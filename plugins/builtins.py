@@ -22,6 +22,12 @@ class builtins(plugin):
         self.bot.whois(args[0] if len(args) > 0 else 'pingwindyktator')
 
     @command
+    def source(self, sender_nick, args):
+        src = r'https://github.com/pingwindyktator/pybot'
+        self.logger.info('source %s given to %s' % (src, sender_nick))
+        self.bot.send_response_to_channel('Patches are welcome! %s' % src)
+
+    @command
     @admin
     def add_op(self, sender_nick, args):
         if len(args) == 0: return

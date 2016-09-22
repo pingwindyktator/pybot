@@ -31,6 +31,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         self.logger.info('connecting to %s:%d...' %
                          (self.server, self.port))
 
+        self.connection.buffer_class.errors = 'replace'
         super(pybot, self).start()
 
     def on_nicknameinuse(self, connection, raw_msg):
@@ -45,7 +46,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         """ called by super() when super.start() func is called """
         self.call_plugins_methods(connection, raw_msg, 'on_welcome')
         self.logger.info('connected to %s:%d using nickname %s' %
-                         (self.server, self.port, self.connection.get_nickname()))
+                         (self.server, self.port, connection.get_nickname()))
 
         self.login(connection)
         self.join_channel(connection)
@@ -72,7 +73,9 @@ class pybot(irc.bot.SingleServerIRCBot):
 
     def on_kick(self, connection, raw_msg):
         self.call_plugins_methods(connection, raw_msg, 'on_kick')
-        self.logger.warning('kicked by %s [%s]' % (raw_msg.source.nick, raw_msg.arguments[0]))
+        if raw_msg.arguments[0] != connection.get_nickname(): return
+
+        self.logger.warning('kicked by %s' % raw_msg.source.nick)
 
         i = None
         while i != 'Y' and i != 'y' and i != 'N' and i != 'n':

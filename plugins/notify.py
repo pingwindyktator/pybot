@@ -15,7 +15,9 @@ class notify(plugin):
     def find_word(self, sender_nick, msg):
         for register_nickname in self.database:
             for alias in self.database[register_nickname]:
-                if alias in re.findall(r"[\w']+", msg) and sender_nick != register_nickname:
+                splited_msg = [x.lower() for x in re.findall(r"[\w']+", msg)]
+
+                if alias.lower() in splited_msg and sender_nick != register_nickname:
                     self.bot.send_response_to_channel(register_nickname)
                     self.logger.info("found alias '%s' for %s" % (alias, register_nickname))
                     break
