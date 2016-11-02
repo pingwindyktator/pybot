@@ -47,11 +47,17 @@ class plugin:
         pass
 
 
-def command(func):
-    if not hasattr(func, '__command'):
-        func.__command = True
+def command(function):
+    @wraps(function)
+    def exception_safe_command(self, *args):
+        try:
+            function(self, *args)
+        except: pass
 
-    return func
+    if not hasattr(exception_safe_command, '__command'):
+        exception_safe_command.__command = True
+
+    return exception_safe_command
 
 
 def admin(function):
