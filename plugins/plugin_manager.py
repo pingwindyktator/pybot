@@ -54,10 +54,34 @@ class plugin_manager(plugin):
 
     @command
     @admin
+    def load_plugin(self, sender_nick, args):
+        """
+        Loads **new** module.
+        """
+        args = [x for x in args if x not in self.bot.get_plugins_names()]
+
+        for arg in args:
+            try:
+                # loading module
+                new_module = importlib.import_module('plugins.' + arg)
+                plugin_class = getattr(new_module, arg)  # requires plugin class' name to be equal to module name
+
+                # loading plugin
+                new_class_instance = plugin_class(self.bot)
+                self.bot.register_plugin(new_class_instance)
+                self.bot.register_commands_for_plugin(new_class_instance)
+                self.logger.warn('plugin [%s] loaded by %s' % (plugin_class.__name__, sender_nick))
+                self.bot.send_response_to_channel('plugin [%s] loaded' % arg)
+            except: pass
+
+    @command
+    @admin
     def reload_plugin(self, sender_nick, args):
         """
         Will cause reference leak! There's no possibility to fully unload module in python.
         Old module's class instance will be fixed in memory after this command.
+
+        Reloading module has to be enabled before this command is executed.
         """
         args = [x for x in args if x in self.bot.get_plugins_names()]  # plugins asked to be reloaded
 
@@ -71,19 +95,22 @@ class plugin_manager(plugin):
         plugins_to_reload = [type(plugin_instance) for plugin_instance in self.bot.get_plugins() if type(plugin_instance).__name__ in args]  # classes to reload
 
         for plugin_class in plugins_to_reload:
-            # unloading plugin
-            cmds = self.bot.get_plugin_commands(plugin_class.__name__)
-            self.bot.plugins.remove(plugin_name_to_instance[plugin_class.__name__])
-            for cmd in cmds:
-                del self.bot.commands[cmd]
+            try:
+                # unloading plugin
+                cmds = self.bot.get_plugin_commands(plugin_class.__name__)
+                self.bot.plugins.remove(plugin_name_to_instance[plugin_class.__name__])
+                for cmd in cmds:
+                    del self.bot.commands[cmd]
 
-            # reloading module
-            del plugin_name_to_instance[plugin_class.__name__]
-            sys.modules[plugin_class.__module__] = importlib.reload(sys.modules[plugin_class.__module__])
-            plugin_class = getattr(sys.modules[plugin_class.__module__], plugin_class.__name__)  # requires plugin class' name to be equal to module name
+                # reloading module
+                del plugin_name_to_instance[plugin_class.__name__]
+                sys.modules[plugin_class.__module__] = importlib.reload(sys.modules[plugin_class.__module__])
+                plugin_class = getattr(sys.modules[plugin_class.__module__], plugin_class.__name__)  # requires plugin class' name to be equal to module name
 
-            # loading plugin
-            new_class_instance = plugin_class(self.bot)
-            self.bot.register_plugin(new_class_instance)
-            self.bot.register_commands_for_plugin(new_class_instance)
-            self.bot.send_response_to_channel('plugin %s reloaded' % plugin_class.__name__)
+                # loading plugin
+                new_class_instance = plugin_class(self.bot)
+                self.bot.register_plugin(new_class_instance)
+                self.bot.register_commands_for_plugin(new_class_instance)
+                self.logger.warn('plugin [%s] reloaded by %s' % (plugin_class.__name__, sender_nick))
+                self.bot.send_response_to_channel('plugin [%s] reloaded' % plugin_class.__name__)
+            except: pass
