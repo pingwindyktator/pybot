@@ -95,7 +95,9 @@ class pybot(irc.bot.SingleServerIRCBot):
 
     def call_plugins_methods(self, connection, raw_msg, func_name):
         for p in self.get_plugins():
-            p.__getattribute__(func_name)(connection, raw_msg)
+            try:
+                p.__getattribute__(func_name)(connection, raw_msg)
+            except: pass
 
     def register_plugin(self, plugin_instance):
         self.plugins.append(plugin_instance)
