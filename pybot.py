@@ -91,12 +91,10 @@ class pybot(irc.bot.SingleServerIRCBot):
         self.call_plugins_methods(connection, raw_msg, 'on_whoisuser')
 
     def on_useronchannel(self, connection, raw_msg):
-        print('**********************')
-        print(raw_msg.arguments)
-        print('**********************')
+        pass
 
     def call_plugins_methods(self, connection, raw_msg, func_name):
-        for p in self.plugins:
+        for p in self.get_plugins():
             p.__getattribute__(func_name)(connection, raw_msg)
 
     def register_plugin(self, plugin_instance):
@@ -143,7 +141,10 @@ class pybot(irc.bot.SingleServerIRCBot):
         """
         :return: names of registered plugins
         """
-        return [type(p).__name__ for p in self.plugins]
+        return [type(p).__name__ for p in self.get_plugins()]
+
+    def get_plugins(self):
+        return self.plugins
 
     def whois(self, targets):
         """send a WHOIS command."""

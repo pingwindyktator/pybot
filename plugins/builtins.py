@@ -19,7 +19,6 @@ class builtins(plugin):
     @admin
     def _debug(self, sender_nick, args):
         self.logger.warn('_debug called by %s' % sender_nick)
-        self.bot.whois(args[0] if len(args) > 0 else 'pingwindyktator')
 
     @command
     def source(self, sender_nick, args):
