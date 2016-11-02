@@ -12,7 +12,19 @@ class plugin:
 
     def on_welcome(self, connection, raw_msg):
         """
-        called by bot when connected to channel
+        called by bot when connected to server
+        """
+        pass
+
+    def on_join(self, connection, raw_msg):
+        """
+        called by bot when somebody joins channel
+        """
+        pass
+
+    def on_me_joined(self, connection, raw_msg):
+        """
+        called by bot when joined channel
         """
         pass
 

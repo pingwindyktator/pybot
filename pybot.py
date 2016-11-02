@@ -43,13 +43,19 @@ class pybot(irc.bot.SingleServerIRCBot):
         connection.nick(new_nickname)
 
     def on_welcome(self, connection, raw_msg):
-        """ called by super() when super.start() func is called """
+        """ called by super() when connected to server """
         self.call_plugins_methods(connection, raw_msg, 'on_welcome')
-        self.logger.info('connected to %s:%d using nickname %s' %
-                         (self.server, self.port, connection.get_nickname()))
-
+        self.logger.info('connected to %s:%d using nickname %s' % (self.server, self.port, connection.get_nickname()))
         self.login(connection)
         self.join_channel(connection)
+
+    def on_join(self, connection, raw_msg):
+        """ called by super() when somebody joins channel """
+        if raw_msg.source.nick == connection.get_nickname():
+            self.logger.info('joined to %s' % self.channel)
+            self.whois(connection.get_nickname())
+        else:
+            self.call_plugins_methods(connection, raw_msg, 'on_join')
 
     def on_privmsg(self, connection, raw_msg):
         """ called by super() when private msg received """
@@ -88,10 +94,13 @@ class pybot(irc.bot.SingleServerIRCBot):
             self.die()
 
     def on_whoisuser(self, connection, raw_msg):
-        self.call_plugins_methods(connection, raw_msg, 'on_whoisuser')
+        # workaround:
+        # /whois me triggers on_me_joined call because when first time on self.on_join (== when bot joins channel)
+        # users-list is not updated yet
+        if raw_msg.arguments[0] == connection.get_nickname():
+            self.call_plugins_methods(connection, raw_msg, 'on_me_joined')
 
-    def on_useronchannel(self, connection, raw_msg):
-        pass
+        self.call_plugins_methods(connection, raw_msg, 'on_whoisuser')
 
     def call_plugins_methods(self, connection, raw_msg, func_name):
         for p in self.get_plugins():
@@ -167,7 +176,6 @@ class pybot(irc.bot.SingleServerIRCBot):
     def join_channel(self, connection):
         self.logger.info('joining %s...' % self.channel)
         connection.join(self.channel)
-        self.logger.info('joined to %s' % self.channel)
 
 
 pybot.ops = {'pingwindyktator'}
