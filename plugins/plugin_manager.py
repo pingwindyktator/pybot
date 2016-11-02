@@ -55,23 +55,23 @@ class plugin_manager(plugin):
     @command
     @admin
     def reload_plugin(self, sender_nick, args):
-        args = [x for x in args if x in self.bot.get_plugins_names()]
-        self.reload_modules(args)
-        self.load_plugins(args)
+        """
+        Will cause reference leak! There's no possibility to fully unload module in python.
+        Old module's class instance will be fixed in memory after this command.
+        """
+        args = [x for x in args if x in self.bot.get_plugins_names()]  # plugins asked to be reloaded
 
-    def reload_modules(self, args):
-        if self.__class__.__name__ in args:
+        if self.__class__.__name__ in args:  # THIS plugin cannot be reloaded!
             self.bot.send_response_to_channel('plugin %s cannot be reloaded' % self.__class__.__name__)
             args.remove(self.__class__.__name__)
 
         plugin_name_to_instance = {}  # plugin_name -> plugin_instance
-        for p in self.bot.get_plugins():
-            plugin_name_to_instance[type(p).__name__] = p
+        for p in self.bot.get_plugins(): plugin_name_to_instance[type(p).__name__] = p
 
-        plugins_to_reload = [plugin_class for plugin_class in plugin.__subclasses__() if plugin_class.__name__ in args]
+        plugins_to_reload = [type(plugin_instance) for plugin_instance in self.bot.get_plugins() if type(plugin_instance).__name__ in args]  # classes to reload
+
         for plugin_class in plugins_to_reload:
             # unloading plugin
-            # self.disable_plugin(sender_nick, [plugin_class.__name__])
             cmds = self.bot.get_plugin_commands(plugin_class.__name__)
             self.bot.plugins.remove(plugin_name_to_instance[plugin_class.__name__])
             for cmd in cmds:
@@ -79,16 +79,11 @@ class plugin_manager(plugin):
 
             # reloading module
             del plugin_name_to_instance[plugin_class.__name__]
-            importlib.reload(sys.modules[plugin_class.__module__])
-            print(42)
+            sys.modules[plugin_class.__module__] = importlib.reload(sys.modules[plugin_class.__module__])
+            plugin_class = getattr(sys.modules[plugin_class.__module__], plugin_class.__name__)  # requires plugin class' name to be equal to module name
 
-    def load_plugins(self, args):
-        # reloading classes from reloaded module
-        plugins_to_reload = [plugin_class for plugin_class in plugin.__subclasses__() if plugin_class.__name__ in args]
-        for plugin_class in plugins_to_reload:
             # loading plugin
-            # self.enable_plugin(sender_nick, [plugin_class.__name__])
-            p = plugin_class(self.bot)
-            self.bot.register_plugin(p)
-            self.bot.register_commands_for_plugin(p)
+            new_class_instance = plugin_class(self.bot)
+            self.bot.register_plugin(new_class_instance)
+            self.bot.register_commands_for_plugin(new_class_instance)
             self.bot.send_response_to_channel('plugin %s reloaded' % plugin_class.__name__)
