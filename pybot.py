@@ -70,12 +70,10 @@ class pybot(irc.bot.SingleServerIRCBot):
         full_msg = raw_msg.arguments[0]
         sender_nick = raw_msg.source.nick
 
-        cmd = msg_parser.split_msg(msg_parser.trim_msg(self.get_command_prefix(), full_msg))
+        cmd = msg_parser.split_msg_raw(msg_parser.trim_msg(self.get_command_prefix(), full_msg))
         if len(cmd) > 0 and cmd[0] in self.commands:
             func = self.commands[cmd[0]]
-            cmd_args_ = msg_parser.trim_msg(self.get_command_prefix(), full_msg)
-            cmd_args = msg_parser.split_msg(msg_parser.trim_msg(cmd[0], cmd_args_))
-            func(sender_nick, cmd_args)
+            func(sender_nick, cmd[1:])
 
     def on_kick(self, connection, raw_msg):
         self.call_plugins_methods(connection, raw_msg, 'on_kick')
@@ -94,9 +92,8 @@ class pybot(irc.bot.SingleServerIRCBot):
             self.die()
 
     def on_whoisuser(self, connection, raw_msg):
-        # workaround:
-        # /whois me triggers on_me_joined call because when first time on self.on_join (== when bot joins channel)
-        # users-list is not updated yet
+        # workaround here:
+        # /whois me triggers on_me_joined call because when first time on self.on_join (== when bot joins channel) users-list is not updated yet
         if raw_msg.arguments[0] == connection.get_nickname():
             self.call_plugins_methods(connection, raw_msg, 'on_me_joined')
 
