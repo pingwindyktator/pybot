@@ -72,7 +72,9 @@ class plugin_manager(plugin):
                 self.bot.register_commands_for_plugin(new_class_instance)
                 self.logger.warn('plugin [%s] loaded by %s' % (plugin_class.__name__, sender_nick))
                 self.bot.send_response_to_channel('plugin [%s] loaded' % arg)
-            except: pass
+            except:
+                self.logger.warn('exception caught while loading plugin [%s] by %s' % (plugin_class.__name__, sender_nick))
+                self.bot.send_response_to_channel('exception caught while loading plugin [%s]' % plugin_class.__name__)
 
     @command
     @admin
@@ -113,4 +115,6 @@ class plugin_manager(plugin):
                 self.bot.register_commands_for_plugin(new_class_instance)
                 self.logger.warn('plugin [%s] reloaded by %s' % (plugin_class.__name__, sender_nick))
                 self.bot.send_response_to_channel('plugin [%s] reloaded' % plugin_class.__name__)
-            except: pass
+            except:
+                self.logger.warn('exception caught while reloading plugin [%s] by %s' % (plugin_class.__name__, sender_nick))
+                self.bot.send_response_to_channel('exception caught while reloading plugin [%s]' % plugin_class.__name__)
