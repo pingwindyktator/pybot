@@ -12,12 +12,10 @@ class notify(plugin):
     def on_pubmsg(self, connection, raw_msg):
         self.find_word(raw_msg.source.nick, raw_msg.arguments[0])
 
-    def find_word(self, sender_nick, msg):
+    def find_word(self, sender_nick, full_msg):
         for register_nickname in self.database:
             for alias in self.database[register_nickname]:
-                splited_msg = [x.lower() for x in re.findall(r"[\w']+", msg)]
-
-                if alias.lower() in splited_msg and sender_nick != register_nickname:
+                if re.findall(alias.lower(), full_msg) and sender_nick != register_nickname:
                     self.bot.send_response_to_channel(register_nickname)
                     self.logger.info("found alias '%s' for %s" % (alias, register_nickname))
                     break
