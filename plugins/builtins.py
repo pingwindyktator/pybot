@@ -1,3 +1,6 @@
+import os
+import sys
+
 from plugin import *
 
 
@@ -59,3 +62,16 @@ class builtins(plugin):
 
         self.bot.send_response_to_channel('%s %s' % (subreply, self.bot.ops))
         self.logger.info('%s asked for ops: %s' % (sender_nick, self.bot.ops))
+
+    @command
+    @admin
+    def restart(self, sender_nick, args):
+        args = sys.argv[:]
+
+        args.insert(0, sys.executable)
+        if sys.platform == 'win32':
+            args = ['"%s"' % arg for arg in args]
+
+        self.logger.warn("re-spawning '%s' by %s" % (' '.join(args), sender_nick))
+        os.chdir(os.getcwd())
+        os.execv(sys.executable, args)
