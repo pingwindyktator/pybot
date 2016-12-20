@@ -6,6 +6,7 @@ class stats(plugin):
         super().__init__(bot)
         self.logger = logging.getLogger(__name__)
 
+    @admin
     @command
     def stats(self, sender_nick, args):
         for chname, chobj in self.bot.channels.items():

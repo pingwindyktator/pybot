@@ -31,7 +31,7 @@ class notify(plugin):
         else:
             self.database[sender_nick] = set(args)
 
-        self.bot.send_response_to_channel('notifying for %s' % ', '.join(args))
+        self.bot.send_response_to_channel('notifying for %s' % args)
         self.logger.info('now notifying: %s -> %s' % (args, sender_nick))
 
     @command
@@ -40,10 +40,9 @@ class notify(plugin):
         to_remove = [arg for arg in args if arg in self.database[sender_nick]]
         if not to_remove: return
 
-        for arg in to_remove:
-            self.database[sender_nick].remove(arg)
+        for arg in to_remove: self.database[sender_nick].remove(arg)
 
-        self.bot.send_response_to_channel('notifying for %s disabled' % ', '.join(to_remove))
+        self.bot.send_response_to_channel('notifying for %s disabled' % to_remove)
         self.logger.info('stop notifying: %s -> %s' % (to_remove, sender_nick))
 
     @command

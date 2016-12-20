@@ -19,7 +19,6 @@ class builtins(plugin):
     @admin
     def _debug(self, sender_nick, args):
         self.logger.warn('_debug called by %s' % sender_nick)
-        self.bot.whois(args[0] if len(args) > 0 else 'pingwindyktator')
 
     @command
     def source(self, sender_nick, args):
@@ -45,7 +44,7 @@ class builtins(plugin):
             self.bot.ops.remove(arg)
 
         subreply = 'is no longer op' if len(to_remove) == 1 else 'are no longer ops'
-        self.bot.send_response_to_channel('%s %s' % (', '.join(to_remove), subreply))
+        self.bot.send_response_to_channel('%s %s' % (to_remove, subreply))
         self.logger.warn('%s removed ops: %s' % (sender_nick, to_remove))
 
     @command
@@ -58,5 +57,5 @@ class builtins(plugin):
         else:
             subreply = 'bot operators:'
 
-        self.bot.send_response_to_channel('%s %s' % (subreply, ', '.join(self.bot.ops)))
+        self.bot.send_response_to_channel('%s %s' % (subreply, self.bot.ops))
         self.logger.info('%s asked for ops: %s' % (sender_nick, self.bot.ops))
