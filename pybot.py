@@ -144,7 +144,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         if plugin_name in self.get_plugins_names():
             return [x for x in self.commands if type(self.commands[x].__self__).__name__ == plugin_name]
         else:
-            raise Exception('no such plugin [%s]' % plugin_name)
+            return None
 
     def get_plugins_names(self):
         """
