@@ -12,7 +12,7 @@ class stalker(plugin):
         self.updating_thread = Thread(target=self.update_all)
 
     def on_pubmsg(self, connection, raw_msg):
-        pass
+        self.update_database(raw_msg.source.nick, raw_msg.source.host)
 
     def on_whoisuser(self, connection, raw_msg):
         self.update_database(raw_msg.arguments[0], raw_msg.arguments[2])
