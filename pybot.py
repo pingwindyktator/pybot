@@ -103,7 +103,8 @@ class pybot(irc.bot.SingleServerIRCBot):
         for p in self.get_plugins():
             try:
                 p.__getattribute__(func_name)(connection, raw_msg)
-            except: pass
+            except Exception as e:
+                self.logger.warn('exception caught calling %s: %s' % (func_name, e))
 
     def register_plugin(self, plugin_instance):
         self.plugins.append(plugin_instance)
@@ -143,7 +144,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         if plugin_name in self.get_plugins_names():
             return [x for x in self.commands if type(self.commands[x].__self__).__name__ == plugin_name]
         else:
-            raise Exception('no such plugin [%s]' % plugin_name)
+            return None
 
     def get_plugins_names(self):
         """
