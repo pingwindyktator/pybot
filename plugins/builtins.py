@@ -20,11 +20,6 @@ class builtins(plugin):
         self.logger.info('help given for %s' % sender_nick)
 
     @command
-    @admin
-    def _debug(self, sender_nick, args):
-        self.logger.warn('_debug called by %s' % sender_nick)
-
-    @command
     def source(self, sender_nick, args):
         src = r'https://github.com/pingwindyktator/pybot'
         self.logger.info('source %s given to %s' % (src, sender_nick))
