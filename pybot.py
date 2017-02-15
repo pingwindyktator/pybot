@@ -104,7 +104,7 @@ class pybot(irc.bot.SingleServerIRCBot):
             try:
                 p.__getattribute__(func_name)(connection, raw_msg)
             except Exception as e:
-                self.logger.warn('exception caught calling %s: %s' % (func_name, e))
+                self.logger.warn('exception caught calling %s: %s' % (p.__getattribute__(func_name), e))
 
     def register_plugin(self, plugin_instance):
         self.plugins.append(plugin_instance)

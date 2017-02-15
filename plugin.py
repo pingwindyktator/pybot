@@ -64,7 +64,8 @@ def command(function):
     def exception_safe_command(self, *args):
         try:
             function(self, *args)
-        except: pass
+        except Exception as e:
+            self.logger.warn('exception caught calling %s: %s' % (function, e))
 
     if not hasattr(exception_safe_command, '__command'):
         exception_safe_command.__command = True
