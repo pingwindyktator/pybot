@@ -89,7 +89,7 @@ class builtins(plugin):
         cmd = "git -C %s log --oneline -n 1 | sed 's/ /: /'" % self.pybot_dir
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
         out, err = process.communicate()
-        return out
+        return ''.join([chr(x) for x in list(out)[:-1]])
 
     @command
     @admin
