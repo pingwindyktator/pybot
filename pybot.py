@@ -13,7 +13,7 @@ import msg_parser
 class pybot(irc.bot.SingleServerIRCBot):
     def __init__(self, channel, nickname, server, port=6667, password=None):
         self.logger = logging.getLogger(__name__)
-        self.plugins = []
+        self.plugins = set()
         self.commands = {}  # map command -> func
         self.load_plugins()
 
@@ -107,7 +107,7 @@ class pybot(irc.bot.SingleServerIRCBot):
                 self.logger.warning('exception caught calling %s: %s' % (p.__getattribute__(func_name), e))
 
     def register_plugin(self, plugin_instance):
-        self.plugins.append(plugin_instance)
+        self.plugins.add(plugin_instance)
         self.logger.info('plugin %s loaded' % type(plugin_instance).__name__)
 
     def register_commands_for_plugin(self, plugin_instance):

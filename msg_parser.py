@@ -29,5 +29,6 @@ def trim_msg(to_trim, full_msg):
             command = full_msg.replace(to_trim_impl, '', 1)
     except Exception as e:
         logger.error('exception caught while parsing msg: ' + e)
+        return ''
 
     return command
