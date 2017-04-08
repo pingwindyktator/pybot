@@ -41,19 +41,19 @@ class stalker(plugin):
         self.logger.info("updating whole stalker's database finished")
 
     def update_database(self, nick, host):
-        result = self.get_from_database(host)
+        result = self.get_nicknames_from_database(host)
         if result is not None:
             if nick not in result:
                 result.extend([nick])
                 self.db_cursor.execute("UPDATE '%s' SET nicks = ? WHERE host = '%s'" % (self.db_name, host), [json.dumps(result)])
+                self.db_connection.commit()
                 self.logger.info('new database entry: %s -> %s' % (host, nick))
         else:
             self.db_cursor.execute("INSERT INTO '%s' VALUES (?, ?)" % self.db_name, (host, json.dumps([nick])))
+            self.db_connection.commit()
             self.logger.info('new database entry: %s -> %s' % (host, nick))
 
-        self.db_connection.commit()
-
-    def get_from_database(self, host):
+    def get_nicknames_from_database(self, host):
         self.db_cursor.execute("SELECT nicks FROM '%s' WHERE host = '%s'" % (self.db_name, host))
         result = self.db_cursor.fetchone()
         if result is not None:
@@ -75,7 +75,7 @@ class stalker(plugin):
     def stalk_nick(self, sender_nick, args):
         if not args: return
         nick = args[0]
-        result = [host for host in self.get_all_hosts_from_database() if nick in self.get_from_database(host)]
+        result = [host for host in self.get_all_hosts_from_database() if nick in self.get_nicknames_from_database(host)]
 
         if result:
             response = 'known hosts of %s: %s ' % (nick, result)
@@ -88,9 +88,9 @@ class stalker(plugin):
     def stalk(self, sender_nick, args):
         if not args: return
         nick = args[0]
-        result = []
+        result = set()
         for x in self.get_all_nicknames_from_database():
-            if nick in x: result.extend(x)
+            if nick in x: result.update(x)
 
         if result:
             response = 'other nicks of %s: %s' % (nick, result)
@@ -103,7 +103,7 @@ class stalker(plugin):
     def stalk_host(self, sender_nick, args):
         if not args: return
         host = args[0]
-        nicks = self.get_from_database(host)
+        nicks = self.get_nicknames_from_database(host)
         if nicks:
             response = 'known nicks from %s: %s' % (host, nicks)
         else:
