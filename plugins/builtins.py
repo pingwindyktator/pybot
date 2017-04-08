@@ -37,7 +37,7 @@ class builtins(plugin):
 
     @command
     def source(self, sender_nick, args):
-        src = r'https://github.com/pingwindyktator/pybot'
+        src = r'https://github.com/pingwindyktator/pybot/tree/develop'
         self.logger.info('source %s given to %s' % (src, sender_nick))
         self.bot.send_response_to_channel('Patches are welcome! %s' % src)
 
