@@ -47,7 +47,7 @@ class plugin:
         pass
 
     # see https://www.alien.net.au/irc/irc2numerics.html
-    # for deep explaination
+    # for deep explanation
     def on_whoisuser(self, connection, raw_msg):
         pass
 
