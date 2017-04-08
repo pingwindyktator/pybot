@@ -34,7 +34,7 @@ class builtins(plugin):
         self.bot.ops.update(args)
         subreply = 'is now op' if len(args) == 1 else 'are now ops'
         self.bot.send_response_to_channel('%s %s' % (', '.join(args), subreply))
-        self.logger.warn('%s added new ops: %s' % (sender_nick, args))
+        self.logger.warning('%s added new ops: %s' % (sender_nick, args))
 
     @command
     @admin
@@ -46,7 +46,7 @@ class builtins(plugin):
 
         subreply = 'is no longer op' if len(to_remove) == 1 else 'are no longer ops'
         self.bot.send_response_to_channel('%s %s' % (to_remove, subreply))
-        self.logger.warn('%s removed ops: %s' % (sender_nick, to_remove))
+        self.logger.warning('%s removed ops: %s' % (sender_nick, to_remove))
 
     @command
     @admin
@@ -70,7 +70,7 @@ class builtins(plugin):
         if sys.platform == 'win32':
             args = ['"%s"' % arg for arg in args]
 
-        self.logger.warn("re-spawning '%s' by %s" % (' '.join(args), sender_nick))
+        self.logger.warning("re-spawning '%s' by %s" % (' '.join(args), sender_nick))
         os.chdir(os.getcwd())
         os.execv(sys.executable, args)
 
@@ -107,5 +107,5 @@ class builtins(plugin):
             self.logger.error('%s asked for self-update, but %s returned %s exit code' % (sender_nick, cmd, process.returncode))
             self.bot.send_response_to_channel("cannot update, 'git pull' returns non-zero exit code")
         else:
-            self.logger.warn('%s asked for self-update' % sender_nick)
+            self.logger.warning('%s asked for self-update' % sender_nick)
             self.bot.send_response_to_channel('updated, now at %s' % self.get_current_head_pos())

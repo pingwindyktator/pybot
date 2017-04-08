@@ -1,5 +1,4 @@
 import importlib
-
 import sys
 
 from plugin import *
@@ -27,7 +26,7 @@ class plugin_manager(plugin):
                     del self.bot.commands[cmd]
 
                 self.bot.send_response_to_channel('plugin [%s] disabled with commands %s' % (arg, cmds))
-                self.logger.warn('plugin [%s] disabled with commands %s by %s' % (arg, cmds, sender_nick))
+                self.logger.warning('plugin [%s] disabled with commands %s by %s' % (arg, cmds, sender_nick))
 
     @command
     def plugins(self, sender_nick, args):
@@ -50,7 +49,7 @@ class plugin_manager(plugin):
                 self.bot.register_commands_for_plugin(p)
                 cmds = self.bot.get_plugin_commands(type(p).__name__)
                 self.bot.send_response_to_channel('plugin [%s] enabled with commands %s' % (arg, cmds))
-                self.logger.warn('plugin [%s] enabled with commands %s by %s' % (arg, cmds, sender_nick))
+                self.logger.warning('plugin [%s] enabled with commands %s by %s' % (arg, cmds, sender_nick))
 
     @command
     @admin
@@ -70,10 +69,10 @@ class plugin_manager(plugin):
                 new_class_instance = plugin_class(self.bot)
                 self.bot.register_plugin(new_class_instance)
                 self.bot.register_commands_for_plugin(new_class_instance)
-                self.logger.warn('plugin [%s] loaded by %s' % (plugin_class.__name__, sender_nick))
+                self.logger.warning('plugin [%s] loaded by %s' % (plugin_class.__name__, sender_nick))
                 self.bot.send_response_to_channel('plugin [%s] loaded' % arg)
             except:
-                self.logger.warn('exception caught while loading plugin [%s] by %s' % (plugin_class.__name__, sender_nick))
+                self.logger.warning('exception caught while loading plugin [%s] by %s' % (plugin_class.__name__, sender_nick))
                 self.bot.send_response_to_channel('exception caught while loading plugin [%s]' % plugin_class.__name__)
 
     @command
@@ -113,8 +112,8 @@ class plugin_manager(plugin):
                 new_class_instance = plugin_class(self.bot)
                 self.bot.register_plugin(new_class_instance)
                 self.bot.register_commands_for_plugin(new_class_instance)
-                self.logger.warn('plugin [%s] reloaded by %s' % (plugin_class.__name__, sender_nick))
+                self.logger.warning('plugin [%s] reloaded by %s' % (plugin_class.__name__, sender_nick))
                 self.bot.send_response_to_channel('plugin [%s] reloaded' % plugin_class.__name__)
             except:
-                self.logger.warn('exception caught while reloading plugin [%s] by %s' % (plugin_class.__name__, sender_nick))
+                self.logger.warning('exception caught while reloading plugin [%s] by %s' % (plugin_class.__name__, sender_nick))
                 self.bot.send_response_to_channel('exception caught while reloading plugin [%s]' % plugin_class.__name__)

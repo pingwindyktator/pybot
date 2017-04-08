@@ -38,7 +38,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         """ called by super() when given nickname is reserved """
         self.call_plugins_methods(connection, raw_msg, 'on_nicknameinuse')
         new_nickname = self.__nickname + '_'
-        self.logger.warn('nickname %s busy, using %s' % (self.__nickname, new_nickname))
+        self.logger.warning('nickname %s busy, using %s' % (self.__nickname, new_nickname))
         self.__nickname = new_nickname
         connection.nick(new_nickname)
 
@@ -104,7 +104,7 @@ class pybot(irc.bot.SingleServerIRCBot):
             try:
                 p.__getattribute__(func_name)(connection, raw_msg)
             except Exception as e:
-                self.logger.warn('exception caught calling %s: %s' % (p.__getattribute__(func_name), e))
+                self.logger.warning('exception caught calling %s: %s' % (p.__getattribute__(func_name), e))
 
     def register_plugin(self, plugin_instance):
         self.plugins.append(plugin_instance)
