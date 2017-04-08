@@ -14,12 +14,26 @@ class builtins(plugin):
 
     @command
     def help(self, sender_nick, args):
-        commands = self.bot.get_commands_by_plugin()
-        for p in commands:
-            if commands[p]:  # != []
-                self.bot.send_response_to_channel('available commands for %s: %s' % (p, ', '.join(commands[p])))
+        if args and args[0]:
+            func_name = args[0]
+            if func_name not in self.bot.commands:
+                return
 
-        self.logger.info('help given for %s' % sender_nick)
+            func = self.bot.commands[func_name]
+            if hasattr(func, '__doc_string'):
+                self.bot.send_response_to_channel('%s: %s' % (func_name, getattr(func, '__doc_string')))
+            else:
+                self.bot.send_response_to_channel('no help for %s' % func_name)
+
+            self.logger.info('help of %s given for %s' % (func_name, sender_nick))
+
+        else:
+            commands = self.bot.get_commands_by_plugin()
+            for p in commands:
+                if commands[p]:
+                    self.bot.send_response_to_channel('available commands for %s: %s' % (p, ', '.join(commands[p])))
+
+            self.logger.info('help given for %s' % sender_nick)
 
     @command
     def source(self, sender_nick, args):
@@ -95,7 +109,8 @@ class builtins(plugin):
     @admin
     def self_update(self, sender_nick, args):
         if not self.update_possible():
-            self.logger.info('%s asked for self-update, but there are local changes in %s' % (sender_nick, self.pybot_dir))
+            self.logger.info(
+                '%s asked for self-update, but there are local changes in %s' % (sender_nick, self.pybot_dir))
             self.bot.send_response_to_channel('local changes prevents me from update')
             return
 
@@ -104,7 +119,8 @@ class builtins(plugin):
         process.wait()
 
         if process.returncode != 0:
-            self.logger.error('%s asked for self-update, but %s returned %s exit code' % (sender_nick, cmd, process.returncode))
+            self.logger.error(
+                '%s asked for self-update, but %s returned %s exit code' % (sender_nick, cmd, process.returncode))
             self.bot.send_response_to_channel("cannot update, 'git pull' returns non-zero exit code")
         else:
             self.logger.warning('%s asked for self-update' % sender_nick)
