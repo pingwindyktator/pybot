@@ -9,6 +9,8 @@ class builtins(plugin):
     def __init__(self, bot):
         super().__init__(bot)
         self.logger = logging.getLogger(__name__)
+        self.pybot_dir = os.path.dirname(os.path.realpath(__file__))
+        self.pybot_dir = os.path.abspath(os.path.join(self.pybot_dir, os.pardir))
 
     @command
     def help(self, sender_nick, args):
@@ -72,26 +74,32 @@ class builtins(plugin):
         os.chdir(os.getcwd())
         os.execv(sys.executable, args)
 
-    @command
-    @admin
-    def self_update(self, sender_nick, args):
-        dir_path_ = os.path.dirname(os.path.realpath(__file__))
-        dir_path = os.path.abspath(os.path.join(dir_path_, os.pardir))
-
-        cmd1 = 'git -C %s diff --exit-code' % dir_path  # unstaged changes
+    def update_possible(self):
+        cmd1 = 'git -C %s diff --exit-code' % self.pybot_dir  # unstaged changes
         process1 = subprocess.Popen(cmd1, shell=True, stdout=subprocess.PIPE)
         process1.wait(2)
 
-        cmd2 = 'git -C %s cherry -v | wc -l' % dir_path  # not committed changes
+        cmd2 = 'git -C %s cherry -v | wc -l' % self.pybot_dir  # not committed changes
         process2 = subprocess.Popen(cmd2, shell=True, stdout=subprocess.PIPE)
         out, err = process2.communicate()
 
-        if process1.returncode != 0 or out != b'0\n':
-            self.logger.info('%s asked for self-update, but there are local changes in %s' % (sender_nick, dir_path))
+        return process1.returncode == 0 and out == b'0\n'
+
+    def get_current_head_pos(self):
+        cmd = "git -C %s log --oneline -n 1 | sed 's/ /: /'" % self.pybot_dir
+        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+        out, err = process.communicate()
+        return out
+
+    @command
+    @admin
+    def self_update(self, sender_nick, args):
+        if not self.update_possible():
+            self.logger.info('%s asked for self-update, but there are local changes in %s' % (sender_nick, self.pybot_dir))
             self.bot.send_response_to_channel('local changes prevents me from update')
             return
 
-        cmd = 'git -C %s pull' % dir_path
+        cmd = 'git -C %s pull' % self.pybot_dir
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
         process.wait()
 
@@ -100,4 +108,4 @@ class builtins(plugin):
             self.bot.send_response_to_channel("cannot update, 'git pull' returns non-zero exit code")
         else:
             self.logger.warn('%s asked for self-update' % sender_nick)
-            self.bot.send_response_to_channel('updated!')
+            self.bot.send_response_to_channel('updated, now at %s' % self.get_current_head_pos())
