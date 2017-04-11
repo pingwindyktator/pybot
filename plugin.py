@@ -91,5 +91,5 @@ def admin(function):
 
 
 def do_not_parse_args(function):
-    function.do_not_parse_args = True
+    function.__do_not_parse_args = True
     return function
