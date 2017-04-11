@@ -49,40 +49,47 @@ class plugin:
     # see https://www.alien.net.au/irc/irc2numerics.html
     # for deep explanation
     def on_whoisuser(self, connection, raw_msg):
+        """
+        called by bot when /whois response received 
+        """
         pass
 
     def on_nicknameinuse(self, connection, raw_msg):
-        """ called by super() when given nickname is reserved """
+        """
+        called by bot when given nickname is reserved
+        """
         pass
 
 
 def command(function):
     @wraps(function)
-    def exception_safe_command(self, *args):
+    def command_impl(self, *args):
         try:
             function(self, *args)
         except Exception as e:
             self.logger.warn('exception caught calling %s: %s' % (function, e))
 
-    if not hasattr(exception_safe_command, '__command'):
-        exception_safe_command.__command = True
-
-    return exception_safe_command
+    command_impl.__command = True
+    return command_impl
 
 
 def doc(doc_string):
-    def doced_function(function):
-        if not hasattr(function, '__doc_string'):
-            function.__doc_string = doc_string
-            return function
+    def doc_impl(function):
+        function.__doc_string = doc_string
+        return function
 
-    return doced_function
+    return doc_impl
 
 
 def admin(function):
     @wraps(function)
-    def admin_function(self, sender_nick, *args):
+    def admin_impl(self, sender_nick, *args):
         if sender_nick in pybot.pybot.ops or sender_nick == 'pingwindyktator':  # E HEHE
             function(self, sender_nick, *args)
 
-    return admin_function
+    return admin_impl
+
+
+def do_not_parse_args(function):
+    function.do_not_parse_args = True
+    return function
