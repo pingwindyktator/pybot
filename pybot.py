@@ -38,7 +38,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         """ called by super() when given nickname is reserved """
         self.call_plugins_methods(connection, raw_msg, 'on_nicknameinuse')
         new_nickname = self.__nickname + '_'
-        self.logger.warning('nickname %s busy, using %s' % (self.__nickname, new_nickname))
+        self.logger.warning('nickname %s is busy, using %s' % (self.__nickname, new_nickname))
         self.__nickname = new_nickname
         connection.nick(new_nickname)
 
@@ -70,10 +70,17 @@ class pybot(irc.bot.SingleServerIRCBot):
         full_msg = raw_msg.arguments[0]
         sender_nick = raw_msg.source.nick
 
-        cmd = msg_parser.split_msg_raw(msg_parser.trim_msg(self.get_command_prefix(), full_msg))
-        if len(cmd) > 0 and cmd[0] in self.commands:
-            func = self.commands[cmd[0]]
-            func(sender_nick, cmd[1:])
+        raw_cmd = msg_parser.trim_msg(self.get_command_prefix(), full_msg)
+        cmd_list = msg_parser.split_msg_raw(raw_cmd)
+        cmd = cmd_list[0] if len(cmd_list) > 0 else ''
+        cmd_list = cmd_list[1:]
+        assert raw_cmd.startswith(cmd)
+        raw_cmd = raw_cmd[len(cmd):].strip()
+
+        if cmd in self.commands:
+            func = self.commands[cmd]
+            if hasattr(func, '__do_not_parse_args'): func(sender_nick, raw_cmd)
+            else: func(sender_nick, cmd_list)
 
     def on_kick(self, connection, raw_msg):
         self.call_plugins_methods(connection, raw_msg, 'on_kick')
