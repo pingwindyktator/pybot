@@ -1,3 +1,4 @@
+import inspect
 import os
 import subprocess
 import sys
@@ -125,3 +126,14 @@ class builtins(plugin):
         else:
             self.logger.warning('%s asked for self-update' % sender_nick)
             self.bot.send_response_to_channel('updated, now at %s' % self.get_current_head_pos())
+
+    @command
+    @admin
+    @do_not_parse_args
+    def as_other_user(self, sender_nick, msg):
+        stack = inspect.stack()
+        caller_frame = (stack[x] for x in range(0, len(stack))
+                        if stack[x][3] == 'on_pubmsg' and stack[x][1].endswith('pybot.py')).__next__()
+        raw_msg = caller_frame[0].f_locals['raw_msg']
+        connection = caller_frame[0].f_locals['connection']
+        self.bot.on_pubmsg(connection, raw_msg)
