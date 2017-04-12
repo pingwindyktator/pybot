@@ -71,7 +71,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         sender_nick = raw_msg.source.nick
 
         raw_cmd = msg_parser.trim_msg(self.get_command_prefix(), full_msg)
-        cmd_list = msg_parser.split_msg_raw(raw_cmd)
+        cmd_list = raw_cmd.split()
         cmd = cmd_list[0] if len(cmd_list) > 0 else ''
         cmd_list = cmd_list[1:]
         assert raw_cmd.startswith(cmd)
