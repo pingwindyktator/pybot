@@ -59,7 +59,8 @@ class SingleServerIRCBot_mock:
         self.connection = self.connection_t(nickname)
         self.handlers = {}
         self.channels = {}
-        for method_name in ["on_nicknameinuse", "on_welcome", "on_join", "on_privmsg", "on_pubmsg", "on_kick", "on_whoisuser"]:
+        for method_name in ["on_nicknameinuse", "on_welcome", "on_join", "on_privmsg", "on_pubmsg", "on_kick",
+                            "on_whoisuser"]:
             self.handlers[method_name] = getattr(self, method_name)
 
         self.channels[getattr(self, 'channel')] = self.chobj_t()
@@ -81,14 +82,6 @@ class SingleServerIRCBot_mock:
     def die(self, msg):
         self.disconnect(msg)
         exit(0)
-
-
-
-
-
-
-
-
 
 
 def simulator_main():
