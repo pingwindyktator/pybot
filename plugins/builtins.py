@@ -3,6 +3,10 @@ import os
 import subprocess
 import sys
 
+from threading import Lock
+from irc.client import NickMask
+from collections import namedtuple
+
 from plugin import *
 
 
@@ -12,6 +16,10 @@ class builtins(plugin):
         self.logger = logging.getLogger(__name__)
         self.pybot_dir = os.path.dirname(os.path.realpath(__file__))
         self.pybot_dir = os.path.abspath(os.path.join(self.pybot_dir, os.pardir))
+        self.as_other_user_command = namedtuple('as_other_user_command',
+                                                'sender_nick hacked_nick connection raw_msg')
+        self.commands_as_other_user_to_send = []
+        self.mutex = Lock()
 
     @command
     def help(self, sender_nick, args, **kwargs):
@@ -127,6 +135,35 @@ class builtins(plugin):
             self.logger.warning('%s asked for self-update' % sender_nick)
             self.bot.send_response_to_channel('updated, now at %s' % self.get_current_head_pos())
 
+    def on_whoisuser(self, connection, raw_msg, **kwargs):
+        try:
+            args = (x for x in self.commands_as_other_user_to_send if
+                    x.hacked_nick == raw_msg.arguments[0]).__next__()
+        except StopIteration:
+            return
+        except RuntimeError:
+            self.bot.whois(raw_msg.source.nick)
+            return
+
+        hacked_source = NickMask.from_params(args.hacked_nick, raw_msg.arguments[1], raw_msg.arguments[2])
+        hacked_raw_msg = args.raw_msg
+        hacked_raw_msg.source = hacked_source
+        hacked_raw_msg.arguments = (hacked_raw_msg.arguments[0],)
+
+        self.logger.warning(
+            '%s runs command (%s) as %s' % (args.sender_nick, hacked_raw_msg.arguments[0], args.hacked_nick))
+        with self.mutex:
+            self.commands_as_other_user_to_send.remove(args)
+
+        self.bot.on_pubmsg(args.connection, hacked_raw_msg)
+
+    def clean_commands_as_other_user_to_send(self):
+        with self.mutex:
+            for x in self.commands_as_other_user_to_send:
+                if x.hacked_nick not in self.bot.channels[self.bot.channel].users():
+                    self.logger.info('removing %s command (%s) as %s' % (x.sender_nick, x.raw_msg.arguments[0], x.hacked_nick))
+                    self.commands_as_other_user_to_send.remove(x)
+
     @command
     @admin
     def as_other_user(self, sender_nick, msg, connection, raw_msg, **kwargs):
@@ -134,5 +171,12 @@ class builtins(plugin):
         hacked_nick = msg.split()[0]
         new_msg = msg[len(hacked_nick):].strip()
         raw_msg.arguments = (new_msg, raw_msg.arguments[1:])
-        raw_msg.source.nick = hacked_nick
-        self.bot.on_pubmsg(connection, raw_msg)
+        self.logger.info('%s queuing command (%s) as %s' % (sender_nick, new_msg, hacked_nick))
+        with self.mutex:
+            self.commands_as_other_user_to_send.append(self.as_other_user_command(sender_nick, hacked_nick, connection, raw_msg))
+
+        # now we don't know ho to set raw_msg fields (user and host)
+        # that's why we are queuing this call, then calling /whois hacked_user
+        # when /whois response received, we've got needed user and host and we can do appropriate call
+        self.clean_commands_as_other_user_to_send()
+        self.bot.whois(hacked_nick)

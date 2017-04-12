@@ -10,37 +10,37 @@ class plugin:
         self.bot = bot
         self.logger = logging.getLogger(__name__)
 
-    def on_welcome(self, connection, raw_msg):
+    def on_welcome(self, *args, **kwargs):
         """
         called by bot when connected to server
         """
         pass
 
-    def on_join(self, connection, raw_msg):
+    def on_join(self, *args, **kwargs):
         """
         called by bot when somebody joins channel
         """
         pass
 
-    def on_me_joined(self, connection, raw_msg):
+    def on_me_joined(self, *args, **kwargs):
         """
         called by bot when joined channel
         """
         pass
 
-    def on_pubmsg(self, connection, raw_msg):
+    def on_pubmsg(self, *args, **kwargs):
         """
         called by bot when public msg received
         """
         pass
 
-    def on_kick(self, connection, raw_msg):
+    def on_kick(self, *args, **kwargs):
         """
         called by bot when kicked from channel
         """
         pass
 
-    def on_privmsg(self, connection, raw_msg):
+    def on_privmsg(self, *args, **kwargs):
         """
         called by bot when private msg received
         """
@@ -48,13 +48,13 @@ class plugin:
 
     # see https://www.alien.net.au/irc/irc2numerics.html
     # for deep explanation
-    def on_whoisuser(self, connection, raw_msg):
+    def on_whoisuser(self, *args, **kwargs):
         """
         called by bot when /whois response received 
         """
         pass
 
-    def on_nicknameinuse(self, connection, raw_msg):
+    def on_nicknameinuse(self, *args, **kwargs):
         """
         called by bot when given nickname is reserved
         """
