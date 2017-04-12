@@ -129,7 +129,6 @@ class builtins(plugin):
 
     @command
     @admin
-    @do_not_parse_args
     def as_other_user(self, sender_nick, msg):
         stack = inspect.stack()
         caller_frame = (stack[x] for x in range(0, len(stack))

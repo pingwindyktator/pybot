@@ -88,8 +88,3 @@ def admin(function):
             function(self, sender_nick, *args)
 
     return admin_impl
-
-
-def do_not_parse_args(function):
-    function.__do_not_parse_args = True
-    return function

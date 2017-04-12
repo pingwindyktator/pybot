@@ -8,7 +8,6 @@ class echo(plugin):
         self.logger = logging.getLogger(__name__)
 
     @command
-    @do_not_parse_args
     def echo(self, sender_nick, msg):
         self.bot.send_response_to_channel(msg)
-        self.logger.info("echo '%s' for %s" % (msg, msg))
+        self.logger.info("echo '%s' for %s" % (msg, sender_nick))
