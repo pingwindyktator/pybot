@@ -1,16 +1,11 @@
 import inspect
 import logging
-import re
-import sys
-import irc.bot
-import irc.strings
-import irc.connection
-import irc.client
 import plugin
 import msg_parser
+from irc.bot import SingleServerIRCBot
 
 
-class pybot(irc.bot.SingleServerIRCBot):
+class pybot(SingleServerIRCBot):
     def __init__(self, channel, nickname, server, port=6667, password=None):
         self.logger = logging.getLogger(__name__)
         self.plugins = set()
@@ -24,7 +19,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         self.__nickname = nickname
 
         self.logger.debug('initiating irc.bot.SingleServerIRCBot...')
-        irc.bot.SingleServerIRCBot.__init__(self, [(server, port)], nickname, nickname)
+        super(pybot, self).__init__([(server, port)], nickname, nickname)
         self.logger.debug('irc.bot.SingleServerIRCBot initiated')
 
     def start(self):
