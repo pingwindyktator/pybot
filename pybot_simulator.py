@@ -30,6 +30,9 @@ class SingleServerIRCBot_mock:
         def nick(self, new_nickname):
             self.bot_nickname = new_nickname
 
+        def kick(self, channel, nick, comment=""):
+            print('> %s has kicked %s (%s)' % (self.get_nickname(), nick, comment))
+
     class raw_msg_t:
         class source_t:
             def __init__(self, nick, host):
