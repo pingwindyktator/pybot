@@ -129,10 +129,10 @@ class builtins(plugin):
 
     @command
     @admin
-    def as_other_user(self, msg, connection, raw_msg):
-        stack = inspect.stack()
-        caller_frame = (stack[x] for x in range(0, len(stack))
-                        if stack[x][3] == 'on_pubmsg' and stack[x][1].endswith('pybot.py')).__next__()
-        raw_msg = caller_frame[0].f_locals['raw_msg']
-        connection = caller_frame[0].f_locals['connection']
+    def as_other_user(self, sender_nick, msg, connection, raw_msg, **kwargs):
+        if not msg: return
+        hacked_nick = msg.split()[0]
+        new_msg = msg[len(hacked_nick):].strip()
+        raw_msg.arguments = (new_msg, raw_msg.arguments[1:])
+        raw_msg.source.nick = hacked_nick
         self.bot.on_pubmsg(connection, raw_msg)
