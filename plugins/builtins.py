@@ -136,13 +136,11 @@ class builtins(plugin):
             self.bot.send_response_to_channel('updated, now at %s' % self.get_current_head_pos())
 
     def on_whoisuser(self, connection, raw_msg, **kwargs):
+        cmds = self.commands_as_other_user_to_send
         try:
-            args = (x for x in self.commands_as_other_user_to_send if
+            args = (x for x in cmds if
                     x.hacked_nick == raw_msg.arguments[0]).__next__()
         except StopIteration:
-            return
-        except RuntimeError:
-            self.bot.whois(raw_msg.source.nick)
             return
 
         hacked_source = NickMask.from_params(args.hacked_nick, raw_msg.arguments[1], raw_msg.arguments[2])
@@ -158,9 +156,12 @@ class builtins(plugin):
         self.bot.on_pubmsg(args.connection, hacked_raw_msg)
 
     def clean_commands_as_other_user_to_send(self):
+        users = self.bot.channels[self.bot.channel].users()
+        users = [user.lower() for user in users]
+
         with self.mutex:
             for x in self.commands_as_other_user_to_send:
-                if x.hacked_nick not in self.bot.channels[self.bot.channel].users():
+                if x.hacked_nick.lower() not in users:
                     self.logger.info('removing %s command (%s) as %s' % (x.sender_nick, x.raw_msg.arguments[0], x.hacked_nick))
                     self.commands_as_other_user_to_send.remove(x)
 

@@ -33,8 +33,9 @@ class stalker(plugin):
 
     def update_all(self):
         self.logger.info("updating whole stalker's database started...")
-        for channel in self.bot.channels:
-            for username in self.bot.channels[channel].users():
+        channels = self.bot.channels
+        for channel in channels:
+            for username in channels[channel].users():
                 self.bot.whois(username)
                 time.sleep(1)  # to not get kicked because of Excess Flood
 
