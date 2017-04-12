@@ -63,9 +63,9 @@ class plugin:
 
 def command(function):
     @wraps(function)
-    def command_impl(self, *args):
+    def command_impl(self, *args, **kwargs):
         try:
-            function(self, *args)
+            function(self, *args, **kwargs)
         except Exception as e:
             self.logger.warn('exception caught calling %s: %s' % (function, e))
 
@@ -83,8 +83,8 @@ def doc(doc_string):
 
 def admin(function):
     @wraps(function)
-    def admin_impl(self, sender_nick, *args):
+    def admin_impl(self, sender_nick, *args, **kwargs):
         if sender_nick in pybot.pybot.ops or sender_nick == 'pingwindyktator':  # E HEHE
-            function(self, sender_nick, *args)
+            function(self, sender_nick, *args, **kwargs)
 
     return admin_impl
