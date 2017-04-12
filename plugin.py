@@ -46,11 +46,8 @@ class plugin:
         """
         pass
 
-    def get_help(self):
-        pass
-
     # see https://www.alien.net.au/irc/irc2numerics.html
-    # for deep explaination
+    # for deep explanation
     def on_whoisuser(self, connection, raw_msg):
         pass
 
@@ -64,12 +61,22 @@ def command(function):
     def exception_safe_command(self, *args):
         try:
             function(self, *args)
-        except: pass
+        except Exception as e:
+            self.logger.warn('exception caught calling %s: %s' % (function, e))
 
     if not hasattr(exception_safe_command, '__command'):
         exception_safe_command.__command = True
 
     return exception_safe_command
+
+
+def doc(doc_string):
+    def doced_function(function):
+        if not hasattr(function, '__doc_string'):
+            function.__doc_string = doc_string
+            return function
+
+    return doced_function
 
 
 def admin(function):
