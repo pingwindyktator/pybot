@@ -18,7 +18,7 @@ class words_blacklist(plugin):
 
     @command
     @admin
-    def ban_word(self, sender_nick, args):
+    def ban_word(self, sender_nick, args, **kwargs):
         if not args: return
         self.blacklist.update(args)
         self.bot.send_response_to_channel("%s banned" % args)
@@ -26,7 +26,7 @@ class words_blacklist(plugin):
 
     @command
     @admin
-    def unban_word(self, sender_nick, args):
+    def unban_word(self, sender_nick, args, **kwargs):
         to_unban = [arg for arg in args if arg in self.blacklist]
         if not to_unban: return
         for arg in to_unban:

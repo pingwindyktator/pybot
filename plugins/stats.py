@@ -8,7 +8,7 @@ class stats(plugin):
 
     @admin
     @command
-    def stats(self, sender_nick, args):
+    def stats(self, sender_nick, **kwargs):
         for chname, chobj in self.bot.channels.items():
             self.bot.send_response_to_channel("--- Channel statistics ---")
             self.bot.send_response_to_channel("Channel: " + chname)

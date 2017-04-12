@@ -72,7 +72,7 @@ class stalker(plugin):
         return [x[0] for x in result_]
 
     @command
-    def stalk_nick(self, sender_nick, args):
+    def stalk_nick(self, sender_nick, args, **kwargs):
         if not args: return
         nick = args[0]
         result = [host for host in self.get_all_hosts_from_database() if nick in self.get_nicknames_from_database(host)]
@@ -85,7 +85,7 @@ class stalker(plugin):
         self.logger.info('%s asks about hosts of %s: %s' % (sender_nick, nick, result))
 
     @command
-    def stalk(self, sender_nick, args):
+    def stalk(self, sender_nick, args, **kwargs):
         if not args: return
         nick = args[0]
         result = set()
@@ -100,7 +100,7 @@ class stalker(plugin):
         self.logger.info('%s stalks %s: %s' % (sender_nick, nick, result))
 
     @command
-    def stalk_host(self, sender_nick, args):
+    def stalk_host(self, sender_nick, args, **kwargs):
         if not args: return
         host = args[0]
         nicks = self.get_nicknames_from_database(host)

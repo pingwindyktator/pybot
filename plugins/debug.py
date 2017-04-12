@@ -8,5 +8,5 @@ class debug(plugin):
 
     @command
     @admin
-    def _debug(self, sender_nick, args):
+    def _debug(self, sender_nick, **kwargs):
         self.logger.warning('_debug called by %s' % sender_nick)

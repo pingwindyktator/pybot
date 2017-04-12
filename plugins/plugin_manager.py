@@ -11,7 +11,7 @@ class plugin_manager(plugin):
 
     @command
     @admin
-    def disable_plugin(self, sender_nick, args):
+    def disable_plugin(self, sender_nick, args, **kwargs):
         plugins = {}  # plugin_name -> plugin_instance
         for p in self.bot.get_plugins():
             plugins[type(p).__name__] = p
@@ -29,13 +29,13 @@ class plugin_manager(plugin):
                 self.logger.warning('plugin [%s] disabled with commands %s by %s' % (arg, cmds, sender_nick))
 
     @command
-    def plugins(self, sender_nick, args):
+    def plugins(self, sender_nick, **kwargs):
         self.bot.send_response_to_channel('enabled plugins: %s' % self.bot.get_plugins_names())
         self.logger.info('plugins given to %s' % sender_nick)
 
     @command
     @admin
-    def enable_plugin(self, sender_nick, args):
+    def enable_plugin(self, sender_nick, args, **kwargs):
         plugins = {}  # plugin_name -> plugin_class
         for plugin_class in plugin.__subclasses__():
             plugins[plugin_class.__name__] = plugin_class
@@ -53,7 +53,7 @@ class plugin_manager(plugin):
 
     @command
     @admin
-    def load_plugin(self, sender_nick, args):
+    def load_plugin(self, sender_nick, args, **kwargs):
         """
         Loads **new** module.
         """
@@ -77,7 +77,7 @@ class plugin_manager(plugin):
 
     @command
     @admin
-    def reload_plugin(self, sender_nick, args):
+    def reload_plugin(self, sender_nick, args, **kwargs):
         """
         Will cause reference leak! There's no possibility to fully unload module in python.
         Old module's class instance will be fixed in memory after this command.
@@ -114,6 +114,6 @@ class plugin_manager(plugin):
                 self.bot.register_commands_for_plugin(new_class_instance)
                 self.logger.warning('plugin [%s] reloaded by %s' % (plugin_class.__name__, sender_nick))
                 self.bot.send_response_to_channel('plugin [%s] reloaded' % plugin_class.__name__)
-            except:
-                self.logger.warning('exception caught while reloading plugin [%s] by %s' % (plugin_class.__name__, sender_nick))
+            except Exception as e:
+                self.logger.warning('exception caught while reloading plugin [%s] by %s: %s' % (plugin_class.__name__, sender_nick, e))
                 self.bot.send_response_to_channel('exception caught while reloading plugin [%s]' % plugin_class.__name__)

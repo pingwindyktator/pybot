@@ -8,18 +8,18 @@ class bot_remote_manager(plugin):
 
     @command
     @admin
-    def disconnect(self, sender_nick, args):
+    def disconnect(self, sender_nick, **kwargs):
         self.logger.warning('disconnect by %s' % sender_nick)
         self.bot.disconnect('[disconnect]')
 
     @command
     @admin
-    def die(self, sender_nick, args):
+    def die(self, sender_nick, **kwargs):
         self.logger.warning('die by %s' % sender_nick)
         self.bot.die('[die]')
 
     @command
     @admin
-    def cycle(self, sender_nick, args):
+    def cycle(self, sender_nick, **kwargs):
         self.logger.warning('cycle by %s' % sender_nick)
         self.bot.send_response_to_channel('operation not supported')

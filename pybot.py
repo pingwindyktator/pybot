@@ -1,16 +1,11 @@
 import inspect
 import logging
-import re
-import sys
-import irc.bot
-import irc.strings
-import irc.connection
-import irc.client
 import plugin
 import msg_parser
+from irc.bot import SingleServerIRCBot
 
 
-class pybot(irc.bot.SingleServerIRCBot):
+class pybot(SingleServerIRCBot):
     def __init__(self, channel, nickname, server, port=6667, password=None):
         self.logger = logging.getLogger(__name__)
         self.plugins = set()
@@ -24,7 +19,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         self.__nickname = nickname
 
         self.logger.debug('initiating irc.bot.SingleServerIRCBot...')
-        irc.bot.SingleServerIRCBot.__init__(self, [(server, port)], nickname, nickname)
+        super(pybot, self).__init__([(server, port)], nickname, nickname)
         self.logger.debug('irc.bot.SingleServerIRCBot initiated')
 
     def start(self):
@@ -38,7 +33,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         """ called by super() when given nickname is reserved """
         self.call_plugins_methods(connection, raw_msg, 'on_nicknameinuse')
         new_nickname = self.__nickname + '_'
-        self.logger.warning('nickname %s busy, using %s' % (self.__nickname, new_nickname))
+        self.logger.warning('nickname %s is busy, using %s' % (self.__nickname, new_nickname))
         self.__nickname = new_nickname
         connection.nick(new_nickname)
 
@@ -70,10 +65,16 @@ class pybot(irc.bot.SingleServerIRCBot):
         full_msg = raw_msg.arguments[0]
         sender_nick = raw_msg.source.nick
 
-        cmd = msg_parser.split_msg_raw(msg_parser.trim_msg(self.get_command_prefix(), full_msg))
-        if len(cmd) > 0 and cmd[0] in self.commands:
-            func = self.commands[cmd[0]]
-            func(sender_nick, cmd[1:])
+        raw_cmd = msg_parser.trim_msg(self.get_command_prefix(), full_msg)
+        cmd_list = raw_cmd.split()
+        cmd = cmd_list[0] if len(cmd_list) > 0 else ''
+        cmd_list = cmd_list[1:]
+        assert raw_cmd.startswith(cmd)
+        raw_cmd = raw_cmd[len(cmd):].strip()
+
+        if cmd in self.commands:
+            func = self.commands[cmd]
+            func(sender_nick=sender_nick, args=cmd_list, msg=raw_cmd, connection=connection, raw_msg=raw_msg)
 
     def on_kick(self, connection, raw_msg):
         self.call_plugins_methods(connection, raw_msg, 'on_kick')

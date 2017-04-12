@@ -10,10 +10,6 @@ def split_msg(msg):
     return re.findall(r"[^\s]+", msg)
 
 
-def split_msg_raw(msg):
-    return msg.split()
-
-
 def trim_msg(to_trim, full_msg):
     """
     trims full_msg to get just command without following to_trim
