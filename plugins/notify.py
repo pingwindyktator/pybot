@@ -21,7 +21,7 @@ class notify(plugin):
                     break
 
     @command
-    def notify(self, sender_nick, args):
+    def notify(self, sender_nick, args, **kwargs):
         if len(args) == 0: return
 
         if sender_nick in self.database:
@@ -33,7 +33,7 @@ class notify(plugin):
         self.logger.info('now notifying: %s -> %s' % (args, sender_nick))
 
     @command
-    def rm_notify(self, sender_nick, args):
+    def rm_notify(self, sender_nick, args, **kwargs):
         if sender_nick not in self.database: return
         to_remove = [arg for arg in args if arg in self.database[sender_nick]]
         if not to_remove: return
@@ -44,7 +44,7 @@ class notify(plugin):
         self.logger.info('stop notifying: %s -> %s' % (to_remove, sender_nick))
 
     @command
-    def notifies(self, sender_nick, args):
+    def notifies(self, sender_nick, **kwargs):
         result = self.database[sender_nick] if sender_nick in self.database else {}
         self.bot.send_response_to_channel('notifying %s -> %s' % (result, sender_nick))
         self.logger.info('notifying %s -> %s' % (result, sender_nick))

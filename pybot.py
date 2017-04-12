@@ -74,8 +74,7 @@ class pybot(SingleServerIRCBot):
 
         if cmd in self.commands:
             func = self.commands[cmd]
-            if hasattr(func, '__do_not_parse_args'): func(sender_nick, raw_cmd)
-            else: func(sender_nick, cmd_list)
+            func(sender_nick=sender_nick, args=cmd_list, msg=raw_cmd, connection=connection, raw_msg=raw_msg)
 
     def on_kick(self, connection, raw_msg):
         self.call_plugins_methods(connection, raw_msg, 'on_kick')

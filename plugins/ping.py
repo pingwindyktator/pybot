@@ -7,11 +7,11 @@ class ping(plugin):
         self.logger = logging.getLogger(__name__)
 
     @command
-    def ping(self, sender_nick, args):
+    def ping(self, sender_nick, **kwargs):
         self.logger.info('pinged by %s' % sender_nick)
         self.bot.send_response_to_channel('pong')
         
     @command
-    def pong(self, sender_nick, args):
+    def pong(self, sender_nick, **kwargs):
         self.logger.info('ponged by %s' % sender_nick)
         self.bot.send_response_to_channel('ping')        

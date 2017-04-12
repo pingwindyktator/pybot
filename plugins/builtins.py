@@ -14,7 +14,7 @@ class builtins(plugin):
         self.pybot_dir = os.path.abspath(os.path.join(self.pybot_dir, os.pardir))
 
     @command
-    def help(self, sender_nick, args):
+    def help(self, sender_nick, args, **kwargs):
         if args and args[0]:
             func_name = args[0]
             if func_name not in self.bot.commands:
@@ -37,14 +37,14 @@ class builtins(plugin):
             self.logger.info('help given for %s' % sender_nick)
 
     @command
-    def source(self, sender_nick, args):
+    def source(self, sender_nick, **kwargs):
         src = r'https://github.com/pingwindyktator/pybot/tree/develop'
         self.logger.info('source %s given to %s' % (src, sender_nick))
         self.bot.send_response_to_channel('Patches are welcome! %s' % src)
 
     @command
     @admin
-    def add_op(self, sender_nick, args):
+    def add_op(self, sender_nick, args, **kwargs):
         if len(args) == 0: return
         self.bot.ops.update(args)
         subreply = 'is now op' if len(args) == 1 else 'are now ops'
@@ -53,7 +53,7 @@ class builtins(plugin):
 
     @command
     @admin
-    def rm_op(self, sender_nick, args):
+    def rm_op(self, sender_nick, args, **kwargs):
         to_remove = [arg for arg in args if arg in self.bot.ops]
         if not to_remove: return
         for arg in to_remove:
@@ -65,7 +65,7 @@ class builtins(plugin):
 
     @command
     @admin
-    def ops(self, sender_nick, args):
+    def ops(self, sender_nick, **kwargs):
         if len(self.bot.ops) == 0:
             subreply = 'no bot operators'
         elif len(self.bot.ops) == 1:
@@ -78,7 +78,7 @@ class builtins(plugin):
 
     @command
     @admin
-    def restart(self, sender_nick, args):
+    def restart(self, sender_nick, **kwargs):
         args = sys.argv[:]
 
         args.insert(0, sys.executable)
@@ -108,7 +108,7 @@ class builtins(plugin):
 
     @command
     @admin
-    def self_update(self, sender_nick, args):
+    def self_update(self, sender_nick, **kwargs):
         if not self.update_possible():
             self.logger.info(
                 '%s asked for self-update, but there are local changes in %s' % (sender_nick, self.pybot_dir))
@@ -129,7 +129,7 @@ class builtins(plugin):
 
     @command
     @admin
-    def as_other_user(self, sender_nick, msg):
+    def as_other_user(self, msg, connection, raw_msg):
         stack = inspect.stack()
         caller_frame = (stack[x] for x in range(0, len(stack))
                         if stack[x][3] == 'on_pubmsg' and stack[x][1].endswith('pybot.py')).__next__()

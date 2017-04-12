@@ -6,6 +6,7 @@ class example_plugin(plugin):
         super().__init__(bot)
         self.logger = logging.getLogger(__name__)
 
+    # TODO update this!
     @command
     def example_command(self, sender_nick, args):
         self.logger.info('example command called by %s' % sender_nick)
