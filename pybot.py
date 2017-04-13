@@ -166,7 +166,7 @@ class pybot(SingleServerIRCBot):
 
     def login(self, connection):
         # TODO add more login ways
-        if self.password is not None:
+        if self.password is not None and self.password != '':
             connection.privmsg('NickServ', 'identify %s %s' % (self.connection.get_nickname(), self.password))
 
     def get_command_prefix(self):
