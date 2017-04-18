@@ -17,6 +17,7 @@ class pybot(SingleServerIRCBot):
         self.port = port
         self.password = password
         self.__nickname = nickname
+        self.joined_to_channel = False
 
         self.logger.debug('initiating irc.bot.SingleServerIRCBot...')
         super(pybot, self).__init__([(server, port)], nickname, nickname)
@@ -77,6 +78,7 @@ class pybot(SingleServerIRCBot):
             func(sender_nick=sender_nick, args=cmd_list, msg=raw_cmd, connection=connection, raw_msg=raw_msg)
 
     def on_kick(self, connection, raw_msg):
+        self.joined_to_channel = False
         self.call_plugins_methods('on_kick', connection, raw_msg)
         if raw_msg.arguments[0] != connection.get_nickname(): return
 
@@ -95,8 +97,9 @@ class pybot(SingleServerIRCBot):
     def on_whoisuser(self, connection, raw_msg):
         # workaround here:
         # /whois me triggers on_me_joined call because when first time on self.on_join (== when bot joins channel) users-list is not updated yet
-        if raw_msg.arguments[0] == connection.get_nickname():
+        if raw_msg.arguments[0] == connection.get_nickname() and not self.joined_to_channel:
             self.call_plugins_methods('on_me_joined', connection, raw_msg)
+            self.joined_to_channel = True
 
         self.call_plugins_methods('on_whoisuser', connection, raw_msg)
 
