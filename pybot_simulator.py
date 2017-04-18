@@ -83,8 +83,11 @@ class raw_msg_t:
 
 
 class chobj_t:
+    def __init__(self, bot_nickname):
+        self.bot_nickname = bot_nickname
+
     def users(self):
-        return list(set(['user1', 'user2', 'user3'] + self.opers() + self.voiced()))
+        return list(set(['user1', 'user2', 'user3'] + self.opers() + self.voiced() + [self.bot_nickname]))
 
     def voiced(self):
         return list(set(['voiced1', 'voiced2', 'voiced3'] + self.opers()))
@@ -104,13 +107,13 @@ class SingleServerIRCBot_mock:
                             "on_whoisuser"]:
             handlers[method_name] = getattr(self, method_name)
 
-        self.channels[getattr(self, 'channel')] = chobj_t()
+        self.channels[getattr(self, 'channel')] = chobj_t(nickname)
         self.connection = connection_t(nickname, handlers)
 
     def init_bot(self):
         self.connection.call_handler('on_welcome', self.connection, None)
 
-        raw_msg = raw_msg_builder.build_for_on_on_join_on_nick('botpingwina')
+        raw_msg = raw_msg_builder.build_for_on_on_join_on_nick(self.connection.get_nickname())
         self.connection.call_handler('on_join', self.connection, raw_msg)
 
     def start(self):
