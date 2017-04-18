@@ -36,6 +36,12 @@ class plugin:
 
     def on_kick(self, *args, **kwargs):
         """
+        called by bot when somebody got kicked
+        """
+        pass
+
+    def on_me_kicked(self, *args, **kwargs):
+        """
         called by bot when kicked from channel
         """
         pass

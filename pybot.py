@@ -18,6 +18,8 @@ class pybot(SingleServerIRCBot):
         self.password = password
         self.__nickname = nickname
         self.joined_to_channel = False
+        self.max_autorejoin_attempts = 5
+        self.autorejoin_attempts = 0
 
         self.logger.debug('initiating irc.bot.SingleServerIRCBot...')
         super(pybot, self).__init__([(server, port)], nickname, nickname)
@@ -43,7 +45,7 @@ class pybot(SingleServerIRCBot):
         self.call_plugins_methods('on_welcome', connection, raw_msg)
         self.logger.info('connected to %s:%d using nickname %s' % (self.server, self.port, connection.get_nickname()))
         self.login(connection)
-        self.join_channel(connection)
+        self.join_channel()
 
     def on_join(self, connection, raw_msg):
         """ called by super() when somebody joins channel """
@@ -78,21 +80,30 @@ class pybot(SingleServerIRCBot):
             func(sender_nick=sender_nick, args=cmd_list, msg=raw_cmd, connection=connection, raw_msg=raw_msg)
 
     def on_kick(self, connection, raw_msg):
-        self.joined_to_channel = False
-        self.call_plugins_methods('on_kick', connection, raw_msg)
-        if raw_msg.arguments[0] != connection.get_nickname(): return
+        if raw_msg.arguments[0] == connection.get_nickname():
+            self.on_me_kicked(connection, raw_msg)
+        else:
+            self.call_plugins_methods('on_kick', connection, raw_msg)
 
+    def on_me_kicked(self, connection, raw_msg):
+        self.call_plugins_methods('on_me_kicked', connection, raw_msg)
+        self.joined_to_channel = False
         self.logger.warning('kicked by %s' % raw_msg.source.nick)
 
-        i = None
-        while i != 'Y' and i != 'y' and i != 'N' and i != 'n':
-            print('rejoin to %s? [Y/n]' % self.channel, end=' ')
-            i = input()
+        if self.autorejoin_attempts >= self.max_autorejoin_attempts:
+            self.logger.warning('autorejoin attempts limit reached, waiting for user interact now')
+            choice = None
+            while choice != 'Y' and choice != 'y' and choice != 'N' and choice != 'n':
+                choice = input('rejoin to %s? [Y/n] ' % self.channel)
 
-        if i == 'Y' or i == 'y':
-            self.join_channel(connection)
+            if choice == 'Y' or choice == 'y':
+                self.autorejoin_attempts = 0
+                self.join_channel()
+            else:
+                self.die()
         else:
-            self.die()
+            self.autorejoin_attempts += 1
+            self.join_channel()
 
     def on_whoisuser(self, connection, raw_msg):
         # workaround here:
@@ -175,9 +186,9 @@ class pybot(SingleServerIRCBot):
     def get_command_prefix(self):
         return '.'
 
-    def join_channel(self, connection):
+    def join_channel(self):
         self.logger.info('joining %s...' % self.channel)
-        connection.join(self.channel)
+        self.connection.join(self.channel)
 
 
 pybot.ops = {'pingwindyktator'}
