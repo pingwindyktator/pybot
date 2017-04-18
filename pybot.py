@@ -66,7 +66,7 @@ class pybot(SingleServerIRCBot):
         """ called by super() when msg received """
         self.call_plugins_methods('on_pubmsg', connection, raw_msg)
         full_msg = raw_msg.arguments[0].strip()
-        sender_nick = raw_msg.source.nick
+        sender_nick = raw_msg.source.nick.lower()
 
         raw_cmd = msg_parser.trim_msg(self.get_command_prefix(), full_msg)
         cmd_list = raw_cmd.split()

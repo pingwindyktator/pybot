@@ -44,6 +44,7 @@ class stalker(plugin):
         self.logger.info("updating whole stalker's database finished")
 
     def update_database(self, nick, host):
+        nick = nick.lower()
         result = self.get_nicknames_from_database(host)
         if result is not None:
             if nick not in result:
@@ -67,6 +68,7 @@ class stalker(plugin):
 
         if result is not None:
             result = json.loads(result[0])
+            result = [x.lower() for x in result]
 
         return result
 
@@ -75,26 +77,34 @@ class stalker(plugin):
             self.db_cursor.execute("SELECT nicks FROM '%s'" % self.db_name)
             result = self.db_cursor.fetchall()
 
-        return [json.loads(x[0]) for x in result]
+        if result is not None:
+            result = [json.loads(x[0]) for x in result]
+            result = [[y.lower() for y in x] for x in result]
+
+        return result
 
     def get_all_hosts_from_database(self):
         with self.db_mutex:
             self.db_cursor.execute("SELECT host FROM '%s'" % self.db_name)
             result = self.db_cursor.fetchall()
 
-        return [x[0] for x in result]
+        if result is not None:
+            result = [x[0] for x in result]
+
+        return result
 
     @command
     def stalk_nick(self, sender_nick, args, **kwargs):
         if not args: return
         nick = args[0]
         all_hosts = self.get_all_hosts_from_database()
-        result = [host for host in all_hosts if nick in self.get_nicknames_from_database(host)]
+        result = set([host for host in all_hosts if nick.lower() in self.get_nicknames_from_database(host)])
 
         if result:
             response = 'known hosts of %s: %s ' % (nick, result)
         else:
             response = "I know nothing about %s" % nick
+
         self.bot.send_response_to_channel(response)
         self.logger.info('%s asks about hosts of %s: %s' % (sender_nick, nick, result))
 
@@ -105,7 +115,7 @@ class stalker(plugin):
         result = set()
         all_nicknames = self.get_all_nicknames_from_database()
         for x in all_nicknames:
-            if nick in x: result.update(x)
+            if nick.lower() in x: result.update(x)
 
         if result:
             response = 'other nicks of %s: %s' % (nick, result)
