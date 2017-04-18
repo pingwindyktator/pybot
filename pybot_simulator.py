@@ -1,7 +1,37 @@
+import sys
+
 import main
+import logging
 from unittest import mock
 from irc.bot import ExponentialBackoff, missing
-from collections import namedtuple
+
+import plugin
+
+
+class raw_msg_builder:
+    @staticmethod
+    def build_for_on_whoisuser(nick, user, host):
+        return raw_msg_t(nick, user, host, (nick, user, host,))
+
+    @staticmethod
+    def build_for_on_whoisuser_on_nick(nick):
+        return raw_msg_t(nick, nick + '_user', nick + '_host', (nick, nick + '_user', nick + '_host',))
+
+    @staticmethod
+    def build_for_on_pubmsg(nick, user, host, msg):
+        return raw_msg_t(nick, user, host, (msg,))
+
+    @staticmethod
+    def build_for_on_pubmsg_on_nick(nick, msg):
+        return raw_msg_t(nick, nick + '_user', nick + '_host', (msg,))
+
+    @staticmethod
+    def build_for_on_join(nick, user, host):
+        return raw_msg_t(nick, user, host, ())
+
+    @staticmethod
+    def build_for_on_on_join_on_nick(nick):
+        return raw_msg_t(nick, nick + '_user', nick + '_host', ())
 
 
 class buffer_class_t:
@@ -15,6 +45,10 @@ class connection_t:
         self.bot_nickname = bot_nickname
         self.handlers = handlers
 
+    def call_handler(self, handler_name, *args):
+        if handler_name not in self.handlers: return
+        self.handlers[handler_name](*args)
+
     def privmsg(self, target, text):
         print('< ' + text)
 
@@ -25,36 +59,41 @@ class connection_t:
         pass
 
     def whois(self, target):
-        raw_msg = raw_msg_t(msg, 'pingwindyktator', 'host_pingwina')
+        raw_msg = raw_msg_builder.build_for_on_whoisuser_on_nick(target)
+        self.call_handler('on_whoisuser', self, raw_msg)
 
     def nick(self, new_nickname):
         self.bot_nickname = new_nickname
 
-    def kick(self, channel, nick, comment=""):
+    def kick(self, channel, nick, comment=''):
         print('> %s has kicked %s (%s)' % (self.get_nickname(), nick, comment))
 
 
 class source_t:
-    def __init__(self, nick, host):
+    def __init__(self, nick, user, host):
         self.nick = nick
         self.host = host
+        self.user = user
 
 
 class raw_msg_t:
-    def __init__(self, full_msg, source_nick, host):
-        self.source = source_t(source_nick, host)
-        self.arguments = (full_msg,)
+    def __init__(self, source_nick, user, host, arguments):
+        self.source = source_t(source_nick, user, host)
+        self.arguments = arguments
 
 
 class chobj_t:
+    def __init__(self, bot_nickname):
+        self.bot_nickname = bot_nickname
+
     def users(self):
-        return list(set(['user1', 'user2', 'user3'] + self.opers() + self.voiced()))
+        return list(set(['user1', 'user2', 'user3'] + self.opers() + self.voiced() + [self.bot_nickname]))
 
     def voiced(self):
         return list(set(['voiced1', 'voiced2', 'voiced3'] + self.opers()))
 
     def opers(self):
-        return ['op1', 'op2', 'op3']
+        return ['op1', 'op2', 'op3', 'pingwindyktator']
 
 
 class SingleServerIRCBot_mock:
@@ -62,25 +101,29 @@ class SingleServerIRCBot_mock:
                  reconnection_interval=missing,
                  recon=ExponentialBackoff(), **connect_params):
 
-        self.handlers = {}
+        handlers = {}
         self.channels = {}
         for method_name in ["on_nicknameinuse", "on_welcome", "on_join", "on_privmsg", "on_pubmsg", "on_kick",
                             "on_whoisuser"]:
-            self.handlers[method_name] = getattr(self, method_name)
+            handlers[method_name] = getattr(self, method_name)
 
-        self.channels[getattr(self, 'channel')] = chobj_t()
-        self.connection = connection_t(nickname, self.handlers)
+        self.channels[getattr(self, 'channel')] = chobj_t(nickname)
+        self.connection = connection_t(nickname, handlers)
 
-    def call_handler(self, handler_name, *args):
-        if not handler_name in self.handlers: return
-        self.handlers[handler_name](*args)
+    def init_bot(self):
+        self.connection.call_handler('on_welcome', self.connection, None)
+
+        raw_msg = raw_msg_builder.build_for_on_on_join_on_nick(self.connection.get_nickname())
+        self.connection.call_handler('on_join', self.connection, raw_msg)
 
     def start(self):
+        self.init_bot()
+
         while True:
             msg = input('> ')
             if not msg: continue
-            raw_msg = raw_msg_t(msg, 'pingwindyktator', 'host_pingwina')
-            self.call_handler('on_pubmsg', self.connection, raw_msg)
+            raw_msg = raw_msg_builder.build_for_on_pubmsg_on_nick('pingwindyktator', msg)
+            self.connection.call_handler('on_pubmsg', self.connection, raw_msg)
 
     def disconnect(self, msg):
         print('> %s has quit (%s)' % (self.connection.get_nickname(), msg))
@@ -90,7 +133,13 @@ class SingleServerIRCBot_mock:
         exit(0)
 
 
+def configure_logger():
+    logging_format = '%(levelname)-10s%(asctime)s %(filename)s:%(funcName)-16s: %(message)s'
+    logging.basicConfig(format=logging_format, level=logging.INFO, stream=sys.stdout)
+
+
 def simulator_main():
+    main.configure_logger = configure_logger
     patcher = mock.patch.object(main.pybot, '__bases__', (SingleServerIRCBot_mock,))
     with patcher:
         patcher.is_local = True

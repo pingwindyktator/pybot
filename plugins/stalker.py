@@ -1,5 +1,5 @@
 import time
-from threading import Thread
+from threading import Thread, Lock
 import json
 import sqlite3
 
@@ -12,11 +12,12 @@ class stalker(plugin):
         self.logger = logging.getLogger(__name__)
 
         self.db_name = 'stalker'
-        self.db_connection = sqlite3.connect(self.db_name + '.db')
+        self.db_connection = sqlite3.connect(self.db_name + '.db', check_same_thread=False)
         self.db_cursor = self.db_connection.cursor()
         self.db_cursor.execute("CREATE TABLE IF NOT EXISTS '%s' (host TEXT primary key not null, nicks TEXT)" % self.db_name)  # host -> {nicknames}
+        self.db_mutex = Lock()
         self.get_all_hosts_from_database()
-        self.updating_thread = Thread(target=self.update_all)
+        self.updating_thread = None
 
     def on_pubmsg(self, connection, raw_msg):
         self.update_database(raw_msg.source.nick, raw_msg.source.host)
@@ -28,12 +29,13 @@ class stalker(plugin):
         self.update_database(raw_msg.source.nick, raw_msg.source.host)
 
     def on_me_joined(self, connection, raw_msg):
-        if not self.updating_thread.is_alive():
+        if self.updating_thread is None or not self.updating_thread.is_alive():
+            self.updating_thread = Thread(target=self.update_all)
             self.updating_thread.start()
 
     def update_all(self):
         self.logger.info("updating whole stalker's database started...")
-        channels = self.bot.channels
+        channels = self.bot.channels.copy()
         for channel in channels:
             for username in channels[channel].users():
                 self.bot.whois(username)
@@ -42,46 +44,67 @@ class stalker(plugin):
         self.logger.info("updating whole stalker's database finished")
 
     def update_database(self, nick, host):
+        nick = nick.lower()
         result = self.get_nicknames_from_database(host)
         if result is not None:
             if nick not in result:
                 result.extend([nick])
-                self.db_cursor.execute("UPDATE '%s' SET nicks = ? WHERE host = '%s'" % (self.db_name, host), [json.dumps(result)])
-                self.db_connection.commit()
+                with self.db_mutex:
+                    self.db_cursor.execute("UPDATE '%s' SET nicks = ? WHERE host = '%s'" % (self.db_name, host), [json.dumps(result)])
+                    self.db_connection.commit()
+
                 self.logger.info('new database entry: %s -> %s' % (host, nick))
         else:
-            self.db_cursor.execute("INSERT INTO '%s' VALUES (?, ?)" % self.db_name, (host, json.dumps([nick])))
-            self.db_connection.commit()
+            with self.db_mutex:
+                self.db_cursor.execute("INSERT INTO '%s' VALUES (?, ?)" % self.db_name, (host, json.dumps([nick])))
+                self.db_connection.commit()
+
             self.logger.info('new database entry: %s -> %s' % (host, nick))
 
     def get_nicknames_from_database(self, host):
-        self.db_cursor.execute("SELECT nicks FROM '%s' WHERE host = '%s'" % (self.db_name, host))
-        result = self.db_cursor.fetchone()
+        with self.db_mutex:
+            self.db_cursor.execute("SELECT nicks FROM '%s' WHERE host = '%s'" % (self.db_name, host))
+            result = self.db_cursor.fetchone()
+
         if result is not None:
             result = json.loads(result[0])
+            result = [x.lower() for x in result]
 
         return result
 
     def get_all_nicknames_from_database(self):
-        self.db_cursor.execute("SELECT nicks FROM '%s'" % self.db_name)
-        result_ = self.db_cursor.fetchall()
-        return [json.loads(x[0]) for x in result_]
+        with self.db_mutex:
+            self.db_cursor.execute("SELECT nicks FROM '%s'" % self.db_name)
+            result = self.db_cursor.fetchall()
+
+        if result is not None:
+            result = [json.loads(x[0]) for x in result]
+            result = [[y.lower() for y in x] for x in result]
+
+        return result
 
     def get_all_hosts_from_database(self):
-        self.db_cursor.execute("SELECT host FROM '%s'" % self.db_name)
-        result_ = self.db_cursor.fetchall()
-        return [x[0] for x in result_]
+        with self.db_mutex:
+            self.db_cursor.execute("SELECT host FROM '%s'" % self.db_name)
+            result = self.db_cursor.fetchall()
+
+        if result is not None:
+            result = [x[0] for x in result]
+
+        return result
 
     @command
     def stalk_nick(self, sender_nick, args, **kwargs):
         if not args: return
         nick = args[0]
-        result = [host for host in self.get_all_hosts_from_database() if nick in self.get_nicknames_from_database(host)]
+        all_hosts = self.get_all_hosts_from_database()
+        result = set([host for host in all_hosts if nick.lower() in self.get_nicknames_from_database(host)])
 
         if result:
             response = 'known hosts of %s: %s ' % (nick, result)
         else:
             response = "I know nothing about %s" % nick
+
         self.bot.send_response_to_channel(response)
         self.logger.info('%s asks about hosts of %s: %s' % (sender_nick, nick, result))
 
@@ -90,8 +113,9 @@ class stalker(plugin):
         if not args: return
         nick = args[0]
         result = set()
-        for x in self.get_all_nicknames_from_database():
-            if nick in x: result.update(x)
+        all_nicknames = self.get_all_nicknames_from_database()
+        for x in all_nicknames:
+            if nick.lower() in x: result.update(x)
 
         if result:
             response = 'other nicks of %s: %s' % (nick, result)

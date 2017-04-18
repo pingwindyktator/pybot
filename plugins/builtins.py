@@ -1,4 +1,3 @@
-import inspect
 import os
 import subprocess
 import sys
@@ -136,7 +135,7 @@ class builtins(plugin):
             self.bot.send_response_to_channel('updated, now at %s' % self.get_current_head_pos())
 
     def on_whoisuser(self, connection, raw_msg, **kwargs):
-        cmds = self.commands_as_other_user_to_send
+        cmds = self.commands_as_other_user_to_send.copy()
         try:
             args = (x for x in cmds if
                     x.hacked_nick == raw_msg.arguments[0]).__next__()
@@ -172,7 +171,7 @@ class builtins(plugin):
         hacked_nick = msg.split()[0]
         new_msg = msg[len(hacked_nick):].strip()
         raw_msg.arguments = (new_msg, raw_msg.arguments[1:])
-        self.logger.info('%s queuing command (%s) as %s' % (sender_nick, new_msg, hacked_nick))
+        self.logger.info('%s queued command (%s) as %s' % (sender_nick, new_msg, hacked_nick))
         with self.mutex:
             self.commands_as_other_user_to_send.append(self.as_other_user_command(sender_nick, hacked_nick, connection, raw_msg))
 
