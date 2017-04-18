@@ -17,7 +17,7 @@ class stalker(plugin):
         self.db_cursor.execute("CREATE TABLE IF NOT EXISTS '%s' (host TEXT primary key not null, nicks TEXT)" % self.db_name)  # host -> {nicknames}
         self.db_mutex = Lock()
         self.get_all_hosts_from_database()
-        self.updating_thread = Thread(target=self.update_all)
+        self.updating_thread = None
 
     def on_pubmsg(self, connection, raw_msg):
         self.update_database(raw_msg.source.nick, raw_msg.source.host)
@@ -29,7 +29,8 @@ class stalker(plugin):
         self.update_database(raw_msg.source.nick, raw_msg.source.host)
 
     def on_me_joined(self, connection, raw_msg):
-        if not self.updating_thread.is_alive():
+        if self.updating_thread is None or not self.updating_thread.is_alive():
+            self.updating_thread = Thread(target=self.update_all)
             self.updating_thread.start()
 
     def update_all(self):
