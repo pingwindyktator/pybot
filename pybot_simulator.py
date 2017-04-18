@@ -2,10 +2,10 @@ import sys
 
 import main
 import logging
-import queue
-import threading
 from unittest import mock
 from irc.bot import ExponentialBackoff, missing
+
+import plugin
 
 
 class raw_msg_builder:
@@ -135,8 +135,20 @@ def configure_logger():
     logging.basicConfig(format=logging_format, level=logging.INFO, stream=sys.stdout)
 
 
+def plugin_command_mock(function):
+    function.__command = True
+    return function
+
+
+def pybot_call_plugins_methods_mock(bot, func_name, *args):
+        for p in bot.get_plugins():
+            p.__getattribute__(func_name)(*args)
+
+
 def simulator_main():
     main.configure_logger = configure_logger
+    plugin.command = plugin_command_mock
+    main.pybot.call_plugins_methods = pybot_call_plugins_methods_mock
     patcher = mock.patch.object(main.pybot, '__bases__', (SingleServerIRCBot_mock,))
     with patcher:
         patcher.is_local = True
