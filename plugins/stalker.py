@@ -12,7 +12,7 @@ class stalker(plugin):
         self.logger = logging.getLogger(__name__)
 
         self.db_name = 'stalker'
-        self.db_connection = sqlite3.connect(self.db_name + '.db')
+        self.db_connection = sqlite3.connect(self.db_name + '.db', check_same_thread=False)
         self.db_cursor = self.db_connection.cursor()
         self.db_cursor.execute("CREATE TABLE IF NOT EXISTS '%s' (host TEXT primary key not null, nicks TEXT)" % self.db_name)  # host -> {nicknames}
         self.get_all_hosts_from_database()
