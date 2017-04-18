@@ -35,7 +35,7 @@ class stalker(plugin):
 
     def update_all(self):
         self.logger.info("updating whole stalker's database started...")
-        channels = self.bot.channels
+        channels = self.bot.channels.copy()
         for channel in channels:
             for username in channels[channel].users():
                 self.bot.whois(username)
@@ -88,7 +88,8 @@ class stalker(plugin):
     def stalk_nick(self, sender_nick, args, **kwargs):
         if not args: return
         nick = args[0]
-        result = [host for host in self.get_all_hosts_from_database() if nick in self.get_nicknames_from_database(host)]
+        all_hosts = self.get_all_hosts_from_database()
+        result = [host for host in all_hosts if nick in self.get_nicknames_from_database(host)]
 
         if result:
             response = 'known hosts of %s: %s ' % (nick, result)
@@ -102,7 +103,8 @@ class stalker(plugin):
         if not args: return
         nick = args[0]
         result = set()
-        for x in self.get_all_nicknames_from_database():
+        all_nicknames = self.get_all_nicknames_from_database()
+        for x in all_nicknames:
             if nick in x: result.update(x)
 
         if result:

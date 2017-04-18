@@ -9,7 +9,8 @@ class stats(plugin):
     @admin
     @command
     def stats(self, sender_nick, **kwargs):
-        for chname, chobj in self.bot.channels.items():
+        items = self.bot.channels.items().copy()
+        for chname, chobj in items:
             self.bot.send_response_to_channel("--- Channel statistics ---")
             self.bot.send_response_to_channel("Channel: " + chname)
             users = sorted(chobj.users())

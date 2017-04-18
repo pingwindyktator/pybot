@@ -135,7 +135,7 @@ class builtins(plugin):
             self.bot.send_response_to_channel('updated, now at %s' % self.get_current_head_pos())
 
     def on_whoisuser(self, connection, raw_msg, **kwargs):
-        cmds = self.commands_as_other_user_to_send
+        cmds = self.commands_as_other_user_to_send.copy()
         try:
             args = (x for x in cmds if
                     x.hacked_nick == raw_msg.arguments[0]).__next__()
