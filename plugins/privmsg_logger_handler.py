@@ -25,16 +25,18 @@ class privmsg_logger_handler(plugin):
         self.logger = logging.getLogger(__name__)
         self.plhs = {}  # username -> logging_level
 
-    def on_welcome(self, connection, raw_msg):
-        root_logger = logging.getLogger('')
-        irc_handler = irc_privmsg_logger_handler(connection, self.plhs)
-        irc_handler.setFormatter(logging.Formatter('%(levelname)-10s%(filename)s:%(funcName)-16s: %(message)s'))
-        root_logger.addHandler(irc_handler)
+        self.int_to_level_str = {
+            logging.CRITICAL: 'critical',
+            logging.FATAL: 'fatal',
+            logging.ERROR: 'error',
+            logging.WARNING: 'warning',
+            logging.WARN: 'warn',
+            logging.INFO: 'info',
+            logging.DEBUG: 'debug',
+            logging.NOTSET: 'all',
+        }
 
-    @command
-    @admin
-    def add_plh(self, sender_nick, args, **kwargs):
-        level_str_to_int = {
+        self.level_str_to_int = {
             'critical': logging.CRITICAL,
             'fatal': logging.FATAL,
             'error': logging.ERROR,
@@ -46,13 +48,22 @@ class privmsg_logger_handler(plugin):
             'all': logging.NOTSET
         }
 
+    def on_welcome(self, connection, raw_msg):
+        root_logger = logging.getLogger('')
+        irc_handler = irc_privmsg_logger_handler(connection, self.plhs)
+        irc_handler.setFormatter(logging.Formatter('%(levelname)-10s%(filename)s:%(funcName)-16s: %(message)s'))
+        root_logger.addHandler(irc_handler)
+
+    @command
+    @admin
+    def add_plh(self, sender_nick, args, **kwargs):
         if not args: return
-        level = args[0]
-        if level not in level_str_to_int: return
-        self.logger.warning('plh added: %s at %s' % (sender_nick, args[0]))
-        level = level_str_to_int[level]
+        level = args[0].strip().lower()
+        if level not in self.level_str_to_int: return
+        self.logger.warning('plh added: %s at %s' % (sender_nick, level))
+        level = self.level_str_to_int[level]
         self.plhs[sender_nick] = level
-        self.bot.send_response_to_channel('plh added: %s at %s' % (sender_nick, args[0]))
+        self.bot.send_response_to_channel('plh added: %s at %s' % (sender_nick, self.int_to_level_str[level]))
 
     @command
     @admin
@@ -65,5 +76,9 @@ class privmsg_logger_handler(plugin):
     @command
     @admin
     def get_plhs(self, sender_nick, **kwargs):
-        self.bot.send_response_to_channel('privmsg logger handlers registered: %s' % self.plhs)
-        self.logger.info('plhs: %s' % self.plhs)
+        response = self.plhs.copy()
+        for target, level in response.items():
+            response[target] = self.int_to_level_str[level]
+
+        self.bot.send_response_to_channel('privmsg logger handlers registered: %s' % response)
+        self.logger.info('plhs given to %s: %s' % (sender_nick, response))
