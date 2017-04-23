@@ -8,10 +8,11 @@ class irc_privmsg_logger_handler(logging.StreamHandler):
         super().__init__()
 
     def emit(self, record):
+        if record.funcName == 'send_raw': return
         try:
             msg = self.format(record)
             for target, level in self.plhs.items():
-                if record.levelno >= level:
+                if record.levelno >= level and self.connection.is_connected():
                     self.connection.privmsg(target, msg)
         except (KeyboardInterrupt, SystemExit):
             raise
