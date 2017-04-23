@@ -18,6 +18,10 @@ class man(plugin):
         content = requests.get(url, timeout=5).content
         start = content.find(b'DESCRIPTION\n')
         end = content.find(b'\n\n', start)
+        if start == -1 or end == -1:
+            self.bot.say('no such man entry: %s' % ask)
+            return
+
         result = content[start + 19:end].replace(b'       ', b'').replace(b'-\n', b'').replace(b'\n', b' ').replace(b'  ', b' ').decode('utf-8').strip()
 
         if self.bot.is_msg_too_long(result):
