@@ -139,8 +139,7 @@ class builtins(plugin):
         try:
             args = (x for x in cmds if
                     x.hacked_nick == raw_msg.arguments[0]).__next__()
-        except StopIteration:
-            return
+        except StopIteration: return
 
         hacked_source = NickMask.from_params(args.hacked_nick, raw_msg.arguments[1], raw_msg.arguments[2])
         hacked_raw_msg = args.raw_msg

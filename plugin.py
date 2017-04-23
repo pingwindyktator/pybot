@@ -84,7 +84,7 @@ def command(function):
         try:
             function(self, *args, **kwargs)
         except Exception as e:
-            self.logger.warn('exception caught calling %s: %s' % (function, e))
+            self.logger.error('exception caught calling %s: %s' % (function, e))
 
     command_impl.__command = True
     return command_impl
