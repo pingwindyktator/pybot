@@ -13,7 +13,7 @@ class example_plugin(plugin):
     @command
     def example_command(self, sender_nick, args, **kwargs):
         self.logger.info('example command called by %s with %s' % (sender_nick, args))
-        self.bot.send_response_to_channel('example command called!')
+        self.bot.say('example command called!')
         # you can easily access everything you need from self.bot
         #
         # every command should take **kwargs argument(!) and positional ones as needed:

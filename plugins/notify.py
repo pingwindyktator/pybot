@@ -16,7 +16,7 @@ class notify(plugin):
         for register_nickname in self.database:
             for alias in self.database[register_nickname]:
                 if re.findall(alias.lower(), full_msg) and sender_nick != register_nickname:
-                    self.bot.send_response_to_channel(register_nickname)
+                    self.bot.say(register_nickname)
                     self.logger.info("found alias '%s' for %s" % (alias, register_nickname))
                     break
 
@@ -29,7 +29,7 @@ class notify(plugin):
         else:
             self.database[sender_nick] = set(args)
 
-        self.bot.send_response_to_channel('notifying for %s' % args)
+        self.bot.say('notifying for %s' % args)
         self.logger.info('now notifying: %s -> %s' % (args, sender_nick))
 
     @command
@@ -40,12 +40,12 @@ class notify(plugin):
 
         for arg in to_remove: self.database[sender_nick].remove(arg)
 
-        self.bot.send_response_to_channel('notifying for %s disabled' % to_remove)
+        self.bot.say('notifying for %s disabled' % to_remove)
         self.logger.info('stop notifying: %s -> %s' % (to_remove, sender_nick))
 
     @command
     def notifies(self, sender_nick, **kwargs):
         result = self.database[sender_nick] if sender_nick in self.database else {}
-        self.bot.send_response_to_channel('notifying %s -> %s' % (result, sender_nick))
+        self.bot.say('notifying %s -> %s' % (result, sender_nick))
         self.logger.info('notifying %s -> %s' % (result, sender_nick))
 

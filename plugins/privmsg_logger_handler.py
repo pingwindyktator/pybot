@@ -65,7 +65,7 @@ class privmsg_logger_handler(plugin):
         self.logger.warning('plh added: %s at %s' % (sender_nick, level))
         level = self.level_str_to_int[level]
         self.plhs[sender_nick] = level
-        self.bot.send_response_to_channel('plh added: %s at %s' % (sender_nick, self.int_to_level_str[level]))
+        self.bot.say('plh added: %s at %s' % (sender_nick, self.int_to_level_str[level]))
 
     @command
     @admin
@@ -73,7 +73,7 @@ class privmsg_logger_handler(plugin):
         if sender_nick not in self.plhs: return
         del self.plhs[sender_nick]
         self.logger.info('plh for %s removed' % sender_nick)
-        self.bot.send_response_to_channel('plh removed')
+        self.bot.say('plh removed')
 
     @command
     def get_plhs(self, sender_nick, **kwargs):
@@ -81,5 +81,5 @@ class privmsg_logger_handler(plugin):
         for target, level in response.items():
             response[target] = self.int_to_level_str[level]
 
-        self.bot.send_response_to_channel('privmsg logger handlers registered: %s' % response)
+        self.bot.say('privmsg logger handlers registered: %s' % response)
         self.logger.info('plhs given to %s: %s' % (sender_nick, response))

@@ -1,8 +1,6 @@
 import sys
 import main
 import logging
-import plugin
-import color
 from unittest import mock
 from irc.bot import ExponentialBackoff, missing
 

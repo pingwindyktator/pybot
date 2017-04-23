@@ -17,7 +17,7 @@ class plugin_manager(plugin):
 
         for arg in args:
             if arg not in plugins:
-                self.bot.send_response_to_channel('not such plugin: [%s]' % arg)
+                self.bot.say('not such plugin: [%s]' % arg)
             else:
                 cmds = self.bot.get_plugin_commands(arg)
                 plugins[arg].unload_plugin()
@@ -25,12 +25,12 @@ class plugin_manager(plugin):
                 for cmd in cmds:
                     del self.bot.commands[cmd]
 
-                self.bot.send_response_to_channel('plugin [%s] disabled with commands %s' % (arg, cmds))
+                self.bot.say('plugin [%s] disabled with commands %s' % (arg, cmds))
                 self.logger.warning('plugin [%s] disabled with commands %s by %s' % (arg, cmds, sender_nick))
 
     @command
     def plugins(self, sender_nick, **kwargs):
-        self.bot.send_response_to_channel('enabled plugins: %s' % self.bot.get_plugins_names())
+        self.bot.say('enabled plugins: %s' % self.bot.get_plugins_names())
         self.logger.info('plugins given to %s' % sender_nick)
 
     @command
@@ -42,13 +42,13 @@ class plugin_manager(plugin):
 
         for arg in args:
             if arg not in plugins:
-                self.bot.send_response_to_channel('not such plugin: [%s]' % arg)
+                self.bot.say('not such plugin: [%s]' % arg)
             else:
                 p = plugins[arg](self.bot)
                 self.bot.register_plugin(p)
                 self.bot.register_commands_for_plugin(p)
                 cmds = self.bot.get_plugin_commands(type(p).__name__)
-                self.bot.send_response_to_channel('plugin [%s] enabled with commands %s' % (arg, cmds))
+                self.bot.say('plugin [%s] enabled with commands %s' % (arg, cmds))
                 self.logger.warning('plugin [%s] enabled with commands %s by %s' % (arg, cmds, sender_nick))
 
     @command
@@ -70,10 +70,10 @@ class plugin_manager(plugin):
                 self.bot.register_plugin(new_class_instance)
                 self.bot.register_commands_for_plugin(new_class_instance)
                 self.logger.warning('plugin [%s] loaded by %s' % (plugin_class.__name__, sender_nick))
-                self.bot.send_response_to_channel('plugin [%s] loaded' % arg)
+                self.bot.say('plugin [%s] loaded' % arg)
             except Exception as e:
                 self.logger.error('exception caught while loading plugin [%s] by %s: %s' % (plugin_class.__name__, sender_nick, e))
-                self.bot.send_response_to_channel('exception caught while reloading plugin [%s]' % plugin_class.__name__)
+                self.bot.say('exception caught while reloading plugin [%s]' % plugin_class.__name__)
 
     @command
     @admin
@@ -87,7 +87,7 @@ class plugin_manager(plugin):
         args = [x for x in args if x in self.bot.get_plugins_names()]  # plugins asked to be reloaded
 
         if self.__class__.__name__ in args:  # THIS plugin cannot be reloaded!
-            self.bot.send_response_to_channel('plugin %s cannot be reloaded' % self.__class__.__name__)
+            self.bot.say('plugin %s cannot be reloaded' % self.__class__.__name__)
             args.remove(self.__class__.__name__)
 
         plugin_name_to_instance = {}  # plugin_name -> plugin_instance
@@ -114,7 +114,7 @@ class plugin_manager(plugin):
                 self.bot.register_plugin(new_class_instance)
                 self.bot.register_commands_for_plugin(new_class_instance)
                 self.logger.warning('plugin [%s] reloaded by %s' % (plugin_class.__name__, sender_nick))
-                self.bot.send_response_to_channel('plugin [%s] reloaded' % plugin_class.__name__)
+                self.bot.say('plugin [%s] reloaded' % plugin_class.__name__)
             except Exception as e:
                 self.logger.error('exception caught while reloading plugin [%s] by %s: %s' % (plugin_class.__name__, sender_nick, e))
-                self.bot.send_response_to_channel('exception caught while reloading plugin [%s]' % plugin_class.__name__)
+                self.bot.say('exception caught while reloading plugin [%s]' % plugin_class.__name__)

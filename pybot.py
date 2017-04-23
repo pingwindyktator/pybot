@@ -179,7 +179,7 @@ class pybot(SingleServerIRCBot):
         """ send a WHOIS command """
         self.connection.whois(targets)
 
-    def send_response_to_channel(self, msg):
+    def say(self, msg):
         self.logger.debug('sending reply: %s' % msg)
         self.connection.privmsg(self.channel, msg)
 

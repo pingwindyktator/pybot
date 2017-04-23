@@ -11,13 +11,13 @@ class stats(plugin):
     def stats(self, sender_nick, **kwargs):
         items = self.bot.channels.items().copy()
         for chname, chobj in items:
-            self.bot.send_response_to_channel("--- Channel statistics ---")
-            self.bot.send_response_to_channel("Channel: " + chname)
+            self.bot.say("--- Channel statistics ---")
+            self.bot.say("Channel: " + chname)
             users = sorted(chobj.users())
-            self.bot.send_response_to_channel("Users: " + ", ".join(users))
+            self.bot.say("Users: " + ", ".join(users))
             opers = sorted(chobj.opers())
-            self.bot.send_response_to_channel("Opers: " + ", ".join(opers))
+            self.bot.say("Opers: " + ", ".join(opers))
             voiced = sorted(chobj.voiced())
-            self.bot.send_response_to_channel("Voiced: " + ", ".join(voiced))
+            self.bot.say("Voiced: " + ", ".join(voiced))
 
             self.logger.info('channel stats given to %s' % sender_nick)

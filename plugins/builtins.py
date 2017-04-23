@@ -29,9 +29,9 @@ class builtins(plugin):
 
             func = self.bot.commands[func_name]
             if hasattr(func, '__doc_string'):
-                self.bot.send_response_to_channel('%s: %s' % (func_name, getattr(func, '__doc_string')))
+                self.bot.say('%s: %s' % (func_name, getattr(func, '__doc_string')))
             else:
-                self.bot.send_response_to_channel('no help for %s' % func_name)
+                self.bot.say('no help for %s' % func_name)
 
             self.logger.info('help of %s given for %s' % (func_name, sender_nick))
 
@@ -39,7 +39,7 @@ class builtins(plugin):
             commands = self.bot.get_commands_by_plugin()
             for p in commands:
                 if commands[p]:
-                    self.bot.send_response_to_channel('available commands for %s: %s' % (p, ', '.join(commands[p])))
+                    self.bot.say('available commands for %s: %s' % (p, ', '.join(commands[p])))
 
             self.logger.info('help given for %s' % sender_nick)
 
@@ -47,7 +47,7 @@ class builtins(plugin):
     def source(self, sender_nick, **kwargs):
         src = r'https://github.com/pingwindyktator/pybot/tree/develop'
         self.logger.info('source %s given to %s' % (src, sender_nick))
-        self.bot.send_response_to_channel('Patches are welcome! %s' % src)
+        self.bot.say('Patches are welcome! %s' % src)
 
     @command
     @admin
@@ -55,7 +55,7 @@ class builtins(plugin):
         if len(args) == 0: return
         self.bot.ops.update(args)
         subreply = 'is now op' if len(args) == 1 else 'are now ops'
-        self.bot.send_response_to_channel('%s %s' % (', '.join(args), subreply))
+        self.bot.say('%s %s' % (', '.join(args), subreply))
         self.logger.warning('%s added new ops: %s' % (sender_nick, args))
 
     @command
@@ -67,7 +67,7 @@ class builtins(plugin):
             self.bot.ops.remove(arg)
 
         subreply = 'is no longer op' if len(to_remove) == 1 else 'are no longer ops'
-        self.bot.send_response_to_channel('%s %s' % (to_remove, subreply))
+        self.bot.say('%s %s' % (to_remove, subreply))
         self.logger.warning('%s removed ops: %s' % (sender_nick, to_remove))
 
     @command
@@ -80,7 +80,7 @@ class builtins(plugin):
         else:
             subreply = 'bot operators:'
 
-        self.bot.send_response_to_channel('%s %s' % (subreply, self.bot.ops))
+        self.bot.say('%s %s' % (subreply, self.bot.ops))
         self.logger.info('%s asked for ops: %s' % (sender_nick, self.bot.ops))
 
     @command
@@ -119,7 +119,7 @@ class builtins(plugin):
         if not self.update_possible():
             self.logger.info(
                 '%s asked for self-update, but there are local changes in %s' % (sender_nick, self.pybot_dir))
-            self.bot.send_response_to_channel('local changes prevents me from update')
+            self.bot.say('local changes prevents me from update')
             return
 
         cmd = 'git -C %s pull' % self.pybot_dir
@@ -129,10 +129,10 @@ class builtins(plugin):
         if process.returncode != 0:
             self.logger.error(
                 '%s asked for self-update, but %s returned %s exit code' % (sender_nick, cmd, process.returncode))
-            self.bot.send_response_to_channel("cannot update, 'git pull' returns non-zero exit code")
+            self.bot.say("cannot update, 'git pull' returns non-zero exit code")
         else:
             self.logger.warning('%s asked for self-update' % sender_nick)
-            self.bot.send_response_to_channel('updated, now at %s' % self.get_current_head_pos())
+            self.bot.say('updated, now at %s' % self.get_current_head_pos())
 
     def on_whoisuser(self, nick, user, host, **kwargs):
         cmds = self.commands_as_other_user_to_send.copy()

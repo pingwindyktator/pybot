@@ -29,7 +29,7 @@ class webtitle_parser(plugin):
                 tree = fromstring(req.content)
                 title = tree.findtext('.//title')
                 if title is not None and title != '':
-                    self.bot.send_response_to_channel(color.light_green(title))
+                    self.bot.say(color.light_green(title))
 
         except Exception:
             self.logger.info('possibly invalid URL: %s', url)

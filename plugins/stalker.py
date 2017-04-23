@@ -105,7 +105,7 @@ class stalker(plugin):
         else:
             response = "I know nothing about %s" % nick
 
-        self.bot.send_response_to_channel(response)
+        self.bot.say(response)
         self.logger.info('%s asks about hosts of %s: %s' % (sender_nick, nick, result))
 
     @command
@@ -121,7 +121,7 @@ class stalker(plugin):
             response = 'other nicks of %s: %s' % (nick, result)
         else:
             response = "I know nothing about %s" % nick
-        self.bot.send_response_to_channel(response)
+        self.bot.say(response)
         self.logger.info('%s stalks %s: %s' % (sender_nick, nick, result))
 
     @command
@@ -133,5 +133,5 @@ class stalker(plugin):
             response = 'known nicks from %s: %s' % (host, nicks)
         else:
             response = "I know nothing about %s" % host
-        self.bot.send_response_to_channel(response)
+        self.bot.say(response)
         self.logger.info('%s asks about nicks from %s: %s' % (sender_nick, host, nicks))
