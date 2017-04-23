@@ -45,7 +45,7 @@ class pybot(SingleServerIRCBot):
         """ called by super() when connected to server """
         self.logger.info('connected to %s:%d using nickname %s' % (self.server, self.port, self.connection.get_nickname()))
         self.call_plugins_methods('on_welcome', raw_msg=raw_msg, server=self.server, port=self.port, nickname=self.connection.get_nickname())
-        self.login(self.connection)
+        self.login()
         self.join_channel()
 
     def on_disconnect(self, connection, raw_msg):
@@ -180,13 +180,17 @@ class pybot(SingleServerIRCBot):
         self.connection.whois(targets)
 
     def say(self, msg):
-        self.logger.debug('sending reply: %s' % msg)
-        self.connection.privmsg(self.channel, msg)
+        self.msg(self.channel, msg)
 
-    def login(self, connection):
+    def msg(self, target, msg):
+        self.logger.debug('sending reply to %s: %s' % (target, msg))
+        self.connection.privmsg(target, msg)
+
+    def login(self):
         # TODO add more login ways
+        # TODO plugin
         if self.password is not None and self.password != '':
-            connection.privmsg('NickServ', 'identify %s %s' % (self.connection.get_nickname(), self.password))
+            self.msg('NickServ', 'identify %s %s' % (self.connection.get_nickname(), self.password))
 
     def get_command_prefix(self):
         return '.'

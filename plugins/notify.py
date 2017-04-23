@@ -1,6 +1,5 @@
 import re
 
-import msg_parser
 from plugin import *
 
 
