@@ -53,6 +53,8 @@ class privmsg_logger_handler(plugin):
         irc_handler = irc_privmsg_logger_handler(connection, self.plhs)
         irc_handler.setFormatter(logging.Formatter('%(levelname)-10s%(filename)s:%(funcName)-16s: %(message)s'))
         root_logger.addHandler(irc_handler)
+    def unload_plugin(self):
+        logging.getLogger('').removeHandler(self.plh_handler)
 
     @command
     @admin
@@ -74,7 +76,6 @@ class privmsg_logger_handler(plugin):
         self.bot.send_response_to_channel('plh removed')
 
     @command
-    @admin
     def get_plhs(self, sender_nick, **kwargs):
         response = self.plhs.copy()
         for target, level in response.items():
