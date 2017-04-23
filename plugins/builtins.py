@@ -134,14 +134,14 @@ class builtins(plugin):
             self.logger.warning('%s asked for self-update' % sender_nick)
             self.bot.send_response_to_channel('updated, now at %s' % self.get_current_head_pos())
 
-    def on_whoisuser(self, raw_msg, **kwargs):
+    def on_whoisuser(self, nick, user, host, **kwargs):
         cmds = self.commands_as_other_user_to_send.copy()
         try:
             args = (x for x in cmds if
-                    x.hacked_nick == raw_msg.arguments[0]).__next__()
+                    x.hacked_nick == nick).__next__()
         except StopIteration: return
 
-        hacked_source = NickMask.from_params(args.hacked_nick, raw_msg.arguments[1], raw_msg.arguments[2])
+        hacked_source = NickMask.from_params(args.hacked_nick, user, host)
         hacked_raw_msg = args.raw_msg
         hacked_raw_msg.source = hacked_source
         hacked_raw_msg.arguments = (hacked_raw_msg.arguments[0],)

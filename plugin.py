@@ -12,48 +12,70 @@ class plugin:
     def on_welcome(self, *args, **kwargs):
         """
         called by bot when connected to server
+        raw_msg
+        server
+        port
+        nickname
         """
         pass
 
     def on_disconnect(self, *args, **kwargs):
         """
         called by bot when disconnected from server
+        raw_msg
+        server
+        port
         """
         pass
 
     def on_join(self, *args, **kwargs):
         """
         called by bot when somebody joins channel
+        raw_msg
+        source
         """
         pass
 
     def on_me_joined(self, *args, **kwargs):
         """
         called by bot when joined channel
+        raw_msg
+        channel
         """
         pass
 
     def on_pubmsg(self, *args, **kwargs):
         """
         called by bot when public msg received
+        raw_msg
+        source
+        msg
         """
         pass
 
     def on_kick(self, *args, **kwargs):
         """
         called by bot when somebody got kicked
+        raw_msg
+        who
+        source
         """
         pass
 
     def on_me_kicked(self, *args, **kwargs):
         """
         called by bot when kicked from channel
+        raw_msg
+        source
         """
         pass
 
     def on_privmsg(self, *args, **kwargs):
         """
         called by bot when private msg received
+        raw_msg
+        msg
+        sender_nick
         """
         pass
 
@@ -61,13 +83,19 @@ class plugin:
     # for deep explanation
     def on_whoisuser(self, *args, **kwargs):
         """
-        called by bot when /whois response received 
+        called by bot when /whois response received
+        raw_msg
+        nick
+        user
+        host
         """
         pass
 
     def on_nicknameinuse(self, *args, **kwargs):
         """
         called by bot when given nickname is reserved
+        raw_msg
+        busy_nickname
         """
         pass
 

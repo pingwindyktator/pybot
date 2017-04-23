@@ -11,17 +11,23 @@ class example_plugin(plugin):
         pass
 
     @command
-    def example_command(self, sender_nick, **kwargs):
-        self.logger.info('example command called by %s' % sender_nick)
+    def example_command(self, sender_nick, args, **kwargs):
+        self.logger.info('example command called by %s with %s' % (sender_nick, args))
         self.bot.send_response_to_channel('example command called!')
         # you can easily access everything you need from self.bot
-        # see also plugin base class methods for more information
         #
         # every command should take **kwargs argument(!) and positional ones as needed:
         #   sender_nick - nickname of msg sender
-        #   cmd_list    - ['some', 'arguments', 'passed', 'to', 'plugin']
-        #   raw_cmd     - 'some   arguments passes to plugin   '
+        #   args        - ['some', 'arguments', 'passed', 'to', 'plugin']
+        #   msg         - 'some   arguments passes to plugin   '
         #   raw_msg     - raw IRC msg
+
+    def on_pubmsg(self, raw_msg, **kwargs):
+        # see plugin base class methods for more information
+        #
+        # every on_* method should take **kwargs argument(!) and positional ones as needed:
+        #   raw_msg - raw IRC msg
+        pass
 
     @command
     @admin

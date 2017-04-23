@@ -19,16 +19,16 @@ class stalker(plugin):
         self.get_all_hosts_from_database()
         self.updating_thread = None
 
-    def on_pubmsg(self, raw_msg, **kwargs):
-        self.update_database(raw_msg.source.nick, raw_msg.source.host)
+    def on_pubmsg(self, source, **kwargs):
+        self.update_database(source.nick, source.host)
 
-    def on_whoisuser(self, raw_msg, **kwargs):
-        self.update_database(raw_msg.arguments[0], raw_msg.arguments[2])
+    def on_whoisuser(self, nick, host, **kwargs):
+        self.update_database(nick, host)
 
-    def on_join(self, raw_msg, **kwargs):
-        self.update_database(raw_msg.source.nick, raw_msg.source.host)
+    def on_join(self, source, **kwargs):
+        self.update_database(source.nick, source.host)
 
-    def on_me_joined(self, raw_msg, **kwargs):
+    def on_me_joined(self, **kwargs):
         if self.updating_thread is None or not self.updating_thread.is_alive():
             self.updating_thread = Thread(target=self.update_all)
             self.updating_thread.start()

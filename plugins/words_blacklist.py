@@ -9,14 +9,11 @@ class words_blacklist(plugin):
         self.blacklist = set()
         self.logger = logging.getLogger(__name__)
 
-    def on_pubmsg(self, raw_msg, **kwargs):
-        full_msg = raw_msg.arguments[0]
-        sender_nick = raw_msg.source.nick
-
+    def on_pubmsg(self, source, msg, **kwargs):
         for word in self.blacklist:
-            if re.findall(word, full_msg) and sender_nick not in self.bot.ops:
-                self.bot.connection.kick(self.bot.channel, sender_nick, 'watch your language!')
-                self.logger.info('%s kicked [%s]' % (sender_nick, word))
+            if re.findall(word, msg) and source.nick not in self.bot.ops:
+                self.bot.connection.kick(self.bot.channel, source.nick, 'watch your language!')
+                self.logger.info('%s kicked [%s]' % (source.nick, word))
 
     @command
     @admin
