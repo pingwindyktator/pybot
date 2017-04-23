@@ -8,7 +8,7 @@ def configure_logger():
     logging_format = '%(levelname)-10s%(asctime)s %(filename)s:%(funcName)-16s: %(message)s'
     log_formatter = logging.Formatter(logging_format)
     root_logger = logging.getLogger('')
-    root_logger.setLevel(logging.INFO)
+    root_logger.setLevel(logging.DEBUG)
 
     file_handler = logging.FileHandler('pybot.log')
     file_handler.setFormatter(log_formatter)
