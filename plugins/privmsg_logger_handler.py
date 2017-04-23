@@ -53,11 +53,6 @@ class privmsg_logger_handler(plugin):
             'all': logging.NOTSET
         }
 
-    def on_welcome(self, connection, raw_msg):
-        root_logger = logging.getLogger('')
-        irc_handler = irc_privmsg_logger_handler(connection, self.plhs)
-        irc_handler.setFormatter(logging.Formatter('%(levelname)-10s%(filename)s:%(funcName)-16s: %(message)s'))
-        root_logger.addHandler(irc_handler)
     def unload_plugin(self):
         logging.getLogger('').removeHandler(self.plh_handler)
 
