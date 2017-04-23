@@ -65,7 +65,7 @@ class pybot(SingleServerIRCBot):
         full_msg = raw_msg.arguments[0]
         sender_nick = raw_msg.source.nick
         logging.info('[PRIV]> %s: %s' % (sender_nick, full_msg))
-        self.call_plugins_methods('on_privmsg', raw_msg=raw_msg, msg=full_msg, sender_nick=sender_nick)
+        self.call_plugins_methods('on_privmsg', raw_msg=raw_msg, msg=full_msg, source=raw_msg.source)
 
     def on_pubmsg(self, connection, raw_msg):
         """ called by super() when msg received """

@@ -23,10 +23,10 @@ class example_plugin(plugin):
         #   raw_msg     - raw IRC msg
 
     def on_pubmsg(self, raw_msg, **kwargs):
-        # see plugin base class methods for more information
+        # see plugin base class methods for more on_* methods
         #
-        # every on_* method should take **kwargs argument(!) and positional ones as needed:
-        #   raw_msg - raw IRC msg
+        # every on_* method should take **kwargs argument(!) and positional ones as needed
+        # see plugin base class for possible positional arguments
         pass
 
     @command

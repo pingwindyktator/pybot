@@ -12,70 +12,70 @@ class plugin:
     def on_welcome(self, *args, **kwargs):
         """
         called by bot when connected to server
-        raw_msg
-        server
-        port
-        nickname
+        raw_msg  - raw IRC msg
+        server   - server address
+        port     - server's port
+        nickname - bot's nickname
         """
         pass
 
     def on_disconnect(self, *args, **kwargs):
         """
         called by bot when disconnected from server
-        raw_msg
-        server
-        port
+        raw_msg - raw IRC msg
+        server  - server address
+        port    - server's port
         """
         pass
 
     def on_join(self, *args, **kwargs):
         """
         called by bot when somebody joins channel
-        raw_msg
-        source
+        raw_msg - raw IRC msg
+        source  - source of joined person
         """
         pass
 
     def on_me_joined(self, *args, **kwargs):
         """
         called by bot when joined channel
-        raw_msg
-        channel
+        raw_msg - raw IRC msg
+        channel - channel
         """
         pass
 
     def on_pubmsg(self, *args, **kwargs):
         """
         called by bot when public msg received
-        raw_msg
-        source
-        msg
+        raw_msg - raw IRC msg
+        source  - pubmsg source
+        msg     - full message
         """
         pass
 
     def on_kick(self, *args, **kwargs):
         """
         called by bot when somebody got kicked
-        raw_msg
-        who
-        source
+        raw_msg - raw IRC msg
+        who     - person who gets kicked
+        source  - kicker's source
         """
         pass
 
     def on_me_kicked(self, *args, **kwargs):
         """
         called by bot when kicked from channel
-        raw_msg
-        source
+        raw_msg - raw IRC msg
+        source  - kicker's source
         """
         pass
 
     def on_privmsg(self, *args, **kwargs):
         """
         called by bot when private msg received
-        raw_msg
-        msg
-        sender_nick
+        raw_msg - raw IRC msg
+        msg     - full message
+        source  - primsg source
         """
         pass
 
@@ -84,18 +84,18 @@ class plugin:
     def on_whoisuser(self, *args, **kwargs):
         """
         called by bot when /whois response received
-        raw_msg
-        nick
-        user
-        host
+        raw_msg - raw IRC msg
+        nick    - requested nickname
+        user    - requested username
+        host    - requested hostname
         """
         pass
 
     def on_nicknameinuse(self, *args, **kwargs):
         """
         called by bot when given nickname is reserved
-        raw_msg
-        busy_nickname
+        raw_msg       - raw IRC msg
+        busy_nickname - nickname bot was trying to use
         """
         pass
 
