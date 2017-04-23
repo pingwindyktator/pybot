@@ -13,14 +13,14 @@ class plugin_manager(plugin):
     @admin
     def disable_plugin(self, sender_nick, args, **kwargs):
         plugins = {}  # plugin_name -> plugin_instance
-        for p in self.bot.get_plugins():
-            plugins[type(p).__name__] = p
+        for p in self.bot.get_plugins(): plugins[type(p).__name__] = p
 
         for arg in args:
             if arg not in plugins:
                 self.bot.send_response_to_channel('not such plugin: [%s]' % arg)
             else:
                 cmds = self.bot.get_plugin_commands(arg)
+                plugins[arg].unload_plugin()
                 self.bot.plugins.remove(plugins[arg])
                 for cmd in cmds:
                     del self.bot.commands[cmd]
@@ -97,14 +97,15 @@ class plugin_manager(plugin):
 
         for plugin_class in plugins_to_reload:
             try:
+                plugin_instance = plugin_name_to_instance[plugin_class.__name__]
                 # unloading plugin
                 cmds = self.bot.get_plugin_commands(plugin_class.__name__)
-                self.bot.plugins.remove(plugin_name_to_instance[plugin_class.__name__])
-                for cmd in cmds:
-                    del self.bot.commands[cmd]
+                plugin_instance.unload_plugin()
+                self.bot.plugins.remove(plugin_instance)
+                for cmd in cmds: del self.bot.commands[cmd]
 
                 # reloading module
-                del plugin_name_to_instance[plugin_class.__name__]
+                del plugin_instance
                 sys.modules[plugin_class.__module__] = importlib.reload(sys.modules[plugin_class.__module__])
                 plugin_class = getattr(sys.modules[plugin_class.__module__], plugin_class.__name__)  # requires plugin class' name to be equal to module name
 

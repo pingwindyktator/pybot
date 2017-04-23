@@ -66,6 +66,12 @@ class plugin:
         """
         pass
 
+    def unload_plugin(self):
+        """
+        called when plugin needs to be disabled / reloaded 
+        """
+        pass
+
 
 def command(function):
     @wraps(function)
