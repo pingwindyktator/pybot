@@ -107,7 +107,6 @@ class SingleServerIRCBot_mock:
                             "on_whoisuser"]:
             handlers[method_name] = getattr(self, method_name)
 
-        self.channels[getattr(self, 'channel')] = chobj_t(nickname)
         self.connection = connection_t(nickname, handlers)
 
     def init_bot(self):
@@ -118,6 +117,7 @@ class SingleServerIRCBot_mock:
 
     def start(self):
         self.init_bot()
+        self.channels[getattr(self, 'channel')] = chobj_t(self.connection.get_nickname())
 
         while True:
             msg = input('> ')
