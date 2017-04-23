@@ -1,5 +1,7 @@
 import inspect
 import logging
+import textwrap
+
 import plugin
 import msg_parser
 from irc.bot import SingleServerIRCBot
@@ -184,7 +186,17 @@ class pybot(SingleServerIRCBot):
 
     def msg(self, target, msg):
         self.logger.debug('sending reply to %s: %s' % (target, msg))
-        self.connection.privmsg(target, msg)
+
+        if self.is_msg_too_long(msg):
+            self.logger.debug('privmsg too long, wrapping...')
+            for part in textwrap.wrap(msg, 450):
+                self.msg(target, part)
+        else:
+            self.connection.privmsg(target, msg)
+
+    def is_msg_too_long(self, msg):
+        encoded_msg = msg.encode('utf-8')
+        return len(encoded_msg + b'\r\n') > 512
 
     def login(self):
         # TODO add more login ways
