@@ -8,9 +8,10 @@ from irc.bot import SingleServerIRCBot
 class pybot(SingleServerIRCBot):
     def __init__(self, channel, nickname, server, port=6667, password=None):
         self.logger = logging.getLogger(__name__)
-        self.plugins = set()
-        self.commands = {}  # map command -> func
-        self.load_plugins()
+
+        self.logger.debug('initiating irc.bot.SingleServerIRCBot...')
+        super(pybot, self).__init__([(server, port)], nickname, nickname)
+        self.logger.debug('irc.bot.SingleServerIRCBot initiated')
 
         self.channel = channel
         self.server = server
@@ -21,9 +22,9 @@ class pybot(SingleServerIRCBot):
         self.max_autorejoin_attempts = 5
         self.autorejoin_attempts = 0
 
-        self.logger.debug('initiating irc.bot.SingleServerIRCBot...')
-        super(pybot, self).__init__([(server, port)], nickname, nickname)
-        self.logger.debug('irc.bot.SingleServerIRCBot initiated')
+        self.plugins = set()
+        self.commands = {}  # map command -> func
+        self.load_plugins()
 
     def start(self):
         self.logger.info('connecting to %s:%d...' %
