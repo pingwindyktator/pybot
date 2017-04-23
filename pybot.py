@@ -35,22 +35,22 @@ class pybot(SingleServerIRCBot):
 
     def on_nicknameinuse(self, connection, raw_msg):
         """ called by super() when given nickname is reserved """
-        self.call_plugins_methods('on_nicknameinuse', connection, raw_msg)
+        self.call_plugins_methods('on_nicknameinuse', raw_msg)
         new_nickname = self.__nickname + '_'
         self.logger.warning('nickname %s is busy, using %s' % (self.__nickname, new_nickname))
         self.__nickname = new_nickname
-        connection.nick(new_nickname)
+        self.connection.nick(new_nickname)
 
     def on_welcome(self, connection, raw_msg):
         """ called by super() when connected to server """
-        self.call_plugins_methods('on_welcome', connection, raw_msg)
+        self.call_plugins_methods('on_welcome', raw_msg)
         self.logger.info('connected to %s:%d using nickname %s' % (self.server, self.port, connection.get_nickname()))
         self.login(connection)
         self.join_channel()
 
     def on_disconnect(self, connection, raw_msg):
         """ called by super() when disconnected to server """
-        self.call_plugins_methods('on_disconnect', connection, raw_msg)
+        self.call_plugins_methods('on_disconnect', raw_msg)
 
     def on_join(self, connection, raw_msg):
         """ called by super() when somebody joins channel """
@@ -58,18 +58,18 @@ class pybot(SingleServerIRCBot):
             self.logger.info('joined to %s' % self.channel)
             self.whois(connection.get_nickname())
         else:
-            self.call_plugins_methods('on_join', connection, raw_msg)
+            self.call_plugins_methods('on_join', raw_msg)
 
     def on_privmsg(self, connection, raw_msg):
         """ called by super() when private msg received """
-        self.call_plugins_methods('on_privmsg', connection, raw_msg)
+        self.call_plugins_methods('on_privmsg', raw_msg)
         full_msg = raw_msg.arguments[0]
         sender_nick = raw_msg.source.nick
         print('[PRIV]>%s: %s' % (sender_nick, full_msg))
 
     def on_pubmsg(self, connection, raw_msg):
         """ called by super() when msg received """
-        self.call_plugins_methods('on_pubmsg', connection, raw_msg)
+        self.call_plugins_methods('on_pubmsg', raw_msg)
         full_msg = raw_msg.arguments[0].strip()
         sender_nick = raw_msg.source.nick.lower()
 
@@ -82,16 +82,16 @@ class pybot(SingleServerIRCBot):
 
         if cmd in self.commands:
             func = self.commands[cmd]
-            func(sender_nick=sender_nick, args=cmd_list, msg=raw_cmd, connection=connection, raw_msg=raw_msg)
+            func(sender_nick=sender_nick, args=cmd_list, msg=raw_cmd, raw_msg=raw_msg)
 
     def on_kick(self, connection, raw_msg):
-        if raw_msg.arguments[0] == connection.get_nickname():
-            self.on_me_kicked(connection, raw_msg)
+        if raw_msg.arguments[0] == self.connection.get_nickname():
+            self.on_me_kicked(self.connection, raw_msg)
         else:
-            self.call_plugins_methods('on_kick', connection, raw_msg)
+            self.call_plugins_methods('on_kick', raw_msg)
 
     def on_me_kicked(self, connection, raw_msg):
-        self.call_plugins_methods('on_me_kicked', connection, raw_msg)
+        self.call_plugins_methods('on_me_kicked', raw_msg)
         self.joined_to_channel = False
         self.logger.warning('kicked by %s' % raw_msg.source.nick)
 
@@ -113,16 +113,16 @@ class pybot(SingleServerIRCBot):
     def on_whoisuser(self, connection, raw_msg):
         # workaround here:
         # /whois me triggers on_me_joined call because when first time on self.on_join (== when bot joins channel) users-list is not updated yet
-        if raw_msg.arguments[0] == connection.get_nickname() and not self.joined_to_channel:
-            self.call_plugins_methods('on_me_joined', connection, raw_msg)
+        if raw_msg.arguments[0] == self.connection.get_nickname() and not self.joined_to_channel:
+            self.call_plugins_methods('on_me_joined', raw_msg)
             self.joined_to_channel = True
 
-        self.call_plugins_methods('on_whoisuser', connection, raw_msg)
+        self.call_plugins_methods('on_whoisuser', raw_msg)
 
-    def call_plugins_methods(self, func_name, *args):
+    def call_plugins_methods(self, func_name, raw_msg):
         for p in self.get_plugins():
             try:
-                p.__getattribute__(func_name)(*args)
+                p.__getattribute__(func_name)(raw_msg=raw_msg)
             except Exception as e:
                 self.logger.error('exception caught calling %s: %s' % (p.__getattribute__(func_name), e))
 
@@ -176,7 +176,7 @@ class pybot(SingleServerIRCBot):
         return self.plugins
 
     def whois(self, targets):
-        """send a WHOIS command."""
+        """ send a WHOIS command """
         self.connection.whois(targets)
 
     def send_response_to_channel(self, msg):
@@ -194,6 +194,10 @@ class pybot(SingleServerIRCBot):
     def join_channel(self):
         self.logger.info('joining %s...' % self.channel)
         self.connection.join(self.channel)
+
+    def leave_channel(self):
+        self.logger.info('leaving %s...' % self.channel)
+        self.connection.part(self.channel)
 
 
 pybot.ops = {'pingwindyktator'}

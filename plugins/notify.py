@@ -9,7 +9,7 @@ class notify(plugin):
         super().__init__(bot)
         self.database = {}  # map username -> {words to watch}
 
-    def on_pubmsg(self, connection, raw_msg):
+    def on_pubmsg(self, raw_msg, **kwargs):
         self.find_word(raw_msg.source.nick, raw_msg.arguments[0])
 
     def find_word(self, sender_nick, full_msg):

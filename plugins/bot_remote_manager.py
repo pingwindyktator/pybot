@@ -22,7 +22,8 @@ class bot_remote_manager(plugin):
     @admin
     def cycle(self, sender_nick, **kwargs):
         self.logger.warning('cycle by %s' % sender_nick)
-        self.bot.send_response_to_channel('operation not supported')
+        self.bot.leave_channel()
+        self.bot.join_channel()
 
     @command
     @admin

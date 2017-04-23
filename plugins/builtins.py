@@ -134,7 +134,7 @@ class builtins(plugin):
             self.logger.warning('%s asked for self-update' % sender_nick)
             self.bot.send_response_to_channel('updated, now at %s' % self.get_current_head_pos())
 
-    def on_whoisuser(self, connection, raw_msg, **kwargs):
+    def on_whoisuser(self, raw_msg, **kwargs):
         cmds = self.commands_as_other_user_to_send.copy()
         try:
             args = (x for x in cmds if
@@ -165,14 +165,14 @@ class builtins(plugin):
 
     @command
     @admin
-    def as_other_user(self, sender_nick, msg, connection, raw_msg, **kwargs):
+    def as_other_user(self, sender_nick, msg, raw_msg, **kwargs):
         if not msg: return
         hacked_nick = msg.split()[0]
         new_msg = msg[len(hacked_nick):].strip()
         raw_msg.arguments = (new_msg, raw_msg.arguments[1:])
         self.logger.info('%s queued command (%s) as %s' % (sender_nick, new_msg, hacked_nick))
         with self.mutex:
-            self.commands_as_other_user_to_send.append(self.as_other_user_command(sender_nick, hacked_nick, connection, raw_msg))
+            self.commands_as_other_user_to_send.append(self.as_other_user_command(sender_nick, hacked_nick, self.bot.connection, raw_msg))
 
         # now we don't know ho to set raw_msg fields (user and host)
         # that's why we are queuing this call, then calling /whois hacked_user
