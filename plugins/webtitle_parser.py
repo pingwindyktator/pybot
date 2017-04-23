@@ -23,12 +23,12 @@ class webtitle_parser(plugin):
                 r'(?:/?|[/?]\S+)$', re.IGNORECASE)
 
             if regex.findall(url):
-                req = requests.get(url)
+                req = requests.get(url, timeout=5)
                 tree = fromstring(req.content)
                 title = tree.findtext('.//title')
                 if title is not None and title != '':
-                    self.bot.send_response_to_channel(title)
-        except (requests.HTTPError, requests.ConnectionError):
+                    self.bot.send_response_to_channel(color.light_green(title))
+        except (requests.HTTPError, requests.ConnectionError, requests.RequestException):
             self.logger.info('possibly invalid URL: %s', url)
         except Exception as e:
             self.logger.error('exception caught: %s', e)
