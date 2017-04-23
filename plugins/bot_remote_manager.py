@@ -23,3 +23,9 @@ class bot_remote_manager(plugin):
     def cycle(self, sender_nick, **kwargs):
         self.logger.warning('cycle by %s' % sender_nick)
         self.bot.send_response_to_channel('operation not supported')
+
+    @command
+    @admin
+    def reconnect(self, sender_nick, **kwargs):
+        self.logger.warning('reconnect by %s' % sender_nick)
+        self.bot.connection.reconnect()
