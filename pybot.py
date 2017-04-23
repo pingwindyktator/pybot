@@ -47,6 +47,10 @@ class pybot(SingleServerIRCBot):
         self.login(connection)
         self.join_channel()
 
+    def on_disconnect(self, connection, raw_msg):
+        """ called by super() when disconnected to server """
+        self.call_plugins_methods('on_disconnect', connection, raw_msg)
+
     def on_join(self, connection, raw_msg):
         """ called by super() when somebody joins channel """
         if raw_msg.source.nick == connection.get_nickname():

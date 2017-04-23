@@ -1,5 +1,4 @@
 import logging
-import re
 from functools import wraps
 
 import pybot
@@ -13,6 +12,12 @@ class plugin:
     def on_welcome(self, *args, **kwargs):
         """
         called by bot when connected to server
+        """
+        pass
+
+    def on_disconnect(self, *args, **kwargs):
+        """
+        called by bot when disconnected from server
         """
         pass
 
