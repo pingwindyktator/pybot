@@ -1,4 +1,4 @@
-See `plugins/example_plugin.py` for basic plugin example
+See `example_plugin.py` for basic plugin example
 
 Running: `python3 ./main.py`
 
