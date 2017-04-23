@@ -2,6 +2,7 @@ import logging
 from functools import wraps
 
 import pybot
+from color import color
 
 
 class plugin:
