@@ -24,6 +24,10 @@ class privmsg_logger_handler(plugin):
         super().__init__(bot)
         self.logger = logging.getLogger(__name__)
         self.plhs = {}  # username -> logging_level
+        self.plh_handler = irc_privmsg_logger_handler(self.bot.connection, self.plhs)
+        self.plh_handler.setFormatter(logging.Formatter('%(levelname)-10s%(filename)s:%(funcName)-16s: %(message)s'))
+        self.plh_handler.setLevel(logging.DEBUG)
+        logging.getLogger('').addHandler(self.plh_handler)
 
         self.int_to_level_str = {
             logging.CRITICAL: 'critical',
