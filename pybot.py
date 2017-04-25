@@ -181,16 +181,14 @@ class pybot(SingleServerIRCBot):
         """ send a WHOIS command """
         self.connection.whois(targets)
 
-    def say(self, msg):
-        self.msg(self.channel, msg)
-
-    def msg(self, target, msg):
+    def say(self, msg, target=None):
+        if not target: target = self.channel
         self.logger.debug('sending reply to %s: %s' % (target, msg))
 
         if self.is_msg_too_long(msg):
             self.logger.debug('privmsg too long, wrapping...')
             for part in textwrap.wrap(msg, 450):
-                self.msg(target, part)
+                self.say(part. target)
         else:
             self.connection.privmsg(target, msg)
 

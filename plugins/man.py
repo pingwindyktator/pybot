@@ -25,7 +25,7 @@ class man(plugin):
         result = content[start + 19:end].replace(b'       ', b'').replace(b'-\n', b'').replace(b'\n', b' ').replace(b'  ', b' ').decode('utf-8').strip()
 
         if self.bot.is_msg_too_long(result):
-            self.bot.msg(sender_nick, result)
+            self.bot.say(result, sender_nick)
         else:
             self.bot.say(color.orange('[%s] ' % ask) + result)
 
