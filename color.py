@@ -22,7 +22,7 @@ class color:
     @staticmethod
     def _template(code):
         def _template_impl(str):
-            return '\x03' + code + str + '\x03'
+            return '\x03' + code + str + '\x0F'
 
         return _template_impl
 
