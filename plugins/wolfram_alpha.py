@@ -1,7 +1,7 @@
 import requests
+import urllib.parse
 
 from plugin import *
-import urllib.parse
 
 
 class wolfram_alpha(plugin):
