@@ -188,7 +188,7 @@ class pybot(SingleServerIRCBot):
         if self.is_msg_too_long(msg):
             self.logger.debug('privmsg too long, wrapping...')
             for part in textwrap.wrap(msg, 450):
-                self.say(part. target)
+                self.say(part, target)
         else:
             self.connection.privmsg(target, msg)
 
@@ -200,7 +200,7 @@ class pybot(SingleServerIRCBot):
         # TODO add more login ways
         # TODO plugin
         if self.password is not None and self.password != '':
-            self.msg('NickServ', 'identify %s %s' % (self.connection.get_nickname(), self.password))
+            self.say('NickServ', 'identify %s %s' % (self.connection.get_nickname(), self.password))
 
     def get_command_prefix(self):
         return '.'
