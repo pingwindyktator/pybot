@@ -8,12 +8,14 @@ class example_plugin(plugin):
 
     def unload_plugin(self):
         # you should unload your plugin in this method
+        # usually you don't need to implement this
         pass
 
     @command
     def example_command(self, sender_nick, args, **kwargs):
         self.logger.info('example command called by %s with %s' % (sender_nick, args))
         self.bot.say('example command called!')
+        self.bot.say('private msg', sender_nick)
         # you can easily access everything you need from self.bot
         #
         # every command should take **kwargs argument(!) and positional ones as needed:
