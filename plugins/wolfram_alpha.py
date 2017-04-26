@@ -31,45 +31,68 @@ class wolfram_alpha(plugin):
     @command
     def wa(self, msg, sender_nick, **kwargs):
         self.logger.info('%s asked wolfram alpha "%s"' % (sender_nick, msg))
-        self.bot.say(self.get_wa_response(msg))
 
-        # response = color.orange('[Wolfram|Alpha] ') + response
-        # if response.lower().strip() == ask.lower().strip():  # TODO more cases
-        #     response = url % ask
-        #
-        # self.bot.say(response)
-
-    def get_wa_response(self, msg):
         ask = self.parse_to_url(msg)
-        error = r'http://api.wolframalpha.com/v2/query?input=mortgage'
-        ok = self.full_req % (ask, self.key)
-        raw_response = requests.get(ok).content.decode('utf-8')
+        raw_response = requests.get(self.full_req % (ask, self.key)).content.decode('utf-8')
         xml_root = xml.etree.ElementTree.fromstring(raw_response)
-        print(raw_response)
+        answers = []
 
         if xml_root.attrib['error'] == 'true':  # wa error
-            return xml_root.find('error').find('msg').text
+            error_msg = xml_root.find('error').find('msg').text
+            self.logger.warning('wolfram alpha error: %s' % error_msg)
+            self.bot.say(error_msg)
+            return
 
         if xml_root.attrib['success'] == 'false':  # no response
-            return 'no data available'
+            self.bot.say('no data available for "%s"' % msg)
+            return
 
-        answers = {}  # answer_type -> answer
-        # TODO maybe I should keep it sorted and take first answer?
-        for pod in xml_root.findall('pod'):  # answers[a] = d
+        for pod in xml_root.findall('pod'):
             if pod.attrib['error'] == 'true': continue
-            answer_type = pod.attrib['title']
-            answer = pod.find('subpod').find('plaintext').text  # TODO can be more subpods!
-            if answer: answers[answer_type] = answer
+            title = pod.attrib['title']
+            primary = 'primary' in pod.attrib and pod.attrib['primary'] == 'true'
+            position = int(pod.attrib['position'])
+            subpods = []
 
-        if not answers: return 'no data available'
+            for subpod in pod.findall('subpod'):
+                plaintext = subpod.find('plaintext').text
+                subtitle = subpod.attrib['title']
+                if not plaintext: continue
+                subpods.append(self.wa_subpod(plaintext, subtitle))
 
-        for answer_type, answer in answers.items():
-            for subanswer in answer.split('\n'):
-                subanswer = subanswer.replace('  ', ' ').replace(' |', ":")
-                str = '[%s] %s' % (answer_type, subanswer)
-                a = 42
+            answers.append(self.wa_pod(title, position, subpods, primary))
 
-        return ''
+        if not answers:
+            self.bot.say('no data available for "%s"' % msg)
+            return
+
+        answers = sorted(answers)
+        prefix = color.orange('[%s] ' % answers[0].title)
+
+        for subpod in answers[0].subpods:
+            result = prefix
+            if subpod.title:
+                result = result + subpod.title + ': '
+
+            result = result + subpod.plaintext
+            self.bot.say(result)
+
+    class wa_subpod:
+        def __init__(self, plaintext, title=''):
+            self.title = title.strip()
+            self.plaintext = plaintext.strip().replace('  ', ' ')
+
+    class wa_pod:
+        def __init__(self, title, position, subpods, primary=False):
+            self.title = title.strip()
+            self.position = position
+            self.subpods = subpods
+            self.primary = primary
+
+        def __lt__(self, other):
+            if self.primary: return True
+            if other.primary: return False
+            return self.position < other.position
 
     @staticmethod
     def parse_to_url(str):
