@@ -44,7 +44,9 @@ class wolfram_alpha(plugin):
             return
 
         if xml_root.attrib['success'] == 'false':  # no response
-            print(raw_response)
+            self.logger.info('******* NO DATA PARSED FROM WA RESPONSE *******')
+            self.logger.info(raw_response)
+            self.logger.info('***********************************************')
             self.bot.say('no data available for "%s"' % msg)
             return
 
@@ -64,14 +66,16 @@ class wolfram_alpha(plugin):
             answers.append(self.wa_pod(title, position, subpods, primary))
 
         if not answers:
-            print(raw_response)
+            self.logger.info('******* NO DATA PARSED FROM WA RESPONSE *******')
+            self.logger.info(raw_response)
+            self.logger.info('***********************************************')
             self.bot.say('no data available for "%s"' % msg)
             return
 
         answers = sorted(answers)
 
-        it = 0
-        while it == 0 or answers[it].primary:
+        for it in range(0, len(answers)):
+            if it > 0 and not answers[it].primary: break
             prefix = color.orange('[%s] ' % answers[it].title)
             for subpod in answers[it].subpods:
                 result = prefix
@@ -80,8 +84,6 @@ class wolfram_alpha(plugin):
 
                 result = result + subpod.plaintext
                 self.bot.say(result)
-
-            it += 1
 
     class wa_subpod:
         def __init__(self, plaintext, title=''):
