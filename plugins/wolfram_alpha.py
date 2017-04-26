@@ -44,11 +44,12 @@ class wolfram_alpha(plugin):
             return
 
         if xml_root.attrib['success'] == 'false':  # no response
+            print(raw_response)
             self.bot.say('no data available for "%s"' % msg)
             return
 
         for pod in xml_root.findall('pod'):
-            if pod.attrib['error'] == 'true': continue
+            if pod.attrib['error'] == 'true': continue  # wa error
             title = pod.attrib['title']
             primary = 'primary' in pod.attrib and pod.attrib['primary'] == 'true'
             position = int(pod.attrib['position'])
@@ -63,24 +64,29 @@ class wolfram_alpha(plugin):
             answers.append(self.wa_pod(title, position, subpods, primary))
 
         if not answers:
+            print(raw_response)
             self.bot.say('no data available for "%s"' % msg)
             return
 
         answers = sorted(answers)
-        prefix = color.orange('[%s] ' % answers[0].title)
 
-        for subpod in answers[0].subpods:
-            result = prefix
-            if subpod.title:
-                result = result + subpod.title + ': '
+        it = 0
+        while it == 0 or answers[it].primary:
+            prefix = color.orange('[%s] ' % answers[it].title)
+            for subpod in answers[it].subpods:
+                result = prefix
+                if subpod.title:
+                    result = result + subpod.title + ': '
 
-            result = result + subpod.plaintext
-            self.bot.say(result)
+                result = result + subpod.plaintext
+                self.bot.say(result)
+
+            it += 1
 
     class wa_subpod:
         def __init__(self, plaintext, title=''):
             self.title = title.strip()
-            self.plaintext = plaintext.strip().replace('  ', ' ')
+            self.plaintext = plaintext.strip().replace('  ', ' ').replace('\n', ' :: ').replace('\t', ' ').replace('|', '-')
 
     class wa_pod:
         def __init__(self, title, position, subpods, primary=False):
@@ -90,8 +96,8 @@ class wolfram_alpha(plugin):
             self.primary = primary
 
         def __lt__(self, other):
-            if self.primary: return True
-            if other.primary: return False
+            if self.primary and not other.primary: return True
+            if other.primary and not self.primary: return False
             return self.position < other.position
 
     @staticmethod
