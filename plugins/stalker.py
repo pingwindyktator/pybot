@@ -16,7 +16,6 @@ class stalker(plugin):
         self.db_cursor = self.db_connection.cursor()
         self.db_cursor.execute("CREATE TABLE IF NOT EXISTS '%s' (host TEXT primary key not null, nicks TEXT)" % self.db_name)  # host -> {nicknames}
         self.db_mutex = Lock()
-        self.get_all_hosts_from_database()
         self.updating_thread = None
 
     def on_pubmsg(self, source, **kwargs):

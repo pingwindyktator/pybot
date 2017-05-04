@@ -9,7 +9,7 @@ class stats(plugin):
     @admin
     @command
     def stats(self, sender_nick, **kwargs):
-        items = self.bot.channels.items().copy()
+        items = self.bot.channels.items()
         for chname, chobj in items:
             self.bot.say("--- Channel statistics ---")
             self.bot.say("Channel: " + chname)
