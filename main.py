@@ -28,9 +28,9 @@ def main():
     logger = logging.getLogger(__name__)
     parser = argparse.ArgumentParser(description='pybot - irc bot')
 
-    parser.add_argument('server', action='store', type=str, help='server:port to connect to')
+    parser.add_argument('server', action='store', type=str, help='server[:port] to connect to')
     parser.add_argument('channel', action='store', type=str, help='channel to join to')
-    parser.add_argument('nickname', action='store', type=str, help='nickname:password to use')
+    parser.add_argument('nickname', action='store', type=str, help='nickname[:password] to use')
     parser.add_argument('-s', '--use-ssl', action='store_true', default=False, help='connect over SSL')
     args = parser.parse_args()
     server = args.server.split(':')[0]
