@@ -1,7 +1,7 @@
 from plugin import *
 
 
-class example_plugin(plugin):
+class example_plugin(plugin):  # plugin class name should equal module name!
     def __init__(self, bot):
         super().__init__(bot)
 
