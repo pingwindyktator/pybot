@@ -10,7 +10,7 @@ class stalker(plugin):
     def __init__(self, bot):
         super().__init__(bot)
         self.db_name = 'stalker'
-        self.db_connection = sqlite3.connect(self.db_name + '.db', check_same_thread=False)
+        self.db_connection = sqlite3.connect(self.config['db_location'], check_same_thread=False)
         self.db_cursor = self.db_connection.cursor()
         self.db_cursor.execute("CREATE TABLE IF NOT EXISTS '%s' (host TEXT primary key not null, nicks TEXT)" % self.db_name)  # host -> {nicknames}
         self.db_mutex = Lock()
