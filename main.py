@@ -39,8 +39,38 @@ def configure_logger(config):
     root_logger.addHandler(stdout_handler)
 
 
+def ensure_config_file_is_ok(config):
+    assert 'server' in config
+    assert type(config['server']) is str
+    assert config['server'].strip() != ''
+
+    assert 'port' in config
+    assert type(config['port']) is int
+    assert config['port'] >= 1024
+    assert config['port'] <= 49151
+
+    assert 'channel' in config
+    assert type(config['channel']) is str
+    assert config['channel'].strip() != ''
+
+    assert 'nickname' in config
+    assert type(config['nickname']) is list
+    assert len(config['nickname']) > 0
+
+    assert 'use_ssl' in config
+    assert type(config['use_ssl']) is bool
+
+    assert 'max_autorejoin_attempts' in config
+    assert type(config['max_autorejoin_attempts']) is int
+    assert config['max_autorejoin_attempts'] >= 0
+
+    assert 'ops' in config
+    assert type(config['ops']) is list
+
+
 def main():
     config = yaml.load(open("pybot.yaml"))
+    ensure_config_file_is_ok(config)
     configure_logger(config)
     bot = pybot(config)
     bot.start()
