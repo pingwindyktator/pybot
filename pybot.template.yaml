@@ -5,3 +5,7 @@ nickname: [pybot, pybot_, pybot__]
 password: [null, null, null]
 use_ssl: true
 max_autorejoin_attempts: 5
+
+bot_remote_manager:
+  disconnect_msg: '[disconnect]'
+  die_msg: '[die]'

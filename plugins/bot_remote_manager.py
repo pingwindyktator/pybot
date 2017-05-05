@@ -10,7 +10,7 @@ class bot_remote_manager(plugin):
     @admin
     def disconnect(self, sender_nick, **kwargs):
         self.logger.warning('disconnect by %s' % sender_nick)
-        self.bot.disconnect('[disconnect]')
+        self.bot.disconnect(self.config['disconnect_msg'])
 
     @command
     @admin
