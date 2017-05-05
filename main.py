@@ -1,6 +1,8 @@
 import logging
-from plugins import *
 import sys
+import argparse
+
+from plugins import *
 from pybot import pybot
 
 
@@ -24,37 +26,33 @@ def configure_logger():
 def main():
     configure_logger()
     logger = logging.getLogger(__name__)
+    parser = argparse.ArgumentParser(description='pybot - irc bot')
 
-    if len(sys.argv) != 4:
-        logger.critical('not enough args given (%s)' % (len(sys.argv) - 1))
-        print("Usage: pybot <server[:port]> <channel> <nickname[:password]>")
+    parser.add_argument('server', action='store', type=str, help='server:port to connect to')
+    parser.add_argument('channel', action='store', type=str, help='channel to join to')
+    parser.add_argument('nickname', action='store', type=str, help='nickname:password to use')
+    parser.add_argument('-s', '--use-ssl', action='store_true', default=False, help='connect over SSL')
+    args = parser.parse_args()
+    server = args.server.split(':')[0]
+    try:
+        port = int(args.server.split(':')[1]) if len(args.server.split(':')) > 1 else 6667
+    except ValueError:
+        print('error: erroneous port')
+        logger.critical('erroneous port given')
         sys.exit(1)
-
-    s = sys.argv[1].split(":", 1)
-    server = s[0]
-    if len(s) == 2:
-        try:
-            port = int(s[1])
-        except ValueError:
-            print("Error: Erroneous port.")
-            logger.critical('erroneous port given')
-            sys.exit(1)
-    else:
-        port = 6667
-
-    channel = sys.argv[2] if sys.argv[2].startswith('#') else '#' + sys.argv[2]
-
-    n = sys.argv[3].split(':')
-    nickname = n[0]
-    password = n[1] if len(n) > 1 else ''
+    channel = args.channel if args.channel.startswith('#') else '#' + args.channel
+    nickname = args.nickname.split(':')[0]
+    password = args.nickname.split(':')[1] if len(args.nickname.split(':')) > 1 else None
+    use_ssl = args.use_ssl
 
     logger.debug('channel: %s' % server)
     logger.debug('port: %d' % port)
     logger.debug('server: %s' % channel)
     logger.debug('nickname: %s' % nickname)
-    logger.debug('password: %s' % ''.join(['*' for _ in range(0, len(password))]))
+    if password:
+        logger.debug('password: %s' % ''.join(['*' for _ in range(0, len(password))]))
 
-    bot = pybot(channel, nickname, server, port, password)
+    bot = pybot(channel, nickname, server, port, use_ssl, password)
     bot.start()
 
 
