@@ -2,6 +2,7 @@ import inspect
 import logging
 import ssl
 import textwrap
+import sys
 import plugin
 import msg_parser
 import irc.bot
@@ -10,26 +11,21 @@ import irc.connection
 
 # noinspection PyUnusedLocal
 class pybot(irc.bot.SingleServerIRCBot):
-    def __init__(self, channel, nickname, server, port=6667, use_ssl=False, password=None):
+    def __init__(self, config):
         self.logger = logging.getLogger(__name__)
 
         self.logger.debug('initiating irc.bot.SingleServerIRCBot...')
         connection_args = {}
-        if use_ssl:
+        if config['use_ssl']:
             ssl_factory = irc.connection.Factory(wrapper=ssl.wrap_socket)
             connection_args['connect_factory'] = ssl_factory
 
-        super(pybot, self).__init__([(server, port)], nickname, nickname, **connection_args)
+        super(pybot, self).__init__([(config['server'], config['port'])], config['nickname'][0], config['nickname'][0], **connection_args)
         self.logger.debug('irc.bot.SingleServerIRCBot initiated')
 
-        self.channel = channel
-        self.server = server
-        self.port = port
-        self.password = password
-        self.__nickname = nickname
-        self.use_ssl = use_ssl
+        self.nickname_id = 0
+        self.config = config
         self.joined_to_channel = False
-        self.max_autorejoin_attempts = 5
         self.autorejoin_attempts = 0
 
         self.plugins = set()
@@ -37,36 +33,42 @@ class pybot(irc.bot.SingleServerIRCBot):
         self.load_plugins()
 
     def start(self):
-        ssl_info = ' over SSL' if self.use_ssl else ''
-        self.logger.info('connecting to %s:%d%s...' % (self.server, self.port, ssl_info))
+        ssl_info = ' over SSL' if self.config['use_ssl'] else ''
+        self.logger.info('connecting to %s:%d%s...' % (self.config['server'], self.config['port'], ssl_info))
 
         self.connection.buffer_class.errors = 'replace'
         super(pybot, self).start()
 
     def on_nicknameinuse(self, connection, raw_msg):
         """ called by super() when given nickname is reserved """
-        new_nickname = self.__nickname + '_'
-        self.logger.warning('nickname %s is busy, using %s' % (self.__nickname, new_nickname))
-        self.call_plugins_methods('on_nicknameinuse', raw_msg=raw_msg, busy_nickname=self.__nickname)
-        self.__nickname = new_nickname
+        nickname = self.config['nickname'][self.nickname_id]
+        self.nickname_id += 1
+
+        if self.nickname_id >= len(self.config['nickname']):
+            self.logger.critical('nickname %s is busy, no more nicknames to use' % nickname)
+            sys.exit(2)
+
+        new_nickname = self.config['nickname'][self.nickname_id]
+        self.logger.warning('nickname %s is busy, using %s' % (nickname, new_nickname))
+        self.call_plugins_methods('on_nicknameinuse', raw_msg=raw_msg, busy_nickname=nickname)
         self.connection.nick(new_nickname)
 
     def on_welcome(self, connection, raw_msg):
         """ called by super() when connected to server """
-        ssl_info = ' over SSL' if self.use_ssl else ''
-        self.logger.info('connected to %s:%d%s using nickname %s' % (self.server, self.port, ssl_info, self.connection.get_nickname()))
-        self.call_plugins_methods('on_welcome', raw_msg=raw_msg, server=self.server, port=self.port, nickname=self.connection.get_nickname())
+        ssl_info = ' over SSL' if self.config['use_ssl'] else ''
+        self.logger.info('connected to %s:%d%s using nickname %s' % (self.config['server'], self.config['port'], ssl_info, self.connection.get_nickname()))
+        self.call_plugins_methods('on_welcome', raw_msg=raw_msg, server=self.config['server'], port=self.config['port'], nickname=self.connection.get_nickname())
         self.login()
         self.join_channel()
 
     def on_disconnect(self, connection, raw_msg):
         """ called by super() when disconnected to server """
-        self.call_plugins_methods('on_disconnect', raw_msg=raw_msg, server=self.server, port=self.port)
+        self.call_plugins_methods('on_disconnect', raw_msg=raw_msg, server=self.config['server'], port=self.config['port'])
 
     def on_join(self, connection, raw_msg):
         """ called by super() when somebody joins channel """
         if raw_msg.source.nick == self.connection.get_nickname():
-            self.logger.info('joined to %s' % self.channel)
+            self.logger.info('joined to %s' % self.config['channel'])
             self.whois(self.connection.get_nickname())
         else:
             self.call_plugins_methods('on_join', raw_msg=raw_msg, source=raw_msg.source)
@@ -75,7 +77,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         """ called by super() when private msg received """
         full_msg = raw_msg.arguments[0]
         sender_nick = raw_msg.source.nick
-        logging.info('[PRIV]> %s: %s' % (sender_nick, full_msg))
+        logging.info('[PRIV] %s: %s' % (sender_nick, full_msg))
         self.call_plugins_methods('on_privmsg', raw_msg=raw_msg, msg=full_msg, source=raw_msg.source)
 
     def on_pubmsg(self, connection, raw_msg):
@@ -106,11 +108,11 @@ class pybot(irc.bot.SingleServerIRCBot):
         self.call_plugins_methods('on_me_kicked', raw_msg=raw_msg, source=raw_msg.source)
         self.joined_to_channel = False
 
-        if self.autorejoin_attempts >= self.max_autorejoin_attempts:
+        if self.autorejoin_attempts >= self.config['max_autorejoin_attempts']:
             self.logger.warning('autorejoin attempts limit reached, waiting for user interact now')
             choice = None
             while choice != 'Y' and choice != 'y' and choice != 'N' and choice != 'n':
-                choice = input('rejoin to %s? [Y/n] ' % self.channel)
+                choice = input('rejoin to %s? [Y/n] ' % self.config['channel'])
 
             if choice == 'Y' or choice == 'y':
                 self.autorejoin_attempts = 0
@@ -125,7 +127,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         # workaround here:
         # /whois me triggers on_me_joined call because when first time on self.on_join (== when bot joins channel) users-list is not updated yet
         if raw_msg.arguments[0] == self.connection.get_nickname() and not self.joined_to_channel:
-            self.call_plugins_methods('on_me_joined', raw_msg=raw_msg, channel=self.channel)
+            self.call_plugins_methods('on_me_joined', raw_msg=raw_msg, channel=self.config['channel'])
             self.joined_to_channel = True
 
         self.call_plugins_methods('on_whoisuser', raw_msg=raw_msg, nick=raw_msg.arguments[0], user=raw_msg.arguments[1], host=raw_msg.arguments[2])
@@ -191,7 +193,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         self.connection.whois(targets)
 
     def say(self, msg, target=None):
-        if not target: target = self.channel
+        if not target: target = self.config['channel']
         self.logger.debug('sending reply to %s: %s' % (target, msg))
 
         if self.is_msg_too_long(msg):
@@ -209,19 +211,19 @@ class pybot(irc.bot.SingleServerIRCBot):
     def login(self):
         # TODO add more login ways
         # TODO plugin
-        if self.password is not None and self.password != '':
-            self.say('NickServ', 'identify %s %s' % (self.connection.get_nickname(), self.password))
+        if self.config['password'] is not None and self.config['password'] != '':
+            self.say('NickServ', 'identify %s %s' % (self.connection.get_nickname(), self.config['password']))
 
     def get_command_prefix(self):
         return '.'
 
     def join_channel(self):
-        self.logger.info('joining %s...' % self.channel)
-        self.connection.join(self.channel)
+        self.logger.info('joining %s...' % self.config['channel'])
+        self.connection.join(self.config['channel'])
 
     def leave_channel(self):
-        self.logger.info('leaving %s...' % self.channel)
-        self.connection.part(self.channel)
+        self.logger.info('leaving %s...' % self.config['channel'])
+        self.connection.part(self.config['channel'])
 
 
 pybot.ops = {'pingwindyktator'}

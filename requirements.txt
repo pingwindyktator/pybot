@@ -1,3 +1,4 @@
+pyyaml
 lxml
 requests
 irc>=15.0.4

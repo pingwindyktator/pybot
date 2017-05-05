@@ -1,0 +1,7 @@
+server: irc.freenode.net
+port: 6697
+channel: '#pybot'
+nickname: [pybot, pybot_, pybot__]
+password: null
+use_ssl: true
+max_autorejoin_attempts: 5
