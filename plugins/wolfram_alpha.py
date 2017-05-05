@@ -9,8 +9,6 @@ class wolfram_alpha(plugin):
     def __init__(self, bot):
         super().__init__(bot)
         self.logger = logging.getLogger(__name__)
-        self.key = '4EU37Y-TX9WJG3JH3'  # should be replaced with you'r personal API key
-        self.short_req = r'https://api.wolframalpha.com/v1/result?i=%s&appid=%s'
         self.full_req = r'http://api.wolframalpha.com/v2/query?' \
                         r'input=%s' \
                         r'&appid=%s' \
@@ -33,7 +31,7 @@ class wolfram_alpha(plugin):
         self.logger.info('%s asked wolfram alpha "%s"' % (sender_nick, msg))
 
         ask = self.parse_to_url(msg)
-        raw_response = requests.get(self.full_req % (ask, self.key)).content.decode('utf-8')
+        raw_response = requests.get(self.full_req % (ask, self.config['api_key'])).content.decode('utf-8')
         xml_root = xml.etree.ElementTree.fromstring(raw_response)
         answers = []
 
