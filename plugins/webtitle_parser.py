@@ -8,7 +8,6 @@ from plugin import *
 class webtitle_parser(plugin):
     def __init__(self, bot):
         super().__init__(bot)
-        self.logger = logging.getLogger(__name__)
 
     def on_pubmsg(self, msg, **kwargs):
         urls = msg.strip().split()

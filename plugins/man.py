@@ -5,7 +5,6 @@ from plugin import *
 class man(plugin):
     def __init__(self, bot):
         super().__init__(bot)
-        self.logger = logging.getLogger(__name__)
         self.man_url = r'http://man.he.net/?topic=%s&section=all'
 
     @command

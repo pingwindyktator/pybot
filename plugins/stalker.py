@@ -9,8 +9,6 @@ from plugin import *
 class stalker(plugin):
     def __init__(self, bot):
         super().__init__(bot)
-        self.logger = logging.getLogger(__name__)
-
         self.db_name = 'stalker'
         self.db_connection = sqlite3.connect(self.db_name + '.db', check_same_thread=False)
         self.db_cursor = self.db_connection.cursor()

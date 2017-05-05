@@ -3,9 +3,9 @@ from plugin import *
 
 class irc_privmsg_logger_handler(logging.StreamHandler):
     def __init__(self, connection, plhs):
+        super().__init__()
         self.plhs = plhs
         self.connection = connection
-        super().__init__()
 
     def emit(self, record):
         if record.funcName == 'send_raw': return

@@ -7,7 +7,6 @@ class words_blacklist(plugin):
     def __init__(self, bot):
         super().__init__(bot)
         self.blacklist = set()
-        self.logger = logging.getLogger(__name__)
 
     def on_pubmsg(self, source, msg, **kwargs):
         for word in self.blacklist:

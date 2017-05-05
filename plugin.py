@@ -8,7 +8,11 @@ from color import color
 class plugin:
     def __init__(self, bot):
         self.bot = bot
-        self.logger = logging.getLogger(__name__)
+        self.logger = logging.getLogger(self._get_class_name())
+        self.config = self.bot.config[self._get_class_name()] if self._get_class_name() in self.bot.config else None
+
+    def _get_class_name(self):
+        return self.__class__.__name__
 
     def on_welcome(self, *args, **kwargs):
         """

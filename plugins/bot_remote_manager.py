@@ -4,7 +4,6 @@ from plugin import *
 class bot_remote_manager(plugin):
     def __init__(self, bot):
         super().__init__(bot)
-        self.logger = logging.getLogger(__name__)
 
     @command
     @admin

@@ -12,7 +12,6 @@ from plugin import *
 class builtins(plugin):
     def __init__(self, bot):
         super().__init__(bot)
-        self.logger = logging.getLogger(__name__)
         self.pybot_dir = os.path.dirname(os.path.realpath(__file__))
         self.pybot_dir = os.path.abspath(os.path.join(self.pybot_dir, os.pardir))
         self.as_other_user_command = namedtuple('as_other_user_command',
