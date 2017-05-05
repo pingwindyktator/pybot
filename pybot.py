@@ -1,18 +1,25 @@
 import inspect
 import logging
+import ssl
 import textwrap
-
 import plugin
 import msg_parser
-from irc.bot import SingleServerIRCBot
+import irc.bot
+import irc.connection
 
 
-class pybot(SingleServerIRCBot):
-    def __init__(self, channel, nickname, server, port=6667, password=None):
+# noinspection PyUnusedLocal
+class pybot(irc.bot.SingleServerIRCBot):
+    def __init__(self, channel, nickname, server, port=6667, use_ssl=False, password=None):
         self.logger = logging.getLogger(__name__)
 
         self.logger.debug('initiating irc.bot.SingleServerIRCBot...')
-        super(pybot, self).__init__([(server, port)], nickname, nickname)
+        connection_args = {}
+        if use_ssl:
+            ssl_factory = irc.connection.Factory(wrapper=ssl.wrap_socket)
+            connection_args['connect_factory'] = ssl_factory
+
+        super(pybot, self).__init__([(server, port)], nickname, nickname, **connection_args)
         self.logger.debug('irc.bot.SingleServerIRCBot initiated')
 
         self.channel = channel
@@ -20,6 +27,7 @@ class pybot(SingleServerIRCBot):
         self.port = port
         self.password = password
         self.__nickname = nickname
+        self.use_ssl = use_ssl
         self.joined_to_channel = False
         self.max_autorejoin_attempts = 5
         self.autorejoin_attempts = 0
@@ -29,8 +37,8 @@ class pybot(SingleServerIRCBot):
         self.load_plugins()
 
     def start(self):
-        self.logger.info('connecting to %s:%d...' %
-                         (self.server, self.port))
+        ssl_info = ' over SSL' if self.use_ssl else ''
+        self.logger.info('connecting to %s:%d%s...' % (self.server, self.port, ssl_info))
 
         self.connection.buffer_class.errors = 'replace'
         super(pybot, self).start()
@@ -45,7 +53,8 @@ class pybot(SingleServerIRCBot):
 
     def on_welcome(self, connection, raw_msg):
         """ called by super() when connected to server """
-        self.logger.info('connected to %s:%d using nickname %s' % (self.server, self.port, self.connection.get_nickname()))
+        ssl_info = ' over SSL' if self.use_ssl else ''
+        self.logger.info('connected to %s:%d%s using nickname %s' % (self.server, self.port, ssl_info, self.connection.get_nickname()))
         self.call_plugins_methods('on_welcome', raw_msg=raw_msg, server=self.server, port=self.port, nickname=self.connection.get_nickname())
         self.login()
         self.join_channel()
@@ -192,7 +201,8 @@ class pybot(SingleServerIRCBot):
         else:
             self.connection.privmsg(target, msg)
 
-    def is_msg_too_long(self, msg):
+    @staticmethod
+    def is_msg_too_long(msg):
         encoded_msg = msg.encode('utf-8')
         return len(encoded_msg + b'\r\n') > 512
 
