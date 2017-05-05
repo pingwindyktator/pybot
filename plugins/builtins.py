@@ -115,8 +115,7 @@ class builtins(plugin):
     @admin
     def self_update(self, sender_nick, **kwargs):
         if not self.update_possible():
-            self.logger.info(
-                '%s asked for self-update, but there are local changes in %s' % (sender_nick, self.pybot_dir))
+            self.logger.info('%s asked for self-update, but there are local changes in %s' % (sender_nick, self.pybot_dir))
             self.bot.say('local changes prevents me from update')
             return
 

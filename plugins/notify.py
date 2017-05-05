@@ -16,7 +16,7 @@ class notify(plugin):
             for alias in self.database[register_nickname]:
                 if re.findall(alias.lower(), full_msg) and sender_nick != register_nickname:
                     self.bot.say(register_nickname)
-                    self.logger.info("found alias '%s' for %s" % (alias, register_nickname))
+                    self.logger.info("found notify set for '%s': %s" % (register_nickname, alias))
                     break
 
     @command
