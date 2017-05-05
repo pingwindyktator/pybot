@@ -44,15 +44,14 @@ class builtins(plugin):
 
     @command
     def source(self, sender_nick, **kwargs):
-        src = r'https://github.com/pingwindyktator/pybot/tree/develop'
-        self.logger.info('source %s given to %s' % (src, sender_nick))
-        self.bot.say('Patches are welcome! %s' % src)
+        self.logger.info('source %s given to %s' % (self.config['source'], sender_nick))
+        self.bot.say('Patches are welcome! %s' % self.config['source'])
 
     @command
     @admin
     def add_op(self, sender_nick, args, **kwargs):
         if len(args) == 0: return
-        self.bot.ops.update(args)
+        self.bot.config['ops'].extend(args)
         subreply = 'is now op' if len(args) == 1 else 'are now ops'
         self.bot.say('%s %s' % (', '.join(args), subreply))
         self.logger.warning('%s added new ops: %s' % (sender_nick, args))
@@ -60,10 +59,10 @@ class builtins(plugin):
     @command
     @admin
     def rm_op(self, sender_nick, args, **kwargs):
-        to_remove = [arg for arg in args if arg in self.bot.ops]
+        to_remove = [arg for arg in args if arg in self.bot.config['ops']]
         if not to_remove: return
         for arg in to_remove:
-            self.bot.ops.remove(arg)
+            self.bot.config['ops'].remove(arg)
 
         subreply = 'is no longer op' if len(to_remove) == 1 else 'are no longer ops'
         self.bot.say('%s %s' % (to_remove, subreply))
@@ -72,15 +71,15 @@ class builtins(plugin):
     @command
     @admin
     def ops(self, sender_nick, **kwargs):
-        if len(self.bot.ops) == 0:
+        if len(self.bot.config['ops']) == 0:
             subreply = 'no bot operators'
-        elif len(self.bot.ops) == 1:
+        elif len(self.bot.config['ops']) == 1:
             subreply = 'bot operator:'
         else:
             subreply = 'bot operators:'
 
-        self.bot.say('%s %s' % (subreply, self.bot.ops))
-        self.logger.info('%s asked for ops: %s' % (sender_nick, self.bot.ops))
+        self.bot.say('%s %s' % (subreply, self.bot.config['ops']))
+        self.logger.info('%s asked for ops: %s' % (sender_nick, self.bot.config['ops']))
 
     @command
     @admin

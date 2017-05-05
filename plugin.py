@@ -134,7 +134,7 @@ def doc(doc_string):
 def admin(function):
     @wraps(function)
     def admin_impl(self, sender_nick, *args, **kwargs):
-        if sender_nick in pybot.pybot.ops or sender_nick == 'pingwindyktator':  # E HEHE
+        if sender_nick in self.bot.config['ops']:
             function(self, sender_nick, *args, **kwargs)
 
     return admin_impl
