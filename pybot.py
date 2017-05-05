@@ -52,6 +52,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         self.logger.warning('nickname %s is busy, using %s' % (nickname, new_nickname))
         self.call_plugins_methods('on_nicknameinuse', raw_msg=raw_msg, busy_nickname=nickname)
         self.connection.nick(new_nickname)
+        self.login()
 
     def on_welcome(self, connection, raw_msg):
         """ called by super() when connected to server """
@@ -211,8 +212,11 @@ class pybot(irc.bot.SingleServerIRCBot):
     def login(self):
         # TODO add more login ways
         # TODO plugin
-        if self.config['password'] is not None and self.config['password'] != '':
-            self.say('NickServ', 'identify %s %s' % (self.connection.get_nickname(), self.config['password']))
+        if self.config['password'] is not None and self.nickname_id < len(self.config['password']):
+            password = self.config['password'][self.nickname_id]
+            if password is not None and password != '':
+                self.logger.info('identifying as %s' % self.connection.get_nickname())
+                self.say('NickServ', 'identify %s %s' % (self.connection.get_nickname(), password))
 
     def get_command_prefix(self):
         return '.'
