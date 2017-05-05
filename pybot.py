@@ -207,7 +207,7 @@ class pybot(irc.bot.SingleServerIRCBot):
     @staticmethod
     def is_msg_too_long(msg):
         encoded_msg = msg.encode('utf-8')
-        return len(encoded_msg + b'\r\n') > 512
+        return len(encoded_msg + b'\r\n') > 512  # max msg len defined by IRC protocol
 
     def login(self):
         # TODO add more login ways
