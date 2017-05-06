@@ -154,7 +154,14 @@ class pybot(irc.bot.SingleServerIRCBot):
 
     def load_plugins(self):
         self.logger.debug('loading plugins...')
+        disabled_plugins = self.config['disabled_plugins'] if 'disabled_plugins' in self.config else []
+        enabled_plugins = self.config['enabled_plugins'] if 'enabled_plugins' in self.config else [x.__name__ for x in plugin.plugin.__subclasses__()]
+
         for plugin_class in plugin.plugin.__subclasses__():
+            if plugin_class.__name__ in disabled_plugins or plugin_class.__name__ not in enabled_plugins:
+                self.logger.info('skipping %s plugin' % plugin_class.__name__)
+                continue
+
             plugin_instance = plugin_class(self)
             self.register_plugin(plugin_instance)
             self.register_commands_for_plugin(plugin_instance)

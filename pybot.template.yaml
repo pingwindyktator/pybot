@@ -8,6 +8,8 @@ max_autorejoin_attempts: 5
 ops: []
 file_logging_level: info
 stdout_logging_level: info
+# enabled_plugins: []
+# disabled_plugins: []
 
 bot_remote_manager:
   disconnect_msg: '[disconnect]'
