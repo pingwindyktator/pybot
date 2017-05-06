@@ -39,46 +39,50 @@ def configure_logger(config):
 
 
 def ensure_config_file_is_ok(config):
-    assert 'server' in config, 'you have to specify server address'
-    assert type(config['server']) is str, 'server field should be string'
-    assert config['server'].strip() != '', 'you have to specify server address'
+    try:
+        assert 'server' in config, 'you have to specify server address'
+        assert type(config['server']) is str, 'server field should be string'
+        assert config['server'].strip() != '', 'you have to specify server address'
 
-    assert 'port' in config, 'you have to specify port'
-    assert type(config['port']) is int, 'port field should be integer'
-    assert config['port'] >= 1024, 'port should be >= 1024'
-    assert config['port'] <= 49151, 'port should be <= 49151'
+        assert 'port' in config, 'you have to specify port'
+        assert type(config['port']) is int, 'port field should be integer'
+        assert config['port'] >= 1024, 'port should be >= 1024'
+        assert config['port'] <= 49151, 'port should be <= 49151'
 
-    assert 'channel' in config, 'you have to specify channel to join'
-    assert type(config['channel']) is str, 'channel field should be string'
-    assert config['channel'].strip() != '', 'you have to specify channel to join'
-    assert config['channel'].startswith('#'), 'channel should start with #'
+        assert 'channel' in config, 'you have to specify channel to join'
+        assert type(config['channel']) is str, 'channel field should be string'
+        assert config['channel'].strip() != '', 'you have to specify channel to join'
+        assert config['channel'].startswith('#'), 'channel should start with #'
 
-    assert 'nickname' in config, "you have to specify at least one nickname to use"
-    assert type(config['nickname']) is list, 'nickname field should be list'
-    assert len(config['nickname']) > 0, 'you have to specify at least one nickname to use'
+        assert 'nickname' in config, "you have to specify at least one nickname to use"
+        assert type(config['nickname']) is list, 'nickname field should be list'
+        assert len(config['nickname']) > 0, 'you have to specify at least one nickname to use'
 
-    assert 'use_ssl' in config, 'you have to specify whether to use sll or not'
-    assert type(config['use_ssl']) is bool, 'use_ssl field should be boolean'
+        assert 'use_ssl' in config, 'you have to specify whether to use sll or not'
+        assert type(config['use_ssl']) is bool, 'use_ssl field should be boolean'
 
-    assert 'max_autorejoin_attempts' in config, 'you have to specify maximum number of autorejoin attempts'
-    assert type(config['max_autorejoin_attempts']) is int, 'max_autorejoin_attempts field should be int'
-    assert config['max_autorejoin_attempts'] >= 0, 'max_autorejoin_attempts should be >= 0'
+        assert 'max_autorejoin_attempts' in config, 'you have to specify maximum number of autorejoin attempts'
+        assert type(config['max_autorejoin_attempts']) is int, 'max_autorejoin_attempts field should be int'
+        assert config['max_autorejoin_attempts'] >= 0, 'max_autorejoin_attempts should be >= 0'
 
-    if 'ops' in config:
-        assert type(config['ops']) is list, 'ops field should be list'
+        if 'ops' in config:
+            assert type(config['ops']) is list, 'ops field should be list'
 
-    if 'disabled_plugins' in config:
-        assert 'enabled_plugins' not in config, 'you cannot have both enabled_plugins and disabled_plugins specified'
-        assert type(config['disabled_plugins']) is list, 'disabled_plugins field should be list'
+        if 'disabled_plugins' in config:
+            assert 'enabled_plugins' not in config, 'you cannot have both enabled_plugins and disabled_plugins specified'
+            assert type(config['disabled_plugins']) is list, 'disabled_plugins field should be list'
 
-    if 'enabled_plugins' in config:
-        assert 'disabled_plugins' not in config, 'you cannot have both enabled_plugins and disabled_plugins specified'
-        assert type(config['enabled_plugins']) is list, 'enabled_plugins field should be list'
+        if 'enabled_plugins' in config:
+            assert 'disabled_plugins' not in config, 'you cannot have both enabled_plugins and disabled_plugins specified'
+            assert type(config['enabled_plugins']) is list, 'enabled_plugins field should be list'
 
-    assert 'file_logging_level' in config, 'you have to specify file logging level'
-    assert config['file_logging_level'] in level_str_to_int, 'file_logging_level can be one of: %s' % ', '.join((level_str_to_int.keys()))
-    assert 'stdout_logging_level' in config, 'you have to specify stdout logging level'
-    assert config['stdout_logging_level'] in level_str_to_int, 'stdout_logging_level can be one of: %s' % ', '.join((level_str_to_int.keys()))
+        assert 'file_logging_level' in config, 'you have to specify file logging level'
+        assert config['file_logging_level'] in level_str_to_int, 'file_logging_level can be one of: %s' % ', '.join((level_str_to_int.keys()))
+        assert 'stdout_logging_level' in config, 'you have to specify stdout logging level'
+        assert config['stdout_logging_level'] in level_str_to_int, 'stdout_logging_level can be one of: %s' % ', '.join((level_str_to_int.keys()))
+    except AssertionError as e:
+        print(e)
+        sys.exit(3)
 
 
 def main():
