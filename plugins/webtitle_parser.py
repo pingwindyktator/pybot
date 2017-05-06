@@ -19,14 +19,14 @@ class webtitle_parser(plugin):
             r'(?::\d+)?'  # optional port
             r'(?:/?|[/?]\S+)$', re.IGNORECASE)
 
-        for url in urls: self.parse_url(url, regex)
+        for url in urls: self.parse_url(url.strip(), regex)
 
     def parse_url(self, url, regex):
         try:
             if regex.findall(url):
                 req = requests.get(url, timeout=5)
                 tree = fromstring(req.content)
-                title = tree.findtext('.//title')
+                title = tree.findtext('.//title').strip()
                 if title is not None and title != '':
                     self.bot.say(color.light_green(title))
 
