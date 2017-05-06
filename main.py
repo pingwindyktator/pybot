@@ -71,6 +71,9 @@ def ensure_config_file_is_ok(config):
         if 'debug' in config:
             assert type(config['debug']) is bool, 'debug field type should be boolean'
 
+        if 'password' in config:
+            assert type(config['password']) is list, 'password field should be list'
+
         if 'disabled_plugins' in config:
             assert 'enabled_plugins' not in config, 'you cannot have both enabled_plugins and disabled_plugins specified'
             assert type(config['disabled_plugins']) is list, 'disabled_plugins field should be list'
