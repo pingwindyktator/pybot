@@ -5,20 +5,21 @@ import yaml
 from plugins import *
 from pybot import pybot
 
+level_str_to_int = {
+    'disabled': sys.maxsize,
+    'critical': logging.CRITICAL,
+    'fatal': logging.FATAL,
+    'error': logging.ERROR,
+    'warning': logging.WARNING,
+    'warn': logging.WARN,
+    'info': logging.INFO,
+    'debug': logging.DEBUG,
+    'notset': logging.NOTSET,
+    'all': logging.NOTSET
+}
+
 
 def configure_logger(config):
-    level_str_to_int = {
-        'critical': logging.CRITICAL,
-        'fatal': logging.FATAL,
-        'error': logging.ERROR,
-        'warning': logging.WARNING,
-        'warn': logging.WARN,
-        'info': logging.INFO,
-        'debug': logging.DEBUG,
-        'notset': logging.NOTSET,
-        'all': logging.NOTSET
-    }
-
     logging_format = '%(levelname)-10s%(asctime)s %(filename)s:%(funcName)-16s: %(message)s'
     log_formatter = logging.Formatter(logging_format)
     root_logger = logging.getLogger('')
@@ -26,15 +27,13 @@ def configure_logger(config):
 
     file_handler = logging.FileHandler('pybot.log')
     file_handler.setFormatter(log_formatter)
-    try: level = level_str_to_int[config['file_logging_level']]
-    except: level = logging.INFO
+    level = level_str_to_int[config['file_logging_level']]
     file_handler.setLevel(level)
     root_logger.addHandler(file_handler)
 
     stdout_handler = logging.StreamHandler(sys.stdout)
     stdout_handler.setFormatter(log_formatter)
-    try: level = level_str_to_int[config['stdout_logging_level']]
-    except: level = logging.INFO
+    level = level_str_to_int[config['stdout_logging_level']]
     stdout_handler.setLevel(level)
     root_logger.addHandler(stdout_handler)
 
@@ -67,6 +66,10 @@ def ensure_config_file_is_ok(config):
 
     assert 'ops' in config
     assert type(config['ops']) is list
+    assert 'file_logging_level' in config, 'you have to specify file logging level'
+    assert config['file_logging_level'] in level_str_to_int, 'file_logging_level can be one of: %s' % ', '.join((level_str_to_int.keys()))
+    assert 'stdout_logging_level' in config, 'you have to specify stdout logging level'
+    assert config['stdout_logging_level'] in level_str_to_int, 'stdout_logging_level can be one of: %s' % ', '.join((level_str_to_int.keys()))
 
 
 def main():
