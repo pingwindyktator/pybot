@@ -78,13 +78,23 @@ class pybot(irc.bot.SingleServerIRCBot):
         """ called by super() when private msg received """
         full_msg = raw_msg.arguments[0]
         sender_nick = raw_msg.source.nick
-        logging.info('[PRIV] %s: %s' % (sender_nick, full_msg))
-        self.call_plugins_methods('on_privmsg', raw_msg=raw_msg, msg=full_msg, source=raw_msg.source)
+        logging.info('[PRIVATE MSG] %s: %s' % (sender_nick, full_msg))
+
+        if self.is_user_banned(sender_nick):
+            self.logger.debug('user %s is banned, skipping msg' % sender_nick)
+            return
+
+        self.call_plugins_methods('on_privmsg', raw_msg=raw_msg, source=raw_msg.source, msg=full_msg)
 
     def on_pubmsg(self, connection, raw_msg):
         """ called by super() when msg received """
         full_msg = raw_msg.arguments[0].strip()
         sender_nick = raw_msg.source.nick.lower()
+
+        if self.is_user_banned(sender_nick):
+            self.logger.debug('user %s is banned, skipping msg' % sender_nick)
+            return
+
         self.call_plugins_methods('on_pubmsg', raw_msg=raw_msg, source=raw_msg.source, msg=full_msg)
 
         raw_cmd = msg_parser.trim_msg(self.config['command_prefix'], full_msg)
@@ -138,10 +148,10 @@ class pybot(irc.bot.SingleServerIRCBot):
 
         self.call_plugins_methods('on_whoisuser', raw_msg=raw_msg, nick=raw_msg.arguments[0], user=raw_msg.arguments[1], host=raw_msg.arguments[2])
 
-    def call_plugins_methods(self, func_name, *args, **kwargs):
+    def call_plugins_methods(self, func_name, **kwargs):
         for p in self.get_plugins():
             try:
-                p.__getattribute__(func_name)(*args, **kwargs)
+                p.__getattribute__(func_name)(**kwargs)
             except Exception as e:
                 self.logger.error('exception caught calling %s: %s' % (p.__getattribute__(func_name), e))
                 if 'debug' in self.config and self.config['debug']:
@@ -217,6 +227,9 @@ class pybot(irc.bot.SingleServerIRCBot):
                 self.say(part, target)
         else:
             self.connection.privmsg(target, msg)
+
+    def is_user_banned(self, nickname):
+        return ('banned_users' in self.config and nickname in self.config['banned_users']) and (nickname not in self.config['ops'])
 
     @staticmethod
     def is_msg_too_long(msg):

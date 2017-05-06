@@ -65,8 +65,8 @@ def ensure_config_file_is_ok(config):
         assert type(config['max_autorejoin_attempts']) is int, 'max_autorejoin_attempts field type should be int'
         assert config['max_autorejoin_attempts'] >= 0, 'max_autorejoin_attempts should be >= 0'
 
-        if 'ops' in config:
-            assert type(config['ops']) is list, 'ops field type should be list'
+        assert 'ops' in config, 'you have to specify bot operators (can be empty)'
+        assert type(config['ops']) is list, 'ops field type should be list'
 
         if 'debug' in config:
             assert type(config['debug']) is bool, 'debug field type should be boolean'
@@ -81,6 +81,9 @@ def ensure_config_file_is_ok(config):
         if 'enabled_plugins' in config:
             assert 'disabled_plugins' not in config, 'you cannot have both enabled_plugins and disabled_plugins specified'
             assert type(config['enabled_plugins']) is list, 'enabled_plugins field type should be list'
+
+        if 'banned_users' in config:
+            assert type(config['banned_users']) is list, 'banned_users field type should be list'
 
         assert 'file_logging_level' in config, 'you have to specify file logging level'
         assert config['file_logging_level'] in level_str_to_int, 'file_logging_level can be one of: %s' % ', '.join((level_str_to_int.keys()))

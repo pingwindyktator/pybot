@@ -11,6 +11,7 @@ stdout_logging_level: info
 # enabled_plugins: []
 # disabled_plugins: []
 command_prefix: '!'
+banned_users: []
 debug: false
 
 bot_remote_manager:
