@@ -88,15 +88,20 @@ class pybot(irc.bot.SingleServerIRCBot):
         self.call_plugins_methods('on_pubmsg', raw_msg=raw_msg, source=raw_msg.source, msg=full_msg)
 
         raw_cmd = msg_parser.trim_msg(self.get_command_prefix(), full_msg)
-        cmd_list = raw_cmd.split()
-        cmd = cmd_list[0] if len(cmd_list) > 0 else ''
-        cmd_list = cmd_list[1:]
+        if not raw_cmd:
+            raw_cmd = msg_parser.trim_msg(self.connection.get_nickname() + ':', full_msg)
+        if not raw_cmd:
+            raw_cmd = msg_parser.trim_msg(self.connection.get_nickname() + ',', full_msg)
+
+        args_list = raw_cmd.split()
+        cmd = args_list[0] if len(args_list) > 0 else ''
+        args_list = args_list[1:]
         assert raw_cmd.startswith(cmd)
         raw_cmd = raw_cmd[len(cmd):].strip()
 
         if cmd in self.commands:
             func = self.commands[cmd]
-            func(sender_nick=sender_nick, args=cmd_list, msg=raw_cmd, raw_msg=raw_msg)
+            func(sender_nick=sender_nick, args=args_list, msg=raw_cmd, raw_msg=raw_msg)
 
     def on_kick(self, connection, raw_msg):
         if raw_msg.arguments[0] == self.connection.get_nickname():
