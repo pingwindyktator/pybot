@@ -50,10 +50,10 @@ class builtins(plugin):
     @command
     @admin
     def add_op(self, sender_nick, args, **kwargs):
-        if len(args) == 0: return
+        if not args: return
         self.bot.config['ops'].extend(args)
         subreply = 'is now op' if len(args) == 1 else 'are now ops'
-        self.bot.say('%s %s' % (', '.join(args), subreply))
+        self.bot.say('%s %s' % (args, subreply))
         self.logger.warning('%s added new ops: %s' % (sender_nick, args))
 
     @command
@@ -72,14 +72,52 @@ class builtins(plugin):
     @admin
     def ops(self, sender_nick, **kwargs):
         if len(self.bot.config['ops']) == 0:
-            subreply = 'no bot operators'
-        elif len(self.bot.config['ops']) == 1:
-            subreply = 'bot operator:'
+            reply = 'no bot operators'
         else:
-            subreply = 'bot operators:'
+            reply = 'bot operators: %s' % self.bot.config['ops']
 
-        self.bot.say('%s %s' % (subreply, self.bot.config['ops']))
+        self.bot.say(reply)
         self.logger.info('%s asked for ops: %s' % (sender_nick, self.bot.config['ops']))
+
+    @command
+    @admin
+    def ban_user(self, sender_nick, args, **kwargs):
+        if not args: return
+
+        if 'banned_users' not in self.bot.config:
+            self.bot.config['banned_users'] = args
+        else:
+            self.bot.config['banned_users'].extend(args)
+
+        subreply = 'is now banned' if len(args) == 1 else 'are now banned'
+        self.bot.say('%s %s' % (args, subreply))
+        self.logger.warning('%s banned %s' % (sender_nick, args))
+
+    @command
+    @admin
+    def unban_user(self, sender_nick, args, **kwargs):
+        if 'banned_users' not in self.bot.config: return
+        to_ban = [arg for arg in args if arg in self.bot.config['banned_users']]
+        if not to_ban: return
+        for arg in to_ban:
+            self.bot.config['banned_users'].remove(arg)
+
+        subreply = 'is no longer banned' if len(to_ban) == 1 else 'are no longer banned'
+        self.bot.say('%s %s' % (to_ban, subreply))
+        self.logger.warning('%s removed ops: %s' % (sender_nick, to_ban))
+
+    @command
+    @admin
+    def banned_users(self, sender_nick, **kwargs):
+        banned = self.bot.config['banned_users'] if 'banned_users' in self.bot.config else []
+
+        if len(banned) == 0:
+            reply = 'no banned users'
+        else:
+            reply = 'banned users: %s' % banned
+
+        self.bot.say(reply)
+        self.logger.info('%s asked for banned users: %s' % (sender_nick, banned))
 
     @command
     @admin
