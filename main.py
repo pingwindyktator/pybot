@@ -52,6 +52,7 @@ def ensure_config_file_is_ok(config):
     assert 'channel' in config
     assert type(config['channel']) is str
     assert config['channel'].strip() != ''
+    assert config['channel'].startswith('#')
 
     assert 'nickname' in config
     assert type(config['nickname']) is list
