@@ -10,6 +10,7 @@ file_logging_level: info
 stdout_logging_level: info
 # enabled_plugins: []
 # disabled_plugins: []
+command_prefix: '!'
 debug: false
 
 bot_remote_manager:

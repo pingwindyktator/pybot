@@ -87,7 +87,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         sender_nick = raw_msg.source.nick.lower()
         self.call_plugins_methods('on_pubmsg', raw_msg=raw_msg, source=raw_msg.source, msg=full_msg)
 
-        raw_cmd = msg_parser.trim_msg(self.get_command_prefix(), full_msg)
+        raw_cmd = msg_parser.trim_msg(self.config['command_prefix'], full_msg)
         if not raw_cmd:
             raw_cmd = msg_parser.trim_msg(self.connection.get_nickname() + ':', full_msg)
         if not raw_cmd:
@@ -231,9 +231,6 @@ class pybot(irc.bot.SingleServerIRCBot):
             if password is not None and password != '':
                 self.logger.info('identifying as %s...' % self.connection.get_nickname())
                 self.say('NickServ', 'identify %s %s' % (self.connection.get_nickname(), password))
-
-    def get_command_prefix(self):
-        return '.'
 
     def join_channel(self):
         self.logger.info('joining %s...' % self.config['channel'])
