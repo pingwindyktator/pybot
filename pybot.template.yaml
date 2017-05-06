@@ -17,7 +17,7 @@ builtins:
   source: https://github.com/pingwindyktator/pybot/tree/develop
 
 stalker:
-  db_location: stalker.db
+  db_location: ./db/stalker.db
 
 wolfram_alpha:
   api_key: 4EU37Y-TX9WJG3JH3

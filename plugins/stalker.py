@@ -1,8 +1,9 @@
+import os
 import time
-from threading import Thread, Lock
 import json
 import sqlite3
 
+from threading import Thread, Lock
 from plugin import *
 
 
@@ -10,6 +11,9 @@ class stalker(plugin):
     def __init__(self, bot):
         super().__init__(bot)
         self.db_name = 'stalker'
+        if not os.path.exists(self.config['db_location']):
+            os.makedirs(os.path.dirname(os.path.realpath(self.config['db_location'])))
+
         self.db_connection = sqlite3.connect(self.config['db_location'], check_same_thread=False)
         self.db_cursor = self.db_connection.cursor()
         self.db_cursor.execute("CREATE TABLE IF NOT EXISTS '%s' (host TEXT primary key not null, nicks TEXT)" % self.db_name)  # host -> {nicknames}
