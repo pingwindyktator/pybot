@@ -188,7 +188,7 @@ class builtins(plugin):
 
     def update_config(self):
         config = yaml.load(open("./pybot.yaml"), Loader=yaml.RoundTripLoader)
-        for key, value in yaml.load(open("./pybot.template.yaml")).items():
+        for key, value in yaml.load(open("./pybot.template.yaml"), Loader=yaml.Loader).items():
             self.update_config_impl(key, value, config)
 
         if config == self.bot.config: return
