@@ -45,6 +45,10 @@ class notify(plugin):
     @command
     def notifies(self, sender_nick, **kwargs):
         result = self.database[sender_nick] if sender_nick in self.database else {}
-        self.bot.say('notifying %s -> %s' % (result, sender_nick))
+        if result:
+            self.bot.say('notifying %s -> %s' % (result, sender_nick))
+        else:
+            self.bot.say('no notifies set for %s' % sender_nick)
+
         self.logger.info('notifying %s -> %s' % (result, sender_nick))
 
