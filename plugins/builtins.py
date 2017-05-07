@@ -1,10 +1,11 @@
 import os
 import subprocess
-import sys
 
+from ruamel import yaml
 from threading import Lock
-from irc.client import NickMask
 from collections import namedtuple
+from irc.client import NickMask
+from ruamel.yaml.comments import CommentedMap
 
 from plugin import *
 
@@ -149,6 +150,43 @@ class builtins(plugin):
         out, err = process.communicate()
         return ''.join([chr(x) for x in list(out)[:-1]])
 
+    def update_config_impl(self, key, value, config):
+        """
+        :param entry: what to insert to :param config
+        """
+
+        if key not in config:
+            config[key] = value
+            self.logger.info('inserting %s:%s to config file' % (key, value))
+        elif type(value) is dict:  # do not override non-dict values
+            for v_key, v_value in value.items():
+                self.update_config_impl(v_key, v_value, config[key])
+
+    def format_and_save_config(self, config):
+        config = config.copy()
+        global_config = CommentedMap()
+        plugins_config = CommentedMap()
+
+        for key, value in config.items():
+            if type(value) is not dict and type(value) is not CommentedMap:
+                global_config[key] = value
+            else:
+                plugins_config[key] = value
+
+        with open('./pybot.yaml', 'w') as outfile:
+            yaml.dump(global_config, outfile, Dumper=yaml.RoundTripDumper)
+            outfile.write('\n')
+            yaml.dump(plugins_config, outfile, Dumper=yaml.RoundTripDumper)
+
+    def update_config(self):
+        config = yaml.load(open("./pybot.yaml"), Loader=yaml.RoundTripLoader)
+        for key, value in yaml.load(open("./pybot.template.yaml")).items():
+            self.update_config_impl(key, value, config)
+
+        self.bot.config = config
+        self.format_and_save_config(config)
+        self.logger.warning('config file updated')
+
     @command
     @admin
     def self_update(self, sender_nick, **kwargs):
@@ -166,6 +204,7 @@ class builtins(plugin):
                 '%s asked for self-update, but %s returned %s exit code' % (sender_nick, cmd, process.returncode))
             self.bot.say("cannot update, 'git pull' returns non-zero exit code")
         else:
+            self.update_config()
             self.logger.warning('%s asked for self-update' % sender_nick)
             self.bot.say('updated, now at %s' % self.get_current_head_pos())
 
