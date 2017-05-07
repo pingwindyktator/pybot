@@ -27,6 +27,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         self.config = config
         self.joined_to_channel = False
         self.autorejoin_attempts = 0
+        self.channel = None
 
         self.plugins = set()
         self.commands = {}  # map command -> func
@@ -143,10 +144,14 @@ class pybot(irc.bot.SingleServerIRCBot):
         # workaround here:
         # /whois me triggers on_me_joined call because when first time on self.on_join (== when bot joins channel) users-list is not updated yet
         if raw_msg.arguments[0] == self.connection.get_nickname() and not self.joined_to_channel:
-            self.call_plugins_methods('on_me_joined', raw_msg=raw_msg, channel=self.config['channel'])
-            self.joined_to_channel = True
+            self.on_me_joined(connection, raw_msg)
 
         self.call_plugins_methods('on_whoisuser', raw_msg=raw_msg, nick=raw_msg.arguments[0], user=raw_msg.arguments[1], host=raw_msg.arguments[2])
+
+    def on_me_joined(self, connection, raw_msg):
+        self.call_plugins_methods('on_me_joined', raw_msg=raw_msg, channel=self.config['channel'])
+        self.joined_to_channel = True
+        self.channel = self.channels[self.config['channel']]
 
     def call_plugins_methods(self, func_name, **kwargs):
         for p in self.get_plugins():

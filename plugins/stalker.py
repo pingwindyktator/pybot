@@ -36,11 +36,10 @@ class stalker(plugin):
 
     def update_all(self):
         self.logger.info("updating whole stalker's database started...")
-        channels = self.bot.channels.copy()
-        for channel in channels:
-            for username in channels[channel].users():
-                self.bot.whois(username)
-                time.sleep(1)  # to not get kicked because of Excess Flood
+        users = list(self.bot.channel.users())
+        for username in users:
+            self.bot.whois(username)
+            time.sleep(1)  # to not get kicked because of Excess Flood
 
         self.logger.info("updating whole stalker's database finished")
 
