@@ -178,10 +178,20 @@ class builtins(plugin):
             outfile.write('\n')
             yaml.dump(plugins_config, outfile, Dumper=yaml.RoundTripDumper)
 
+        with open('./pybot.yaml', 'r+') as outfile:
+            lines = outfile.readlines()
+            outfile.truncate(0)
+            for i, line in enumerate(lines):
+                outfile.write(line)
+                if line.strip() and line.startswith(' ') and i + 1 < len(lines) and lines[i + 1] and lines[i + 1][0].isalpha():
+                    outfile.write('\n')
+
     def update_config(self):
         config = yaml.load(open("./pybot.yaml"), Loader=yaml.RoundTripLoader)
         for key, value in yaml.load(open("./pybot.template.yaml")).items():
             self.update_config_impl(key, value, config)
+
+        if config == self.bot.config: return
 
         self.bot.config = config
         self.format_and_save_config(config)
