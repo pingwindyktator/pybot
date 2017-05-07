@@ -1,7 +1,7 @@
 import logging
 import sys
-import yaml
 
+from ruamel import yaml
 from plugins import *
 from pybot import pybot
 
