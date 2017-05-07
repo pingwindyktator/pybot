@@ -113,9 +113,9 @@ class plugin:
 
 def command(function):
     @wraps(function)
-    def command_impl(self, *args, **kwargs):
+    def command_impl(self, **kwargs):
         try:
-            function(self, *args, **kwargs)
+            function(self, **kwargs)
         except Exception as e:
             self.logger.error('exception caught calling %s: %s' % (function, e))
             if 'debug' in self.bot.config and self.bot.config['debug']:
@@ -135,8 +135,8 @@ def doc(doc_string):
 
 def admin(function):
     @wraps(function)
-    def admin_impl(self, sender_nick, *args, **kwargs):
+    def admin_impl(self, sender_nick, **kwargs):
         if sender_nick in self.bot.config['ops']:
-            function(self, sender_nick, *args, **kwargs)
+            function(self, sender_nick=sender_nick, **kwargs)
 
     return admin_impl
