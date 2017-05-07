@@ -114,7 +114,7 @@ class SingleServerIRCBot_mock:
 
     def start(self):
         self.init_bot()
-        self.channels[getattr(self, 'channel')] = chobj_t(self.connection.get_nickname())
+        self.channels[getattr(self, 'config')['channel']] = chobj_t(self.connection.get_nickname())
 
         while True:
             msg = input('> ')
@@ -130,7 +130,7 @@ class SingleServerIRCBot_mock:
         exit(0)
 
 
-def configure_logger():
+def configure_logger(*args, **kwargs):
     logging_format = '%(levelname)-10s%(asctime)s %(filename)s:%(funcName)-16s: %(message)s'
     logging.basicConfig(format=logging_format, level=logging.INFO, stream=sys.stdout)
 
