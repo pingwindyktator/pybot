@@ -99,7 +99,7 @@ def ensure_config_file_is_ok(config):
 
 
 def main():
-    config = yaml.load(open("pybot.yaml"))
+    config = yaml.load(open("pybot.yaml"), Loader=yaml.Loader)
     ensure_config_file_is_ok(config)
     configure_logger(config)
     bot = pybot(config)
