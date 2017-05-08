@@ -149,9 +149,9 @@ class pybot(irc.bot.SingleServerIRCBot):
         self.call_plugins_methods('on_whoisuser', raw_msg=raw_msg, nick=raw_msg.arguments[0], user=raw_msg.arguments[1], host=raw_msg.arguments[2])
 
     def on_me_joined(self, connection, raw_msg):
-        self.call_plugins_methods('on_me_joined', raw_msg=raw_msg, channel=self.config['channel'])
         self.joined_to_channel = True
         self.channel = self.channels[self.config['channel']]
+        self.call_plugins_methods('on_me_joined', raw_msg=raw_msg, channel=self.config['channel'])
 
     def call_plugins_methods(self, func_name, **kwargs):
         for p in self.get_plugins():
@@ -164,7 +164,7 @@ class pybot(irc.bot.SingleServerIRCBot):
 
     def register_plugin(self, plugin_instance):
         self.plugins.add(plugin_instance)
-        self.logger.info('plugin %s loaded' % type(plugin_instance).__name__)
+        self.logger.info('+ plugin %s loaded' % type(plugin_instance).__name__)
 
     def register_commands_for_plugin(self, plugin_instance):
         for f in inspect.getmembers(plugin_instance, predicate=inspect.ismethod):
@@ -181,7 +181,7 @@ class pybot(irc.bot.SingleServerIRCBot):
 
         for plugin_class in plugin.plugin.__subclasses__():
             if plugin_class.__name__ in disabled_plugins or plugin_class.__name__ not in enabled_plugins:
-                self.logger.info('skipping %s plugin' % plugin_class.__name__)
+                self.logger.info('- plugin %s skipped' % plugin_class.__name__)
                 continue
 
             plugin_instance = plugin_class(self)
