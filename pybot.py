@@ -234,7 +234,7 @@ class pybot(irc.bot.SingleServerIRCBot):
             self.connection.privmsg(target, msg)
 
     def is_user_banned(self, nickname):
-        return ('banned_users' in self.config and nickname in self.config['banned_users']) and (nickname not in self.config['ops'])
+        return ('banned_users' in self.config and nickname.lower() in (nn.lower() for nn in self.config['banned_users'])) and (nickname not in self.config['ops'])
 
     @staticmethod
     def is_msg_too_long(msg):

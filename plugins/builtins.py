@@ -89,7 +89,7 @@ class builtins(plugin):
         if 'banned_users' not in self.bot.config:
             self.bot.config['banned_users'] = args
         else:
-            self.bot.config['banned_users'].extend(args)
+            self.bot.config['banned_users'].extend([arg.lower() for arg in args])
 
         reply = '%s is now banned' % args[0] if len(args) == 1 else '%s are now banned' % args
         self.bot.say(reply)
@@ -99,14 +99,14 @@ class builtins(plugin):
     @admin
     def unban_user(self, sender_nick, args, **kwargs):
         if 'banned_users' not in self.bot.config: return
-        to_ban = [arg for arg in args if arg in self.bot.config['banned_users']]
+        to_ban = [arg.lower() for arg in args if arg.lower() in self.bot.config['banned_users']]
         if not to_ban: return
         for arg in to_ban:
             self.bot.config['banned_users'].remove(arg)
 
         reply = '%s is no longer banned' % to_ban[0] if len(to_ban) == 1 else '%s are no longer banned' % to_ban
         self.bot.say(reply)
-        self.logger.warning('%s removed ops: %s' % (sender_nick, to_ban))
+        self.logger.warning('%s unbaned: %s' % (sender_nick, to_ban))
 
     @command
     @admin
