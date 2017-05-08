@@ -54,8 +54,8 @@ class builtins(plugin):
     def add_op(self, sender_nick, args, **kwargs):
         if not args: return
         self.bot.config['ops'].extend(args)
-        subreply = 'is now op' if len(args) == 1 else 'are now ops'
-        self.bot.say('%s %s' % (args, subreply))
+        reply = '%s is now op' % args[0] if len(args) == 1 else '%s are now ops' % args
+        self.bot.say(reply)
         self.logger.warning('%s added new ops: %s' % (sender_nick, args))
 
     @command
@@ -66,8 +66,8 @@ class builtins(plugin):
         for arg in to_remove:
             self.bot.config['ops'].remove(arg)
 
-        subreply = 'is no longer op' if len(to_remove) == 1 else 'are no longer ops'
-        self.bot.say('%s %s' % (to_remove, subreply))
+        reply = '%s is no longer op' % to_remove[0] if len(to_remove) == 1 else '%s are no longer ops' % to_remove
+        self.bot.say(reply)
         self.logger.warning('%s removed ops: %s' % (sender_nick, to_remove))
 
     @command
@@ -91,8 +91,8 @@ class builtins(plugin):
         else:
             self.bot.config['banned_users'].extend(args)
 
-        subreply = 'is now banned' if len(args) == 1 else 'are now banned'
-        self.bot.say('%s %s' % (args, subreply))
+        reply = '%s is now banned' % args[0] if len(args) == 1 else '%s are now banned' % args
+        self.bot.say(reply)
         self.logger.warning('%s banned %s' % (sender_nick, args))
 
     @command
@@ -104,8 +104,8 @@ class builtins(plugin):
         for arg in to_ban:
             self.bot.config['banned_users'].remove(arg)
 
-        subreply = 'is no longer banned' if len(to_ban) == 1 else 'are no longer banned'
-        self.bot.say('%s %s' % (to_ban, subreply))
+        reply = '%s is no longer banned' % to_ban[0] if len(to_ban) == 1 else '%s are no longer banned' % to_ban
+        self.bot.say(reply)
         self.logger.warning('%s removed ops: %s' % (sender_nick, to_ban))
 
     @command
