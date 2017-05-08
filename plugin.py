@@ -118,8 +118,7 @@ def command(function):
             function(self, **kwargs)
         except Exception as e:
             self.logger.error('exception caught calling %s: %s' % (function, e))
-            if 'debug' in self.bot.config and self.bot.config['debug']:
-                raise
+            if self.bot.is_debug_mode_enabled(): raise
 
     command_impl.__command = True
     return command_impl

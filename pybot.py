@@ -159,8 +159,7 @@ class pybot(irc.bot.SingleServerIRCBot):
                 p.__getattribute__(func_name)(**kwargs)
             except Exception as e:
                 self.logger.error('exception caught calling %s: %s' % (p.__getattribute__(func_name), e))
-                if 'debug' in self.config and self.config['debug']:
-                    raise
+                if self.is_debug_mode_enabled(): raise
 
     def register_plugin(self, plugin_instance):
         self.plugins.add(plugin_instance)
@@ -257,3 +256,6 @@ class pybot(irc.bot.SingleServerIRCBot):
     def leave_channel(self):
         self.logger.info('leaving %s...' % self.config['channel'])
         self.connection.part(self.config['channel'])
+
+    def is_debug_mode_enabled(self):
+        return 'debug' in self.config and self.config['debug']

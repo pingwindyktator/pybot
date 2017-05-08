@@ -222,8 +222,7 @@ class builtins(plugin):
             except Exception as e:
                 suffix = ', unable to update config file!'
                 self.logger.warning('exception caught while updating config file: %s' % e)
-                if 'debug' in self.bot.config and self.bot.config['debug']:
-                    raise
+                if self.bot.is_debug_mode_enabled(): raise
 
             self.logger.warning('%s asked for self-update' % sender_nick)
             self.bot.say('updated, now at "%s"%s' % (self.get_current_head_pos(), suffix))
