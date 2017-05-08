@@ -183,7 +183,12 @@ class pybot(irc.bot.SingleServerIRCBot):
                 self.logger.info('- plugin %s skipped' % plugin_class.__name__)
                 continue
 
-            plugin_instance = plugin_class(self)
+            try:
+                plugin_instance = plugin_class(self)
+            except Exception as e:
+                self.logger.warning('- unable to load plugin %s: %s' % (plugin_class.__name__, e))
+                continue
+
             self.register_plugin(plugin_instance)
             self.register_commands_for_plugin(plugin_instance)
 
