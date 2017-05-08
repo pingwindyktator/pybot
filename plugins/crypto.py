@@ -47,4 +47,13 @@ class crypto(plugin):
 
         content = requests.get(url % ask_id.id, timeout=5).content.decode('utf-8')
         raw_result = json.loads(content)[0]
-        self.bot.say(color.orange('[%s]' % ask_id.name) + ' $%s' % raw_result['price_usd'])
+        
+        hour_change = float(raw_result['percent_change_1h'])
+        day_change = float(raw_result['percent_change_24h'])
+        week_change = float(raw_result['percent_change_7d'])
+
+        hour_change = color.light_green('+%s%%' % hour_change) if hour_change >= 0 else color.light_red('%s%%' % hour_change)
+        day_change = color.light_green('+%s%%' % day_change) if day_change >= 0 else color.light_red('%s%%' % day_change)
+        week_change = color.light_green('+%s%%' % week_change) if week_change >= 0 else color.light_red('%s%%' % week_change)
+
+        self.bot.say(color.orange('[%s]' % ask_id.name) + ' $%s' % raw_result['price_usd'] + ' [%s hourly, %s daily, %s weekly]' % (hour_change, day_change, week_change))
