@@ -83,7 +83,7 @@ class crypto(plugin):
 
     def convert_impl(self, sender_nick, amount, from_curr, to_curr):
         self.logger.info('%s wants to convert %s %s to %s' % (sender_nick, amount, from_curr, to_curr))
-        to_curr_org = to_curr
+        to_curr_org = to_curr.upper()
         _from_curr = self.get_currency_id(from_curr)
         _to_curr = self.get_currency_id(to_curr)
         convertions = [None, None, None]
@@ -101,7 +101,7 @@ class crypto(plugin):
             convertions[1] = self.convertion(amount / to_curr_usd_price, _to_curr.symbol, amount, 'usd')
             amount /= to_curr_usd_price
             to_curr = 'usd'
-        else: to_curr_org = to_curr_org.upper()
+            to_curr_org = _to_curr.symbol
 
         result = amount
 
