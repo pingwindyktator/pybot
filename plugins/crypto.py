@@ -47,4 +47,4 @@ class crypto(plugin):
 
         content = requests.get(url % ask_id.id, timeout=5).content.decode('utf-8')
         raw_result = json.loads(content)[0]
-        self.bot.say(color.orange('[%s]' % ask_id.name) + '$%s' % raw_result['price_usd'])
+        self.bot.say(color.orange('[%s]' % ask_id.name) + ' $%s' % raw_result['price_usd'])
