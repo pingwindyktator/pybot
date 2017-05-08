@@ -192,11 +192,12 @@ class builtins(plugin):
         for key, value in yaml.load(open("./pybot.template.yaml"), Loader=yaml.Loader).items():
             self.update_config_impl(key, value, config)
 
-        if config == self.bot.config: return
+        if config == self.bot.config: return False
 
         self.bot.config = config
         self.format_and_save_config(config)
         self.logger.warning('config file updated')
+        return True
 
     @command
     @admin
@@ -215,9 +216,17 @@ class builtins(plugin):
                 '%s asked for self-update, but %s returned %s exit code' % (sender_nick, cmd, process.returncode))
             self.bot.say("cannot update, 'git pull' returns non-zero exit code")
         else:
-            self.update_config()
+            suffix = ''
+            try:
+                if self.update_config(): suffix = ', config file updated'
+            except Exception as e:
+                suffix = ', unable to update config file!'
+                self.logger.warning('exception caught while updating config file: %s' % e)
+                if 'debug' in self.bot.config and self.bot.config['debug']:
+                    raise
+
             self.logger.warning('%s asked for self-update' % sender_nick)
-            self.bot.say('updated, now at %s' % self.get_current_head_pos())
+            self.bot.say('updated, now at "%s"%s' % (self.get_current_head_pos(), suffix))
 
     def on_whoisuser(self, nick, user, host, **kwargs):
         cmds = self.commands_as_other_user_to_send.copy()
