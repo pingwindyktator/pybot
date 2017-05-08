@@ -2,3 +2,4 @@ ruamel_yaml
 lxml
 requests
 irc>=15.0.4
+BeautifulSoup4
