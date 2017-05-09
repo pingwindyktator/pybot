@@ -12,7 +12,7 @@ class crypto(plugin):
         self.known_crypto_currencies = self.get_crypto_currencies()
         self.convert_regex = re.compile(r'^([0-9]*\.?[0-9]*)\W*([A-Za-z]+)\W+(to|in)\W+([A-Za-z]+)$')
         self.coinmarketcap_url = r'https://api.coinmarketcap.com/v1/ticker/%s'
-        self.google_finance_url = r'https://www.google.com/finance/converter?a=%s&from=%s&to=%s'
+        self.fixer_url = r'http://api.fixer.io/latest?base=%s'
 
     class currency_id:
         def __init__(self, id, name, symbol):
@@ -122,15 +122,21 @@ class crypto(plugin):
 
         result = amount
 
-        if not (_from_curr and _to_curr):
-            content = requests.get(self.google_finance_url % (amount, from_curr, to_curr), timeout=5).content
-            soup = BeautifulSoup(content, "lxml")
-            div = soup.find('div', {'id': 'currency_converter_result'})
-            if not div.contents[1].contents:
-                self.bot.say("Google Finances can't convert %s %s to %s" % (amount, from_curr, to_curr))
+        if not (_from_curr and _to_curr) and from_curr.upper() != to_curr.upper():
+            content = requests.get(self.fixer_url % from_curr, timeout=5).content
+            raw_result = json.loads(content)
+            if 'error' in raw_result:
+                if raw_result['error'] == 'Invalid base':
+                    self.bot.say("fixer.io knows nothing about %s" % from_curr)
+                else:
+                    self.bot.say("fixer.io can't convert %s to %s" % (from_curr, to_curr))
+                    self.logger.info('fixer.io error: %s' % raw_result['error'])
+                return
+            elif to_curr.upper() not in raw_result['rates']:
+                self.bot.say("fixer.io knows nothing about %s" % to_curr)
                 return
             else:
-                result = float(div.contents[1].contents[0].split()[0])
+                result = amount * raw_result['rates'][to_curr.upper()]
                 convertions[2] = self.convertion(amount, from_curr, result, to_curr)
 
         self.logger.info(convertions)
