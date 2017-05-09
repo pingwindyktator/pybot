@@ -3,7 +3,6 @@ import re
 import requests
 
 from plugin import *
-from bs4 import BeautifulSoup
 
 
 class crypto(plugin):
