@@ -11,6 +11,7 @@ class crypto(plugin):
         super().__init__(bot)
         self.known_crypto_currencies = self.get_crypto_currencies()
         self.convert_regex = re.compile(r'^([0-9]*\.?[0-9]*)\W*([A-Za-z]+)\W+(to|in)\W+([A-Za-z]+)$')
+        self.amount_present_regex = re.compile(r'([0-9]*\.?[0-9]*)\W*([A-Za-z]+)$')
         self.coinmarketcap_url = r'https://api.coinmarketcap.com/v1/ticker/%s'
         self.google_finance_url = r'https://www.google.com/finance/converter?a=%s&from=%s&to=%s'
 
@@ -67,22 +68,30 @@ class crypto(plugin):
         if not msg: return
         msg = msg.strip()
         convert = self.convert_regex.findall(msg)
+        amount_present = self.amount_present_regex.findall(msg)
 
         if convert:
             self.logger.info('%s wants to convert %s %s to %s' % (sender_nick, convert[0][0], convert[0][1], convert[0][3]))
             self.convert_impl(float(convert[0][0]) if convert[0][0] else 1., convert[0][1], convert[0][3])
         else:
-            self.logger.info('%s asked coinmarketcap about %s' % (sender_nick, msg))
-            self.crypto_impl(msg)
+            if amount_present:
+                amount = float(amount_present[0][0]) if amount_present[0][0] else 1.
+                curr = amount_present[0][1]
+            else:
+                amount = 1.
+                curr = msg
 
-    def crypto_impl(self, curr):
+            self.logger.info('%s asks coinmarketcap about %s %s' % (sender_nick, amount, curr))
+            self.crypto_impl(amount, curr)
+
+    def crypto_impl(self, amount, curr):
         curr_info = self.get_crypto_curr_info(curr)
 
         if not curr_info:
             self.bot.say('no such crypto currency: %s' % curr)
             return
 
-        self.bot.say(color.orange('[%s]' % curr_info.id.name) + ' $%s ' % curr_info.price_usd + self.generate_curr_price_change_output(curr_info))
+        self.bot.say(color.orange('[%s]' % curr_info.id.name) + ' $%s (US dollars) ' % (amount * curr_info.price_usd) + self.generate_curr_price_change_output(curr_info))
 
     # --------------------------------------------------------------------------------------------------------------
 
@@ -103,6 +112,10 @@ class crypto(plugin):
         convertions = [None, None, None]
 
         if _from_curr:
+            if to_curr.lower() == 'usd':
+                self.crypto_impl(amount, from_curr)
+                return
+
             convertions[0] = self.convertion(amount, _from_curr.id.symbol, amount * _from_curr.price_usd, 'usd')
             amount *= _from_curr.price_usd
             from_curr = 'usd'
