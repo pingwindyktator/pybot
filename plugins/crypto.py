@@ -9,16 +9,26 @@ from bs4 import BeautifulSoup
 class crypto(plugin):
     def __init__(self, bot):
         super().__init__(bot)
-        self.currencies = self.get_crypto_currencies()
-        self.regex = re.compile(r'^([0-9]*\.?[0-9]*)\W*([A-Za-z]+)\W+(to|in)\W+([A-Za-z]+)$')
+        self.known_crypto_currencies = self.get_crypto_currencies()
+        self.convert_regex = re.compile(r'^([0-9]*\.?[0-9]*)\W*([A-Za-z]+)\W+(to|in)\W+([A-Za-z]+)$')
         self.coinmarketcap_url = r'https://api.coinmarketcap.com/v1/ticker/%s'
         self.google_finance_url = r'https://www.google.com/finance/converter?a=%s&from=%s&to=%s'
 
-    class crypto_currency_id:
+    class currency_id:
         def __init__(self, id, name, symbol):
             self.id = id
             self.name = name
             self.symbol = symbol
+
+    class currency_info:
+        def __init__(self, id, raw_result):
+            self.id = id
+            self.price_usd = float(raw_result['price_usd'])
+            self.price_btc = float(raw_result['price_btc'])
+            self.hour_change = float(raw_result['percent_change_1h'])
+            self.day_change = float(raw_result['percent_change_24h'])
+            self.week_change = float(raw_result['percent_change_7d'])
+            self.marker_cap_usd = float(raw_result['market_cap_usd'])
 
     def get_crypto_currencies(self):
         url = r'https://api.coinmarketcap.com/v1/ticker/'
@@ -26,82 +36,82 @@ class crypto(plugin):
         raw_result = json.loads(content)
         result = []
         for entry in raw_result:
-            result.append(self.crypto_currency_id(entry['id'], entry['name'], entry['symbol']))
+            result.append(self.currency_id(entry['id'], entry['name'], entry['symbol']))
 
         return result
 
-    def get_currency_id(self, alias):
+    def get_crypto_currency_id(self, alias):
         alias = alias.lower()
-        for entry in self.currencies:
+        for entry in self.known_crypto_currencies:
             if entry.id == alias or entry.name.lower() == alias or entry.symbol.lower() == alias:
                 return entry
 
         return None
 
+    def get_crypto_curr_info(self, curr):
+        curr_id = self.get_crypto_currency_id(curr)
+        if not curr_id: return None
+
+        content = requests.get(self.coinmarketcap_url % curr_id.id, timeout=5).content.decode('utf-8')
+        raw_result = json.loads(content)[0]
+        return self.currency_info(curr_id, raw_result)
+
+    def generate_curr_price_change_output(self, curr_info):
+        hour_change = color.light_green('+%s%%' % curr_info.hour_change) if curr_info.hour_change >= 0 else color.light_red('%s%%' % curr_info.hour_change)
+        day_change = color.light_green('+%s%%' % curr_info.day_change) if curr_info.day_change >= 0 else color.light_red('%s%%' % curr_info.day_change)
+        week_change = color.light_green('+%s%%' % curr_info.week_change) if curr_info.week_change >= 0 else color.light_red('%s%%' % curr_info.week_change)
+        return '[%s hourly, %s daily, %s weekly]' % (hour_change, day_change, week_change)
+
     @command
     def crypto(self, sender_nick, msg, **kwargs):
         if not msg: return
         msg = msg.strip()
-        convert = self.regex.findall(msg)
+        convert = self.convert_regex.findall(msg)
+
         if convert:
-            self.convert_impl(sender_nick, float(convert[0][0]) if convert[0][0] else 1., convert[0][1], convert[0][3])
+            self.logger.info('%s wants to convert %s %s to %s' % (sender_nick, convert[0][0], convert[0][1], convert[0][3]))
+            self.convert_impl(float(convert[0][0]) if convert[0][0] else 1., convert[0][1], convert[0][3])
         else:
-            self.get_crypto_data(sender_nick, msg)
+            self.logger.info('%s asked coinmarketcap about %s' % (sender_nick, msg))
+            self.crypto_impl(msg)
 
-    def get_crypto_data(self, sender_nick, curr):
-        self.logger.info('%s asked coinmarketcap about %s' % (sender_nick, curr))
-        curr_id = self.get_currency_id(curr)
+    def crypto_impl(self, curr):
+        curr_info = self.get_crypto_curr_info(curr)
 
-        if not curr_id:
-            self.bot.say('no known currency: %s' % curr)
+        if not curr_info:
+            self.bot.say('no such crypto currency: %s' % curr)
             return
 
-        content = requests.get(self.coinmarketcap_url % curr_id.id, timeout=5).content.decode('utf-8')
-        raw_result = json.loads(content)[0]
-
-        hour_change = float(raw_result['percent_change_1h'])
-        day_change = float(raw_result['percent_change_24h'])
-        week_change = float(raw_result['percent_change_7d'])
-
-        hour_change = color.light_green('+%s%%' % hour_change) if hour_change >= 0 else color.light_red('%s%%' % hour_change)
-        day_change = color.light_green('+%s%%' % day_change) if day_change >= 0 else color.light_red('%s%%' % day_change)
-        week_change = color.light_green('+%s%%' % week_change) if week_change >= 0 else color.light_red('%s%%' % week_change)
-
-        self.bot.say(color.orange('[%s]' % curr_id.name) + ' $%s' % raw_result['price_usd'] + ' [%s hourly, %s daily, %s weekly]' % (hour_change, day_change, week_change))
+        self.bot.say(color.orange('[%s]' % curr_info.id.name) + ' $%s ' % curr_info.price_usd + self.generate_curr_price_change_output(curr_info))
 
     # --------------------------------------------------------------------------------------------------------------
 
     class convertion:
         def __init__(self, amount_from, from_curr, amount_to, to_curr):
             self.amount_from = float(amount_from)
-            self.from_curr = from_curr.upper()
+            self.from_curr = from_curr
             self.amount_to = float(amount_to)
-            self.to_curr = to_curr.upper()
+            self.to_curr = to_curr
 
         def __repr__(self):
             return '%s %s == %s %s' % (self.amount_from, self.from_curr, self.amount_to, self.to_curr)
 
-    def convert_impl(self, sender_nick, amount, from_curr, to_curr):
-        self.logger.info('%s wants to convert %s %s to %s' % (sender_nick, amount, from_curr, to_curr))
+    def convert_impl(self, amount, from_curr, to_curr):
         to_curr_org = to_curr.upper()
-        _from_curr = self.get_currency_id(from_curr)
-        _to_curr = self.get_currency_id(to_curr)
+        _from_curr = self.get_crypto_curr_info(from_curr)
+        _to_curr = self.get_crypto_curr_info(to_curr)
         convertions = [None, None, None]
 
         if _from_curr:
-            content = requests.get(self.coinmarketcap_url % _from_curr.id, timeout=5).content.decode('utf-8')
-            from_curr_usd_price = float(json.loads(content)[0]['price_usd'])
-            convertions[0] = self.convertion(amount, _from_curr.symbol, amount * from_curr_usd_price, 'usd')
-            amount *= from_curr_usd_price
+            convertions[0] = self.convertion(amount, _from_curr.id.symbol, amount * _from_curr.price_usd, 'usd')
+            amount *= _from_curr.price_usd
             from_curr = 'usd'
 
         if _to_curr:
-            content = requests.get(self.coinmarketcap_url % _to_curr.id, timeout=5).content.decode('utf-8')
-            to_curr_usd_price = float(json.loads(content)[0]['price_usd'])
-            convertions[1] = self.convertion(amount / to_curr_usd_price, _to_curr.symbol, amount, 'usd')
-            amount /= to_curr_usd_price
+            convertions[1] = self.convertion(amount / _to_curr.price_usd, _to_curr.id.symbol, amount, 'usd')
+            amount /= _to_curr.price_usd
             to_curr = 'usd'
-            to_curr_org = _to_curr.symbol
+            to_curr_org = _to_curr.id.symbol
 
         result = amount
 
