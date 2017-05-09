@@ -57,10 +57,17 @@ class crypto(plugin):
         return self.currency_info(curr_id, raw_result)
 
     def generate_curr_price_change_output(self, curr_info):
-        hour_change = color.light_green('+%s%%' % curr_info.hour_change) if curr_info.hour_change >= 0 else color.light_red('%s%%' % curr_info.hour_change)
-        day_change = color.light_green('+%s%%' % curr_info.day_change) if curr_info.day_change >= 0 else color.light_red('%s%%' % curr_info.day_change)
-        week_change = color.light_green('+%s%%' % curr_info.week_change) if curr_info.week_change >= 0 else color.light_red('%s%%' % curr_info.week_change)
-        return '[%s hourly, %s daily, %s weekly]' % (hour_change, day_change, week_change)
+        results = []
+
+        for change in [curr_info.hour_change, curr_info.day_change, curr_info.week_change]:
+            if change >= 0:
+                result = color.light_green('+%s%%' % change) + ' | ' + color.light_green('+$%.2f' % (change * curr_info.price_usd / 100.))
+            else:
+                result = color.light_red('%s%%' % change) + ' | ' + color.light_red('-$%.2f' % abs(change * curr_info.price_usd / 100.))
+
+            results.append(result)
+
+        return '[%s hourly] [%s daily] [%s weekly]' % (results[0], results[1], results[2])
 
     @command
     def crypto(self, sender_nick, msg, **kwargs):
@@ -82,7 +89,7 @@ class crypto(plugin):
             self.bot.say('no such crypto currency: %s' % curr)
             return
 
-        self.bot.say(color.orange('[%s]' % curr_info.id.name) + ' $%s ' % curr_info.price_usd + self.generate_curr_price_change_output(curr_info))
+        self.bot.say(color.orange('[%s]' % curr_info.id.name) + ' $%s (US dollars) ' % curr_info.price_usd + self.generate_curr_price_change_output(curr_info))
 
     # --------------------------------------------------------------------------------------------------------------
 
