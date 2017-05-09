@@ -122,7 +122,7 @@ class crypto(plugin):
         result = amount
 
         if not (_from_curr and _to_curr) and from_curr.upper() != to_curr.upper():
-            content = requests.get(self.fixer_url % from_curr, timeout=5).content
+            content = requests.get(self.fixer_url % from_curr, timeout=5).content.decode('utf-8')
             raw_result = json.loads(content)
             if 'error' in raw_result:
                 if raw_result['error'] == 'Invalid base':
