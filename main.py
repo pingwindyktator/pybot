@@ -99,6 +99,10 @@ def ensure_config_file_is_ok(config):
 
 
 def main():
+    if sys.version_info < (3, 6, 0):
+        print("Python 3.6.0 required to run pybot")
+        sys.exit(4)
+
     config = yaml.load(open("pybot.yaml"), Loader=yaml.Loader)
     ensure_config_file_is_ok(config)
     configure_logger(config)
