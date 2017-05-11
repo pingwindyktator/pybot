@@ -7,10 +7,10 @@ class ping(plugin):
 
     @command
     def ping(self, sender_nick, **kwargs):
-        self.logger.info('pinged by %s' % sender_nick)
+        self.logger.info(f'pinged by {sender_nick}')
         self.bot.say('pong')
         
     @command
     def pong(self, sender_nick, **kwargs):
-        self.logger.info('ponged by %s' % sender_nick)
+        self.logger.info(f'ponged by {sender_nick}')
         self.bot.say('ping')

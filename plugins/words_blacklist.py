@@ -12,15 +12,15 @@ class words_blacklist(plugin):
         for word in self.blacklist:
             if re.findall(word, msg) and source.nick not in self.bot.config['ops']:
                 self.bot.connection.kick(self.bot.config['channel'], source.nick, 'watch your language!')
-                self.logger.info('%s kicked [%s]' % (source.nick, word))
+                self.logger.info(f'{source.nick} kicked [{word}]')
 
     @command
     @admin
     def ban_word(self, sender_nick, args, **kwargs):
         if not args: return
         self.blacklist.update(args)
-        self.bot.say("%s banned" % args)
-        self.logger.info("words %s banned by %s" % (args, sender_nick))
+        self.bot.say(f"{args} banned")
+        self.logger.info(f"words {args} banned by {sender_nick}")
 
     @command
     @admin
@@ -30,5 +30,5 @@ class words_blacklist(plugin):
         for arg in to_unban:
             self.blacklist.remove(arg)
 
-        self.bot.say("%s unbanned" % to_unban)
-        self.logger.info("words %s unbanned by %s" % (to_unban, sender_nick))
+        self.bot.say(f"{to_unban} unbanned")
+        self.logger.info(f"words {to_unban} unbanned by {sender_nick}")

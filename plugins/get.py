@@ -13,7 +13,7 @@ class get(plugin):
         os.makedirs(os.path.dirname(os.path.realpath(self.config['db_location'])), exist_ok=True)
         self.db_connection = sqlite3.connect(self.config['db_location'], check_same_thread=False)
         self.db_cursor = self.db_connection.cursor()
-        self.db_cursor.execute("CREATE TABLE IF NOT EXISTS '%s' (entry TEXT primary key not null, val TEXT)" % self.db_name)  # key -> value
+        self.db_cursor.execute(f"CREATE TABLE IF NOT EXISTS '{self.db_name}' (entry TEXT primary key not null, val TEXT)")  # key -> value
         self.db_mutex = Lock()
         self.case_insensitive_text = 'COLLATE NOCASE' if not self.config['case_sensitive'] else ''
 
@@ -21,21 +21,22 @@ class get(plugin):
     def get(self, sender_nick, msg, **kwargs):
         entry = self.prepare_entry(msg)
         with self.db_mutex:
-            self.db_cursor.execute("SELECT val FROM '%s' WHERE entry = ? %s" % (self.db_name, self.case_insensitive_text), (entry,))
+            self.db_cursor.execute(f"SELECT val FROM '{self.db_name}' WHERE entry = ? {self.case_insensitive_text}", (entry,))
             result = self.db_cursor.fetchone()
 
-        self.logger.info('%s gets %s: %s' % (sender_nick, entry, result))
-        if result: self.bot.say(result[0])
+        result = result[0] if result else None
+        self.logger.info(f'{sender_nick} gets {entry}: {result}')
+        if result: self.bot.say(result)
 
     @command
     @admin
     def rm_set(self, sender_nick, msg, **kwargs):
         entry = self.prepare_entry(msg)
         with self.db_mutex:
-            self.db_cursor.execute("DELETE FROM '%s' WHERE entry = ? %s" % (self.db_name, self.case_insensitive_text), (entry,))
+            self.db_cursor.execute(f"DELETE FROM '{self.db_name}' WHERE entry = ? {self.case_insensitive_text}", (entry,))
             self.db_connection.commit()
 
-        self.logger.info('%s removes %s' % (sender_nick, entry))
+        self.logger.info(f'{sender_nick} removes {entry}')
 
     @command
     @admin
@@ -45,12 +46,12 @@ class get(plugin):
         entry = self.prepare_entry(entry)
         try:
             with self.db_mutex:
-                self.db_cursor.execute("INSERT INTO '%s' VALUES (?, ?)" % self.db_name, (entry, val))
+                self.db_cursor.execute(f"INSERT INTO '{self.db_name}' VALUES (?, ?)", (entry, val))
                 self.db_connection.commit()
 
-            self.logger.info('%s sets %s: %s' % (sender_nick, entry, val))
-        except sqlite3.IntegrityError as e:
-            self.bot.say('"%s" entry already exists' % entry)
+            self.logger.info(f'{sender_nick} sets {entry}: {val}')
+        except sqlite3.IntegrityError:
+            self.bot.say(f'"{entry}" entry already exists')
 
     def prepare_entry(self, entry):
         result = entry.strip()

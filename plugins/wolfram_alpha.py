@@ -28,7 +28,7 @@ class wolfram_alpha(plugin):
 
     @command
     def wa(self, msg, sender_nick, **kwargs):
-        self.logger.info('%s asked wolfram alpha "%s"' % (sender_nick, msg))
+        self.logger.info(f'{sender_nick} asked wolfram alpha "{msg}"')
 
         ask = self.parse_to_url(msg)
         raw_response = requests.get(self.full_req % (ask, self.config['api_key'])).content.decode('utf-8')
@@ -37,15 +37,15 @@ class wolfram_alpha(plugin):
 
         if xml_root.attrib['error'] == 'true':  # wa error
             error_msg = xml_root.find('error').find('msg').text
-            self.logger.warning('wolfram alpha error: %s' % error_msg)
+            self.logger.warning(f'wolfram alpha error: {error_msg}')
             self.bot.say(error_msg)
             return
 
         if xml_root.attrib['success'] == 'false':  # no response
-            self.logger.info('******* NO DATA PARSED FROM WA RESPONSE *******')
-            self.logger.info(raw_response)
-            self.logger.info('***********************************************')
-            self.bot.say('no data available for "%s"' % msg)
+            self.logger.debug('******* NO DATA PARSED FROM WA RESPONSE *******')
+            self.logger.debug(raw_response)
+            self.logger.debug('***********************************************')
+            self.bot.say(f'no data available for "{msg}"')
             return
 
         for pod in xml_root.findall('pod'):
@@ -64,17 +64,17 @@ class wolfram_alpha(plugin):
             answers.append(self.wa_pod(title, position, subpods, primary))
 
         if not answers:
-            self.logger.info('******* NO DATA PARSED FROM WA RESPONSE *******')
-            self.logger.info(raw_response)
-            self.logger.info('***********************************************')
-            self.bot.say('no data available for "%s"' % msg)
+            self.logger.debug('******* NO DATA PARSED FROM WA RESPONSE *******')
+            self.logger.debug(raw_response)
+            self.logger.debug('***********************************************')
+            self.bot.say(f'no data available for "{msg}"')
             return
 
         answers = sorted(answers)
 
         for it in range(0, len(answers)):
             if it > 0 and not answers[it].primary: break
-            prefix = color.orange('[%s] ' % answers[it].title)
+            prefix = color.orange(f'[{answers[it].title}] ')
             for subpod in answers[it].subpods:
                 result = prefix
                 if subpod.title:

@@ -19,4 +19,4 @@ class stats(plugin):
             voiced = sorted(chobj.voiced())
             self.bot.say("Voiced: " + ", ".join(voiced))
 
-            self.logger.info('channel stats given to %s' % sender_nick)
+            self.logger.info(f'channel stats given to {sender_nick}')

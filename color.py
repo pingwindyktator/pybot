@@ -1,4 +1,4 @@
-colours = {
+colors = {
     "00": "white",
     "01": "black",
     "02": "blue",
@@ -26,5 +26,5 @@ class color:
 
         return _template_impl
 
-for code, name in colours.items():
+for code, name in colors.items():
     setattr(color, name, color._template(code))

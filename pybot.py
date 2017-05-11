@@ -35,7 +35,7 @@ class pybot(irc.bot.SingleServerIRCBot):
 
     def start(self):
         ssl_info = ' over SSL' if self.config['use_ssl'] else ''
-        self.logger.info('connecting to %s:%d%s...' % (self.config['server'], self.config['port'], ssl_info))
+        self.logger.info(f'connecting to {self.config["server"]}:{self.config["port"]}{ssl_info}...')
 
         self.connection.buffer_class.errors = 'replace'
         super(pybot, self).start()
@@ -46,11 +46,11 @@ class pybot(irc.bot.SingleServerIRCBot):
         self.nickname_id += 1
 
         if self.nickname_id >= len(self.config['nickname']):
-            self.logger.critical('nickname %s is busy, no more nicknames to use' % nickname)
+            self.logger.critical(f'nickname {nickname} is busy, no more nicknames to use')
             sys.exit(2)
 
         new_nickname = self.config['nickname'][self.nickname_id]
-        self.logger.warning('nickname %s is busy, using %s' % (nickname, new_nickname))
+        self.logger.warning(f'nickname {nickname} is busy, using {new_nickname}')
         self.call_plugins_methods('on_nicknameinuse', raw_msg=raw_msg, busy_nickname=nickname)
         self.connection.nick(new_nickname)
         self.login()
@@ -58,7 +58,7 @@ class pybot(irc.bot.SingleServerIRCBot):
     def on_welcome(self, connection, raw_msg):
         """ called by super() when connected to server """
         ssl_info = ' over SSL' if self.config['use_ssl'] else ''
-        self.logger.info('connected to %s:%d%s using nickname %s' % (self.config['server'], self.config['port'], ssl_info, self.connection.get_nickname()))
+        self.logger.info(f'connected to {self.config["server"]}:{self.config["port"]}{ssl_info} using nickname {self.connection.get_nickname()}')
         self.call_plugins_methods('on_welcome', raw_msg=raw_msg, server=self.config['server'], port=self.config['port'], nickname=self.connection.get_nickname())
         self.login()
         self.join_channel()
@@ -70,7 +70,7 @@ class pybot(irc.bot.SingleServerIRCBot):
     def on_join(self, connection, raw_msg):
         """ called by super() when somebody joins channel """
         if raw_msg.source.nick == self.connection.get_nickname():
-            self.logger.info('joined to %s' % self.config['channel'])
+            self.logger.info(f'joined to {self.config["channel"]}')
             self.whois(self.connection.get_nickname())
         else:
             self.call_plugins_methods('on_join', raw_msg=raw_msg, source=raw_msg.source)
@@ -79,10 +79,10 @@ class pybot(irc.bot.SingleServerIRCBot):
         """ called by super() when private msg received """
         full_msg = raw_msg.arguments[0]
         sender_nick = raw_msg.source.nick
-        logging.info('[PRIVATE MSG] %s: %s' % (sender_nick, full_msg))
+        logging.info(f'[PRIVATE MSG] {sender_nick}: {full_msg}')
 
         if self.is_user_banned(sender_nick):
-            self.logger.debug('user %s is banned, skipping msg' % sender_nick)
+            self.logger.debug(f'user {sender_nick} is banned, skipping msg')
             return
 
         self.call_plugins_methods('on_privmsg', raw_msg=raw_msg, source=raw_msg.source, msg=full_msg)
@@ -93,7 +93,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         sender_nick = raw_msg.source.nick.lower()
 
         if self.is_user_banned(sender_nick):
-            self.logger.debug('user %s is banned, skipping msg' % sender_nick)
+            self.logger.debug(f'user {sender_nick} is banned, skipping msg')
             return
 
         self.call_plugins_methods('on_pubmsg', raw_msg=raw_msg, source=raw_msg.source, msg=full_msg)
@@ -121,7 +121,7 @@ class pybot(irc.bot.SingleServerIRCBot):
             self.call_plugins_methods('on_kick', raw_msg=raw_msg, who=raw_msg.arguments[0], source=raw_msg.source)
 
     def on_me_kicked(self, connection, raw_msg):
-        self.logger.warning('kicked by %s' % raw_msg.source.nick)
+        self.logger.warning(f'kicked by {raw_msg.source.nick}')
         self.call_plugins_methods('on_me_kicked', raw_msg=raw_msg, source=raw_msg.source)
         self.joined_to_channel = False
 
@@ -129,7 +129,7 @@ class pybot(irc.bot.SingleServerIRCBot):
             self.logger.warning('autorejoin attempts limit reached, waiting for user interact now')
             choice = None
             while choice != 'Y' and choice != 'y' and choice != 'N' and choice != 'n':
-                choice = input('rejoin to %s? [Y/n] ' % self.config['channel'])
+                choice = input(f'rejoin to {self.config["channel"]}? [Y/n] ')
 
             if choice == 'Y' or choice == 'y':
                 self.autorejoin_attempts = 0
@@ -158,12 +158,12 @@ class pybot(irc.bot.SingleServerIRCBot):
             try:
                 p.__getattribute__(func_name)(**kwargs)
             except Exception as e:
-                self.logger.error('exception caught calling %s: %s' % (p.__getattribute__(func_name), e))
+                self.logger.error(f'exception caught calling {p.__getattribute__(func_name)}: {e}')
                 if self.is_debug_mode_enabled(): raise
 
     def register_plugin(self, plugin_instance):
         self.plugins.add(plugin_instance)
-        self.logger.info('+ plugin %s loaded' % type(plugin_instance).__name__)
+        self.logger.info(f'+ plugin {type(plugin_instance).__name__} loaded')
 
     def register_commands_for_plugin(self, plugin_instance):
         for f in inspect.getmembers(plugin_instance, predicate=inspect.ismethod):
@@ -171,7 +171,7 @@ class pybot(irc.bot.SingleServerIRCBot):
             func_name = f[0]
             if hasattr(func, '__command'):
                 self.commands[func_name] = func
-                self.logger.debug('command %s registered' % func_name)
+                self.logger.debug(f'command {func_name} registered')
 
     def load_plugins(self):
         self.logger.debug('loading plugins...')
@@ -180,13 +180,13 @@ class pybot(irc.bot.SingleServerIRCBot):
 
         for plugin_class in plugin.plugin.__subclasses__():
             if plugin_class.__name__ in disabled_plugins or plugin_class.__name__ not in enabled_plugins:
-                self.logger.info('- plugin %s skipped' % plugin_class.__name__)
+                self.logger.info(f'- plugin {plugin_class.__name__} skipped')
                 continue
 
             try:
                 plugin_instance = plugin_class(self)
             except Exception as e:
-                self.logger.warning('- unable to load plugin %s: %s' % (plugin_class.__name__, e))
+                self.logger.warning(f'- unable to load plugin {plugin_class.__name__}: {e}')
                 continue
 
             self.register_plugin(plugin_instance)
@@ -228,7 +228,7 @@ class pybot(irc.bot.SingleServerIRCBot):
 
     def say(self, msg, target=None):
         if not target: target = self.config['channel']
-        self.logger.debug('sending reply to %s: %s' % (target, msg))
+        self.logger.debug(f'sending reply to {target}: {msg}')
 
         if self.is_msg_too_long(msg):
             self.logger.debug('privmsg too long, wrapping...')
@@ -251,15 +251,15 @@ class pybot(irc.bot.SingleServerIRCBot):
         if self.config['password'] is not None and self.nickname_id < len(self.config['password']):
             password = self.config['password'][self.nickname_id]
             if password is not None and password != '':
-                self.logger.info('identifying as %s...' % self.connection.get_nickname())
-                self.say('NickServ', 'identify %s %s' % (self.connection.get_nickname(), password))
+                self.logger.info(f'identifying as {self.connection.get_nickname()}...')
+                self.say('NickServ', f"identify {self.connection.get_nickname()} {password}")
 
     def join_channel(self):
-        self.logger.info('joining %s...' % self.config['channel'])
+        self.logger.info(f'joining {self.config["channel"]}...')
         self.connection.join(self.config['channel'])
 
     def leave_channel(self):
-        self.logger.info('leaving %s...' % self.config['channel'])
+        self.logger.info(f'leaving {self.config["channel"]}...')
         self.connection.part(self.config['channel'])
 
     def is_debug_mode_enabled(self):

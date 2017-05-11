@@ -16,7 +16,7 @@ class notify(plugin):
             for alias in self.database[register_nickname]:
                 if re.findall(alias.lower(), full_msg) and sender_nick != register_nickname:
                     self.bot.say(register_nickname)
-                    self.logger.info("found notify set for '%s': %s" % (register_nickname, alias))
+                    self.logger.info(f"found notify set for '{register_nickname}': {alias}")
                     break
 
     @command
@@ -28,8 +28,8 @@ class notify(plugin):
         else:
             self.database[sender_nick] = set(args)
 
-        self.bot.say('notifying for %s' % args)
-        self.logger.info('now notifying: %s -> %s' % (args, sender_nick))
+        self.bot.say(f'notifying for {args}')
+        self.logger.info(f'now notifying: {args} -> {sender_nick}')
 
     @command
     def rm_notify(self, sender_nick, args, **kwargs):
@@ -39,16 +39,16 @@ class notify(plugin):
 
         for arg in to_remove: self.database[sender_nick].remove(arg)
 
-        self.bot.say('notifying for %s disabled' % to_remove)
-        self.logger.info('stop notifying: %s -> %s' % (to_remove, sender_nick))
+        self.bot.say(f'notifying for {to_remove} disabled')
+        self.logger.info(f'stop notifying: {to_remove} -> {sender_nick}')
 
     @command
     def notifies(self, sender_nick, **kwargs):
         result = self.database[sender_nick] if sender_nick in self.database else {}
         if result:
-            self.bot.say('notifying %s -> %s' % (result, sender_nick))
+            self.bot.say(f'notifying {result} -> {sender_nick}')
         else:
-            self.bot.say('no notifies set for %s' % sender_nick)
+            self.bot.say(f'no notifies set for {sender_nick}')
 
-        self.logger.info('notifying %s -> %s' % (result, sender_nick))
+        self.logger.info(f'notifying {result} -> {sender_nick}')
 

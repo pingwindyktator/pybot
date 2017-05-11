@@ -65,7 +65,7 @@ class connection_t:
         self.bot_nickname = new_nickname
 
     def kick(self, channel, nick, comment=''):
-        print('> %s has kicked %s (%s)' % (self.get_nickname(), nick, comment))
+        print(f'> {self.get_nickname()} has kicked {nick} ({comment})')
 
 
 class source_t:
@@ -125,7 +125,7 @@ class SingleServerIRCBot_mock:
             self.connection.call_handler('on_pubmsg', self.connection, raw_msg)
 
     def disconnect(self, msg):
-        print('> %s has quit (%s)' % (self.connection.get_nickname(), msg))
+        print(f'> {self.connection.get_nickname()} has quit ({msg})')
 
     def die(self, msg):
         self.disconnect(msg)
@@ -139,7 +139,7 @@ def configure_logger(*args, **kwargs):
 
 def simulator_main():
     main.configure_logger = configure_logger
-    for code, name in color.colours.items():
+    for code, name in color.colors.items():
         setattr(color.color, name, lambda x: x)
         
     patcher = mock.patch.object(main.pybot, '__bases__', (SingleServerIRCBot_mock,))

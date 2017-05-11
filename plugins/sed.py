@@ -18,6 +18,6 @@ class sed(plugin):
             replace_all = found[0][2]
             new_msg = re.sub(to_replace, replace_with, self.database[source.nick], 0 if replace_all else 1)
             if new_msg != self.database[source.nick]:
-                self.bot.say('%s meant %s' % (source.nick, repr(new_msg)))
+                self.bot.say(f'{source.nick} meant {repr(new_msg)}')
         else:
             self.database[source.nick] = msg

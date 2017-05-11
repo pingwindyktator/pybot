@@ -31,4 +31,4 @@ class webtitle_parser(plugin):
                     self.bot.say(color.light_green(title))
 
         except Exception:
-            self.logger.info('possibly invalid URL: %s', url)
+            self.logger.info(f'possibly invalid URL: {url}')

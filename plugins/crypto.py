@@ -59,14 +59,15 @@ class crypto(plugin):
         results = []
 
         for change in [curr_info.hour_change, curr_info.day_change, curr_info.week_change]:
+            change_price = change * curr_info.price_usd / 100.
             if change >= 0:
-                result = color.light_green('+%s%%' % change) + ' | ' + color.light_green('+$%.2f' % (change * curr_info.price_usd / 100.))
+                result = color.light_green(f'+{change}%') + ' | ' + color.light_green(f'+${change_price:.2f}')
             else:
-                result = color.light_red('%s%%' % change) + ' | ' + color.light_red('-$%.2f' % abs(change * curr_info.price_usd / 100.))
+                result = color.light_red(f'{change}%') + ' | ' + color.light_red('-$%.2f' % abs(change_price))
 
             results.append(result)
 
-        return '[%s hourly] [%s daily] [%s weekly]' % (results[0], results[1], results[2])
+        return f'[{results[0]} hourly] [{results[1]} daily] [{results[2]} weekly]'
 
     @command
     def crypto(self, sender_nick, msg, **kwargs):
@@ -75,20 +76,20 @@ class crypto(plugin):
         convert = self.convert_regex.findall(msg)
 
         if convert:
-            self.logger.info('%s wants to convert %s %s to %s' % (sender_nick, convert[0][0], convert[0][1], convert[0][3]))
+            self.logger.info(f'{sender_nick} wants to convert {convert[0][0]} {convert[0][1]} to {convert[0][3]}')
             self.convert_impl(float(convert[0][0]) if convert[0][0] else 1., convert[0][1], convert[0][3])
         else:
-            self.logger.info('%s asked coinmarketcap about %s' % (sender_nick, msg))
+            self.logger.info(f'{sender_nick} asked coinmarketcap about {msg}')
             self.crypto_impl(msg)
 
     def crypto_impl(self, curr):
         curr_info = self.get_crypto_curr_info(curr)
 
         if not curr_info:
-            self.bot.say('no such crypto currency: %s' % curr)
+            self.bot.say(f'no such crypto currency: {curr}')
             return
 
-        self.bot.say(color.orange('[%s]' % curr_info.id.name) + ' $%s (US dollars) ' % curr_info.price_usd + self.generate_curr_price_change_output(curr_info))
+        self.bot.say(color.orange(f'[{curr_info.id.name}]') + f' ${curr_info.price_usd} (US dollars) ' + self.generate_curr_price_change_output(curr_info))
 
     # --------------------------------------------------------------------------------------------------------------
 
@@ -100,7 +101,7 @@ class crypto(plugin):
             self.to_curr = to_curr
 
         def __repr__(self):
-            return '%s %s == %s %s' % (self.amount_from, self.from_curr, self.amount_to, self.to_curr)
+            return f'{self.amount_from} {self.from_curr} == {self.amount_to} {self.to_curr}'
 
     def convert_impl(self, amount, from_curr, to_curr):
         to_curr_org = to_curr.upper()
@@ -126,17 +127,17 @@ class crypto(plugin):
             raw_result = json.loads(content)
             if 'error' in raw_result:
                 if raw_result['error'] == 'Invalid base':
-                    self.bot.say("fixer.io knows nothing about %s" % from_curr)
+                    self.bot.say(f"fixer.io knows nothing about {from_curr}")
                 else:
-                    self.bot.say("fixer.io can't convert %s to %s" % (from_curr, to_curr))
-                    self.logger.info('fixer.io error: %s' % raw_result['error'])
+                    self.bot.say(f"fixer.io can't convert {from_curr} to {to_curr}")
+                    self.logger.warning(f'fixer.io error: {raw_result["error"]}')
                 return
             elif to_curr.upper() not in raw_result['rates']:
-                self.bot.say("fixer.io knows nothing about %s" % to_curr)
+                self.bot.say(f"fixer.io knows nothing about {to_curr}")
                 return
             else:
                 result = amount * raw_result['rates'][to_curr.upper()]
                 convertions[2] = self.convertion(amount, from_curr, result, to_curr)
 
         self.logger.info(convertions)
-        self.bot.say(color.orange('[Result]') + ' %s %s' % (result, to_curr_org))
+        self.bot.say(color.orange('[Result]') + f' {result} {to_curr_org}')

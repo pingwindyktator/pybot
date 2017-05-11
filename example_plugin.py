@@ -12,7 +12,7 @@ class example_plugin(plugin):  # plugin class name should equal module name!
 
     @command
     def example_command(self, sender_nick, args, **kwargs):
-        self.logger.info('example command called by %s with %s' % (sender_nick, args))
+        self.logger.info(f'example command called by {sender_nick} with {args}')
         self.bot.say('example command called!')
         self.bot.say('private msg', sender_nick)
         # you can easily access everything you need from self.bot

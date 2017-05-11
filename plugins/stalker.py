@@ -15,7 +15,7 @@ class stalker(plugin):
 
         self.db_connection = sqlite3.connect(self.config['db_location'], check_same_thread=False)
         self.db_cursor = self.db_connection.cursor()
-        self.db_cursor.execute("CREATE TABLE IF NOT EXISTS '%s' (host TEXT primary key not null, nicks TEXT)" % self.db_name)  # host -> {nicknames}
+        self.db_cursor.execute(f"CREATE TABLE IF NOT EXISTS '{self.db_name}' (host TEXT primary key not null, nicks TEXT)")  # host -> {nicknames}
         self.db_mutex = Lock()
         self.updating_thread = None
 
@@ -49,20 +49,20 @@ class stalker(plugin):
             if nick not in result:
                 result.extend([nick])
                 with self.db_mutex:
-                    self.db_cursor.execute("UPDATE '%s' SET nicks = ? WHERE host = ?" % self.db_name, (json.dumps(result), host))
+                    self.db_cursor.execute(f"UPDATE '{self.db_name}' SET nicks = ? WHERE host = ?", (json.dumps(result), host))
                     self.db_connection.commit()
 
-                self.logger.info('new database entry: %s -> %s' % (host, nick))
+                self.logger.info(f'new database entry: {host} -> {nick}')
         else:
             with self.db_mutex:
-                self.db_cursor.execute("INSERT INTO '%s' VALUES (?, ?)" % self.db_name, (host, json.dumps([nick])))
+                self.db_cursor.execute(f"INSERT INTO '{self.db_name}' VALUES (?, ?)", (host, json.dumps([nick])))
                 self.db_connection.commit()
 
-            self.logger.info('new database entry: %s -> %s' % (host, nick))
+            self.logger.info(f'new database entry: {host} -> {nick}')
 
     def get_nicknames_from_database(self, host):
         with self.db_mutex:
-            self.db_cursor.execute("SELECT nicks FROM '%s' WHERE host = ?" % self.db_name, (host,))
+            self.db_cursor.execute(f"SELECT nicks FROM '{self.db_name}' WHERE host = ?", (host,))
             result = self.db_cursor.fetchone()
 
         if result:
@@ -73,7 +73,7 @@ class stalker(plugin):
 
     def get_all_nicknames_from_database(self):
         with self.db_mutex:
-            self.db_cursor.execute("SELECT nicks FROM '%s'" % self.db_name)
+            self.db_cursor.execute(f"SELECT nicks FROM '{self.db_name}'")
             result = self.db_cursor.fetchall()
 
         if result:
@@ -84,7 +84,7 @@ class stalker(plugin):
 
     def get_all_hosts_from_database(self):
         with self.db_mutex:
-            self.db_cursor.execute("SELECT host FROM '%s'" % self.db_name)
+            self.db_cursor.execute(f"SELECT host FROM '{self.db_name}'")
             result = self.db_cursor.fetchall()
 
         if result:
@@ -100,12 +100,12 @@ class stalker(plugin):
         result = set([host for host in all_hosts if nick.lower() in self.get_nicknames_from_database(host)])
 
         if result:
-            response = 'known hosts of %s: %s ' % (nick, result)
+            response = f'known hosts of {nick}: {result} '
         else:
-            response = "I know nothing about %s" % nick
+            response = f"I know nothing about {nick}"
 
         self.bot.say(response)
-        self.logger.info('%s asks about hosts of %s: %s' % (sender_nick, nick, result))
+        self.logger.info(f'{sender_nick} asks about hosts of {nick}: {result}')
 
     @command
     def stalk(self, sender_nick, args, **kwargs):
@@ -117,11 +117,11 @@ class stalker(plugin):
             if nick.lower() in x: result.update(x)
 
         if result:
-            response = 'other nicks of %s: %s' % (nick, result)
+            response = f'other nicks of {nick}: {result}'
         else:
-            response = "I know nothing about %s" % nick
+            response = f"I know nothing about {nick}"
         self.bot.say(response)
-        self.logger.info('%s stalks %s: %s' % (sender_nick, nick, result))
+        self.logger.info(f'{sender_nick} stalks {nick}: {result}')
 
     @command
     def stalk_host(self, sender_nick, args, **kwargs):
@@ -129,8 +129,8 @@ class stalker(plugin):
         host = args[0]
         nicks = self.get_nicknames_from_database(host)
         if nicks:
-            response = 'known nicks from %s: %s' % (host, nicks)
+            response = f'known nicks from {host}: {nicks}'
         else:
-            response = "I know nothing about %s" % host
+            response = f"I know nothing about {host}"
         self.bot.say(response)
-        self.logger.info('%s asks about nicks from %s: %s' % (sender_nick, host, nicks))
+        self.logger.info(f'{sender_nick} asks about nicks from {host}: {nicks}')

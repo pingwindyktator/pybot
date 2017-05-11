@@ -86,9 +86,9 @@ def ensure_config_file_is_ok(config):
             assert type(config['banned_users']) is list, 'banned_users field type should be list'
 
         assert 'file_logging_level' in config, 'you have to specify file logging level'
-        assert config['file_logging_level'] in level_str_to_int, 'file_logging_level can be one of: %s' % ', '.join((level_str_to_int.keys()))
+        assert config['file_logging_level'] in level_str_to_int, f'file_logging_level can be one of: {", ".join((level_str_to_int.keys()))}'
         assert 'stdout_logging_level' in config, 'you have to specify stdout logging level'
-        assert config['stdout_logging_level'] in level_str_to_int, 'stdout_logging_level can be one of: %s' % ', '.join((level_str_to_int.keys()))
+        assert config['stdout_logging_level'] in level_str_to_int, f'stdout_logging_level can be one of: {", ".join((level_str_to_int.keys()))}'
 
         assert 'command_prefix' in config, 'you have to specify command prefix'
         assert type(config['command_prefix']) is str, 'command_prefix field type should be string'

@@ -8,4 +8,4 @@ class echo(plugin):
     @command
     def echo(self, sender_nick, msg, **kwargs):
         self.bot.say(msg)
-        self.logger.info("echo '%s' for %s" % (msg, sender_nick))
+        self.logger.info(f"echo '{msg}' for {sender_nick}")

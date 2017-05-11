@@ -16,7 +16,7 @@ class plugin_manager(plugin):
 
         for arg in args:
             if arg not in plugins:
-                self.bot.say('not such plugin: [%s]' % arg)
+                self.bot.say(f'not such plugin: [{arg}]')
             else:
                 cmds = self.bot.get_plugin_commands(arg)
                 plugins[arg].unload_plugin()
@@ -24,13 +24,13 @@ class plugin_manager(plugin):
                 for cmd in cmds:
                     del self.bot.commands[cmd]
 
-                self.bot.say('plugin [%s] disabled with commands %s' % (arg, cmds))
-                self.logger.warning('plugin [%s] disabled with commands %s by %s' % (arg, cmds, sender_nick))
+                self.bot.say(f'plugin [{arg}] disabled with commands {cmds}')
+                self.logger.warning(f'plugin [{arg}] disabled with commands {cmds} by {sender_nick}')
 
     @command
     def plugins(self, sender_nick, **kwargs):
-        self.bot.say('enabled plugins: %s' % self.bot.get_plugins_names())
-        self.logger.info('plugins given to %s' % sender_nick)
+        self.bot.say(f'enabled plugins: {self.bot.get_plugins_names()}')
+        self.logger.info(f'plugins given to {sender_nick}')
 
     @command
     @admin
@@ -41,14 +41,14 @@ class plugin_manager(plugin):
 
         for arg in args:
             if arg not in plugins:
-                self.bot.say('not such plugin: [%s]' % arg)
+                self.bot.say(f'not such plugin: [{arg}]')
             else:
                 p = plugins[arg](self.bot)
                 self.bot.register_plugin(p)
                 self.bot.register_commands_for_plugin(p)
                 cmds = self.bot.get_plugin_commands(type(p).__name__)
-                self.bot.say('plugin [%s] enabled with commands %s' % (arg, cmds))
-                self.logger.warning('plugin [%s] enabled with commands %s by %s' % (arg, cmds, sender_nick))
+                self.bot.say(f'plugin [{arg}] enabled with commands {cmds}')
+                self.logger.warning(f'plugin [{arg}] enabled with commands {cmds} by {sender_nick}')
 
     @command
     @admin
@@ -68,11 +68,11 @@ class plugin_manager(plugin):
                 new_class_instance = plugin_class(self.bot)
                 self.bot.register_plugin(new_class_instance)
                 self.bot.register_commands_for_plugin(new_class_instance)
-                self.logger.warning('plugin [%s] loaded by %s' % (plugin_class.__name__, sender_nick))
-                self.bot.say('plugin [%s] loaded' % arg)
+                self.logger.warning(f'plugin [{plugin_class.__name__}] loaded by {sender_nick}')
+                self.bot.say(f'plugin [{arg}] loaded')
             except Exception as e:
-                self.logger.error('exception caught while loading plugin [%s] by %s: %s' % (plugin_class.__name__, sender_nick, e))
-                self.bot.say('exception caught while reloading plugin [%s]' % plugin_class.__name__)
+                self.logger.error(f'exception caught while loading plugin [{plugin_class.__name__}] by {sender_nick}: {e}')
+                self.bot.say(f'exception caught while reloading plugin [{plugin_class.__name__}]')
 
     @command
     @admin
@@ -86,7 +86,7 @@ class plugin_manager(plugin):
         args = [x for x in args if x in self.bot.get_plugins_names()]  # plugins asked to be reloaded
 
         if self.__class__.__name__ in args:  # THIS plugin cannot be reloaded!
-            self.bot.say('plugin %s cannot be reloaded' % self.__class__.__name__)
+            self.bot.say(f'plugin {self.__class__.__name__} cannot be reloaded')
             args.remove(self.__class__.__name__)
 
         plugin_name_to_instance = {}  # plugin_name -> plugin_instance
@@ -112,8 +112,8 @@ class plugin_manager(plugin):
                 new_class_instance = plugin_class(self.bot)
                 self.bot.register_plugin(new_class_instance)
                 self.bot.register_commands_for_plugin(new_class_instance)
-                self.logger.warning('plugin [%s] reloaded by %s' % (plugin_class.__name__, sender_nick))
-                self.bot.say('plugin [%s] reloaded' % plugin_class.__name__)
+                self.logger.warning(f'plugin [{plugin_class.__name__}] reloaded by {sender_nick}')
+                self.bot.say(f'plugin [{plugin_class.__name__}] reloaded')
             except Exception as e:
-                self.logger.error('exception caught while reloading plugin [%s] by %s: %s' % (plugin_class.__name__, sender_nick, e))
-                self.bot.say('exception caught while reloading plugin [%s]' % plugin_class.__name__)
+                self.logger.error(f'exception caught while reloading plugin [{plugin_class.__name__}] by {sender_nick}: {e}')
+                self.bot.say(f'exception caught while reloading plugin [{plugin_class.__name__}]')
