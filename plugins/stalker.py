@@ -49,7 +49,7 @@ class stalker(plugin):
             if nick not in result:
                 result.extend([nick])
                 with self.db_mutex:
-                    self.db_cursor.execute("UPDATE '%s' SET nicks = ? WHERE host = '%s'" % (self.db_name, host), [json.dumps(result)])
+                    self.db_cursor.execute("UPDATE '%s' SET nicks = ? WHERE host = ?" % self.db_name, (json.dumps(result), host))
                     self.db_connection.commit()
 
                 self.logger.info('new database entry: %s -> %s' % (host, nick))
@@ -62,7 +62,7 @@ class stalker(plugin):
 
     def get_nicknames_from_database(self, host):
         with self.db_mutex:
-            self.db_cursor.execute("SELECT nicks FROM '%s' WHERE host = '%s'" % (self.db_name, host))
+            self.db_cursor.execute("SELECT nicks FROM '%s' WHERE host = ?" % self.db_name, (host,))
             result = self.db_cursor.fetchone()
 
         if result:

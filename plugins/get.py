@@ -21,7 +21,7 @@ class get(plugin):
     def get(self, sender_nick, msg, **kwargs):
         entry = self.prepare_entry(msg)
         with self.db_mutex:
-            self.db_cursor.execute("SELECT val FROM '%s' WHERE entry = '%s' %s" % (self.db_name, entry, self.case_insensitive_text))
+            self.db_cursor.execute("SELECT val FROM '%s' WHERE entry = ? %s" % (self.db_name, self.case_insensitive_text), (entry,))
             result = self.db_cursor.fetchone()
 
         self.logger.info('%s gets %s: %s' % (sender_nick, entry, result))
@@ -32,7 +32,7 @@ class get(plugin):
     def rm_set(self, sender_nick, msg, **kwargs):
         entry = self.prepare_entry(msg)
         with self.db_mutex:
-            self.db_cursor.execute("DELETE FROM '%s' WHERE entry = '%s' %s" % (self.db_name, entry, self.case_insensitive_text))
+            self.db_cursor.execute("DELETE FROM '%s' WHERE entry = ? %s" % (self.db_name, self.case_insensitive_text), (entry,))
             self.db_connection.commit()
 
         self.logger.info('%s removes %s' % (sender_nick, entry))
