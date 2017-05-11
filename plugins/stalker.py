@@ -11,8 +11,7 @@ class stalker(plugin):
     def __init__(self, bot):
         super().__init__(bot)
         self.db_name = 'stalker'
-        if not os.path.exists(self.config['db_location']):
-            os.makedirs(os.path.dirname(os.path.realpath(self.config['db_location'])))
+        os.makedirs(os.path.dirname(os.path.realpath(self.config['db_location'])), exist_ok=True)
 
         self.db_connection = sqlite3.connect(self.config['db_location'], check_same_thread=False)
         self.db_cursor = self.db_connection.cursor()
@@ -46,7 +45,7 @@ class stalker(plugin):
     def update_database(self, nick, host):
         nick = nick.lower()
         result = self.get_nicknames_from_database(host)
-        if result is not None:
+        if result:
             if nick not in result:
                 result.extend([nick])
                 with self.db_mutex:
@@ -66,7 +65,7 @@ class stalker(plugin):
             self.db_cursor.execute("SELECT nicks FROM '%s' WHERE host = '%s'" % (self.db_name, host))
             result = self.db_cursor.fetchone()
 
-        if result is not None:
+        if result:
             result = json.loads(result[0])
             result = [x.lower() for x in result]
 
@@ -77,7 +76,7 @@ class stalker(plugin):
             self.db_cursor.execute("SELECT nicks FROM '%s'" % self.db_name)
             result = self.db_cursor.fetchall()
 
-        if result is not None:
+        if result:
             result = [json.loads(x[0]) for x in result]
             result = [[y.lower() for y in x] for x in result]
 
@@ -88,7 +87,7 @@ class stalker(plugin):
             self.db_cursor.execute("SELECT host FROM '%s'" % self.db_name)
             result = self.db_cursor.fetchall()
 
-        if result is not None:
+        if result:
             result = [x[0] for x in result]
 
         return result

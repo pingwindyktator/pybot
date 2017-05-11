@@ -26,3 +26,7 @@ stalker:
 
 wolfram_alpha:
   api_key: 4EU37Y-TX9WJG3JH3
+
+get:
+  db_location: ./db/get.db
+  case_sensitive: false
