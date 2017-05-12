@@ -1,5 +1,5 @@
 import sys
-import main
+import _main
 import logging
 import color
 
@@ -138,14 +138,14 @@ def configure_logger(*args, **kwargs):
 
 
 def simulator_main():
-    main.configure_logger = configure_logger
+    _main.configure_logger = configure_logger
     for code, name in color.colors.items():
         setattr(color.color, name, lambda x: x)
         
-    patcher = mock.patch.object(main.pybot, '__bases__', (SingleServerIRCBot_mock,))
+    patcher = mock.patch.object(_main.pybot, '__bases__', (SingleServerIRCBot_mock,))
     with patcher:
         patcher.is_local = True
-        main.main()
+        _main.main()
 
 
 if __name__ == "__main__":
