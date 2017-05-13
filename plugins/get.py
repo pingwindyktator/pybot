@@ -50,6 +50,7 @@ class get(plugin):
                 self.db_connection.commit()
 
             self.logger.info(f'{sender_nick} sets {entry}: {val}')
+            self.bot.say('ok!')
         except sqlite3.IntegrityError:
             self.bot.say(f'"{entry}" entry already exists')
 
