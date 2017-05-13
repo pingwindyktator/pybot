@@ -137,5 +137,7 @@ def admin(function):
     def admin_impl(self, sender_nick, **kwargs):
         if sender_nick in self.bot.config['ops']:
             function(self, sender_nick=sender_nick, **kwargs)
+        else:
+            self.logger.info(f'{sender_nick} is not op, skipping command')
 
     return admin_impl
