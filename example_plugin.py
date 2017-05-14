@@ -1,5 +1,10 @@
 from plugin import *
 
+# TIPS:
+# - all plugin functions will be called from one, main thread
+# - IRC nickname is case-insensitive. Generally you should'nt worry about it, since pybot API uses irc_nickname class
+#     to represent it, but - for example - if you wan't to use database, use .casefold()
+
 
 class example_plugin(plugin):  # plugin class name should equal module name!
     def __init__(self, bot):
