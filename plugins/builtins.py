@@ -159,10 +159,6 @@ class builtins(plugin):
         return ''.join([chr(x) for x in list(out)[:-1]])
 
     def update_config_impl(self, key, value, config):
-        """
-        :param entry: what to insert to :param config
-        """
-
         if key not in config:
             config[key] = value
             self.logger.info(f'inserting {key}:{value} to config file')
@@ -189,6 +185,8 @@ class builtins(plugin):
         with open('./pybot.yaml', 'r+') as outfile:
             lines = outfile.readlines()
             outfile.truncate(0)
+            outfile.seek(0)
+
             for i, line in enumerate(lines):
                 outfile.write(line)
                 if line.strip() and line.startswith(' ') and i + 1 < len(lines) and lines[i + 1] and lines[i + 1][0].isalpha():
@@ -196,6 +194,7 @@ class builtins(plugin):
 
     def update_config(self):
         config = yaml.load(open("./pybot.yaml"), Loader=yaml.RoundTripLoader)
+        if not config: config = {}
         for key, value in yaml.load(open("./pybot.template.yaml"), Loader=yaml.Loader).items():
             self.update_config_impl(key, value, config)
 
@@ -219,8 +218,7 @@ class builtins(plugin):
         process.wait()
 
         if process.returncode != 0:
-            self.logger.error(
-                f'{sender_nick} asked for self-update, but {cmd} returned {process.returncode} exit code')
+            self.logger.error(f'{sender_nick} asked for self-update, but {cmd} returned {process.returncode} exit code')
             self.bot.say("cannot update, 'git pull' returns non-zero exit code")
         else:
             suffix = ''
