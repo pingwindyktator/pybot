@@ -265,8 +265,8 @@ class pybot(irc.bot.SingleServerIRCBot):
         if self.config['password'] is not None and self.nickname_id < len(self.config['password']):
             password = self.config['password'][self.nickname_id]
             if password is not None and password != '':
-                self.logger.info(f'identifying as {self.connection.get_nickname()}...')
-                self.say('NickServ', f"identify {self.connection.get_nickname()} {password}")
+                self.logger.info(f'identifying as {get_nickname()}...')
+                self.say('NickServ', f"identify {get_nickname()} {password}")
 
     def join_channel(self):
         self.logger.info(f'joining {self.config["channel"]}...')
