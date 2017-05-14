@@ -107,7 +107,12 @@ def ensure_config_file_is_ok(config):
 
 
 def main():
-    config = yaml.load(open("pybot.yaml"), Loader=yaml.Loader)
+    try:
+        config = yaml.load(open("pybot.yaml"), Loader=yaml.Loader)
+    except Exception as e:
+        print(f'Cannot read config file: {e}')
+        sys.exit(6)
+
     ensure_config_file_is_ok(config)
     configure_logger(config)
     bot = pybot(config)
