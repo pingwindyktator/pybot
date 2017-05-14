@@ -30,7 +30,7 @@ class wolfram_alpha(plugin):
     def wa(self, msg, sender_nick, **kwargs):
         self.logger.info(f'{sender_nick} asked wolfram alpha "{msg}"')
 
-        ask = self.parse_to_url(msg)
+        ask = urllib.parse.quote(msg)
         raw_response = requests.get(self.full_req % (ask, self.config['api_key'])).content.decode('utf-8')
         xml_root = xml.etree.ElementTree.fromstring(raw_response)
         answers = []
@@ -99,7 +99,3 @@ class wolfram_alpha(plugin):
             if self.primary and not other.primary: return True
             if other.primary and not self.primary: return False
             return self.position < other.position
-
-    @staticmethod
-    def parse_to_url(str):
-        return urllib.parse.quote(str)
