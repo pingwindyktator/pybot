@@ -4,7 +4,6 @@ import sys
 
 from ruamel import yaml
 from threading import Lock
-from collections import namedtuple
 from irc.client import NickMask
 from ruamel.yaml.comments import CommentedMap
 
@@ -16,10 +15,15 @@ class builtins(plugin):
         super().__init__(bot)
         self.pybot_dir = os.path.dirname(os.path.realpath(__file__))
         self.pybot_dir = os.path.abspath(os.path.join(self.pybot_dir, os.pardir))
-        self.as_other_user_command = namedtuple('as_other_user_command',
-                                                'sender_nick hacked_nick connection raw_msg')
         self.commands_as_other_user_to_send = []
         self.mutex = Lock()
+
+    class as_other_user_command:
+        def __init__(self, sender_nick, hacked_nick, connection, raw_msg):
+            self.sender_nick = irc_nickname(sender_nick)
+            self.hacked_nick = irc_nickname(hacked_nick)
+            self.connection = connection
+            self.raw_msg = raw_msg
 
     @command
     def help(self, sender_nick, args, **kwargs):
@@ -53,16 +57,18 @@ class builtins(plugin):
     @admin
     def add_op(self, sender_nick, args, **kwargs):
         if not args: return
-        self.bot.config['ops'].extend(args)
-        reply = f'{args[0]} is now op' if len(args) == 1 else f'{args} are now ops'
+        to_add = [irc_nickname(arg) for arg in args]
+        self.bot.config['ops'].extend(to_add)
+        reply = f'{to_add[0]} is now op' if len(to_add) == 1 else f'{to_add} are now ops'
         self.bot.say(reply)
-        self.logger.warning(f'{sender_nick} added new ops: {args}')
+        self.logger.warning(f'{sender_nick} added new ops: {to_add}')
 
     @command
     @admin
     def rm_op(self, sender_nick, args, **kwargs):
-        to_remove = [arg for arg in args if arg in self.bot.config['ops']]
-        if not to_remove: return
+        if not args: return
+        to_remove = [irc_nickname(arg) for arg in args]
+        to_remove = [arg for arg in to_remove if arg in self.bot.config['ops']]
         for arg in to_remove:
             self.bot.config['ops'].remove(arg)
 
@@ -85,22 +91,23 @@ class builtins(plugin):
     @admin
     def ban_user(self, sender_nick, args, **kwargs):
         if not args: return
-
+        to_ban = [irc_nickname(arg) for arg in args]
         if 'banned_users' not in self.bot.config:
-            self.bot.config['banned_users'] = args
+            self.bot.config['banned_users'] = to_ban
         else:
-            self.bot.config['banned_users'].extend([arg.lower() for arg in args])
+            self.bot.config['banned_users'].extend(to_ban)
 
-        reply = f'{args[0]} is now banned' if len(args) == 1 else f'{args} are now banned'
+        reply = f'{to_ban[0]} is now banned' if len(to_ban) == 1 else f'{to_ban} are now banned'
         self.bot.say(reply)
-        self.logger.warning(f'{sender_nick} banned {args}')
+        self.logger.warning(f'{sender_nick} banned {to_ban}')
 
     @command
     @admin
     def unban_user(self, sender_nick, args, **kwargs):
+        if not args: return
         if 'banned_users' not in self.bot.config: return
-        to_ban = [arg.lower() for arg in args if arg.lower() in self.bot.config['banned_users']]
-        if not to_ban: return
+        to_ban = [irc_nickname(arg) for arg in args]
+        to_ban = [arg for arg in to_ban if arg in self.bot.config['banned_users']]
         for arg in to_ban:
             self.bot.config['banned_users'].remove(arg)
 
@@ -248,11 +255,10 @@ class builtins(plugin):
 
     def clean_commands_as_other_user_to_send(self):
         users = list(self.bot.channel.users())
-        users = [user.lower() for user in users]
 
         with self.mutex:
             for x in self.commands_as_other_user_to_send:
-                if x.hacked_nick.lower() not in users:
+                if x.hacked_nick not in users:
                     self.logger.info(f'removing {x.sender_nick} command ({x.raw_msg.arguments[0]}) as {x.hacked_nick}')
                     self.commands_as_other_user_to_send.remove(x)
 
@@ -260,7 +266,7 @@ class builtins(plugin):
     @admin
     def as_other_user(self, sender_nick, msg, raw_msg, **kwargs):
         if not msg: return
-        hacked_nick = msg.split()[0]
+        hacked_nick = irc_nickname(msg.split()[0])
         new_msg = msg[len(hacked_nick):].strip()
         raw_msg.arguments = (new_msg, raw_msg.arguments[1:])
         self.logger.info(f'{sender_nick} queued command ({new_msg}) as {hacked_nick}')

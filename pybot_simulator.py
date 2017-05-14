@@ -14,7 +14,7 @@ class raw_msg_builder:
 
     @staticmethod
     def build_for_on_whoisuser_on_nick(nick):
-        return raw_msg_t(nick, nick + '_user', nick + '_host', (nick, nick + '_user', nick + '_host',))
+        return raw_msg_t(nick, nick + '_user', nick + '_host', (nick, nick.lower() + '_user', nick.lower() + '_host',))
 
     @staticmethod
     def build_for_on_pubmsg(nick, user, host, msg):
@@ -22,7 +22,7 @@ class raw_msg_builder:
 
     @staticmethod
     def build_for_on_pubmsg_on_nick(nick, msg):
-        return raw_msg_t(nick, nick + '_user', nick + '_host', (msg,))
+        return raw_msg_t(nick, nick.lower() + '_user', nick.lower() + '_host', (msg,))
 
     @staticmethod
     def build_for_on_join(nick, user, host):
@@ -30,7 +30,7 @@ class raw_msg_builder:
 
     @staticmethod
     def build_for_on_on_join_on_nick(nick):
-        return raw_msg_t(nick, nick + '_user', nick + '_host', ())
+        return raw_msg_t(nick, nick.lower() + '_user', nick.lower() + '_host', ())
 
 
 class buffer_class_t:

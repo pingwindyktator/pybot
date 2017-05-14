@@ -1,8 +1,9 @@
 import logging
+
+from pybot import irc_nickname
+from color import color
 from functools import wraps
 
-import pybot
-from color import color
 
 
 class plugin:
@@ -135,6 +136,7 @@ def doc(doc_string):
 def admin(function):
     @wraps(function)
     def admin_impl(self, sender_nick, **kwargs):
+        sender_nick = irc_nickname(sender_nick)
         if sender_nick in self.bot.config['ops']:
             function(self, sender_nick=sender_nick, **kwargs)
         else:

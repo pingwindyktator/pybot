@@ -8,6 +8,20 @@ import msg_parser
 import irc.bot
 import irc.connection
 
+from functools import total_ordering
+
+
+@total_ordering
+class irc_nickname(str):
+    def __eq__(self, other):
+        return self.casefold() == other.casefold()
+
+    def __lt__(self, other):
+        return self.casefold() < other.casefold()
+
+    def __hash__(self):
+        return hash(self.casefold())
+
 
 # noinspection PyUnusedLocal
 class pybot(irc.bot.SingleServerIRCBot):
@@ -36,20 +50,19 @@ class pybot(irc.bot.SingleServerIRCBot):
     def start(self):
         ssl_info = ' over SSL' if self.config['use_ssl'] else ''
         self.logger.info(f'connecting to {self.config["server"]}:{self.config["port"]}{ssl_info}...')
-
         self.connection.buffer_class.errors = 'replace'
         super(pybot, self).start()
 
     def on_nicknameinuse(self, connection, raw_msg):
         """ called by super() when given nickname is reserved """
-        nickname = self.config['nickname'][self.nickname_id]
+        nickname = irc_nickname(self.config['nickname'][self.nickname_id])
         self.nickname_id += 1
 
         if self.nickname_id >= len(self.config['nickname']):
             self.logger.critical(f'nickname {nickname} is busy, no more nicknames to use')
             sys.exit(2)
 
-        new_nickname = self.config['nickname'][self.nickname_id]
+        new_nickname = irc_nickname(self.config['nickname'][self.nickname_id])
         self.logger.warning(f'nickname {nickname} is busy, using {new_nickname}')
         self.call_plugins_methods('on_nicknameinuse', raw_msg=raw_msg, busy_nickname=nickname)
         self.connection.nick(new_nickname)
@@ -58,8 +71,8 @@ class pybot(irc.bot.SingleServerIRCBot):
     def on_welcome(self, connection, raw_msg):
         """ called by super() when connected to server """
         ssl_info = ' over SSL' if self.config['use_ssl'] else ''
-        self.logger.info(f'connected to {self.config["server"]}:{self.config["port"]}{ssl_info} using nickname {self.connection.get_nickname()}')
-        self.call_plugins_methods('on_welcome', raw_msg=raw_msg, server=self.config['server'], port=self.config['port'], nickname=self.connection.get_nickname())
+        self.logger.info(f'connected to {self.config["server"]}:{self.config["port"]}{ssl_info} using nickname {self.get_nickname()}')
+        self.call_plugins_methods('on_welcome', raw_msg=raw_msg, server=self.config['server'], port=self.config['port'], nickname=self.get_nickname())
         self.login()
         self.join_channel()
 
@@ -69,16 +82,16 @@ class pybot(irc.bot.SingleServerIRCBot):
 
     def on_join(self, connection, raw_msg):
         """ called by super() when somebody joins channel """
-        if raw_msg.source.nick == self.connection.get_nickname():
+        if raw_msg.source.nick == self.get_nickname():
             self.logger.info(f'joined to {self.config["channel"]}')
-            self.whois(self.connection.get_nickname())
+            self.whois(self.get_nickname())
         else:
             self.call_plugins_methods('on_join', raw_msg=raw_msg, source=raw_msg.source)
 
     def on_privmsg(self, connection, raw_msg):
         """ called by super() when private msg received """
         full_msg = raw_msg.arguments[0]
-        sender_nick = raw_msg.source.nick
+        sender_nick = irc_nickname(raw_msg.source.nick)
         logging.info(f'[PRIVATE MSG] {sender_nick}: {full_msg}')
 
         if self.is_user_banned(sender_nick):
@@ -90,7 +103,7 @@ class pybot(irc.bot.SingleServerIRCBot):
     def on_pubmsg(self, connection, raw_msg):
         """ called by super() when msg received """
         full_msg = raw_msg.arguments[0].strip()
-        sender_nick = raw_msg.source.nick.lower()
+        sender_nick = irc_nickname(raw_msg.source.nick)
 
         if self.is_user_banned(sender_nick):
             self.logger.debug(f'user {sender_nick} is banned, skipping msg')
@@ -100,9 +113,9 @@ class pybot(irc.bot.SingleServerIRCBot):
 
         raw_cmd = msg_parser.trim_msg(self.config['command_prefix'], full_msg)
         if not raw_cmd:
-            raw_cmd = msg_parser.trim_msg(self.connection.get_nickname() + ':', full_msg)
+            raw_cmd = msg_parser.trim_msg(self.get_nickname() + ':', full_msg)
         if not raw_cmd:
-            raw_cmd = msg_parser.trim_msg(self.connection.get_nickname() + ',', full_msg)
+            raw_cmd = msg_parser.trim_msg(self.get_nickname() + ',', full_msg)
 
         args_list = raw_cmd.split()
         cmd = args_list[0] if len(args_list) > 0 else ''
@@ -115,7 +128,7 @@ class pybot(irc.bot.SingleServerIRCBot):
             func(sender_nick=sender_nick, args=args_list, msg=raw_cmd, raw_msg=raw_msg)
 
     def on_kick(self, connection, raw_msg):
-        if raw_msg.arguments[0] == self.connection.get_nickname():
+        if raw_msg.arguments[0] == self.get_nickname():
             self.on_me_kicked(self.connection, raw_msg)
         else:
             self.call_plugins_methods('on_kick', raw_msg=raw_msg, who=raw_msg.arguments[0], source=raw_msg.source)
@@ -143,10 +156,10 @@ class pybot(irc.bot.SingleServerIRCBot):
     def on_whoisuser(self, connection, raw_msg):
         # workaround here:
         # /whois me triggers on_me_joined call because when first time on self.on_join (== when bot joins channel) users-list is not updated yet
-        if raw_msg.arguments[0] == self.connection.get_nickname() and not self.joined_to_channel:
+        if raw_msg.arguments[0] == self.get_nickname() and not self.joined_to_channel:
             self.on_me_joined(connection, raw_msg)
 
-        self.call_plugins_methods('on_whoisuser', raw_msg=raw_msg, nick=raw_msg.arguments[0], user=raw_msg.arguments[1], host=raw_msg.arguments[2])
+        self.call_plugins_methods('on_whoisuser', raw_msg=raw_msg, nick=irc_nickname(raw_msg.arguments[0]), user=raw_msg.arguments[1], host=raw_msg.arguments[2])
 
     def on_me_joined(self, connection, raw_msg):
         self.joined_to_channel = True
@@ -238,7 +251,8 @@ class pybot(irc.bot.SingleServerIRCBot):
             self.connection.privmsg(target, msg)
 
     def is_user_banned(self, nickname):
-        return ('banned_users' in self.config and nickname.lower() in (nn.lower() for nn in self.config['banned_users'])) and (nickname not in self.config['ops'])
+        nickname = irc_nickname(nickname)
+        return ('banned_users' in self.config and nickname in self.config['banned_users']) and (nickname not in self.config['ops'])
 
     @staticmethod
     def is_msg_too_long(msg):
@@ -264,3 +278,6 @@ class pybot(irc.bot.SingleServerIRCBot):
 
     def is_debug_mode_enabled(self):
         return 'debug' in self.config and self.config['debug']
+
+    def get_nickname(self):
+        return irc_nickname(self.connection.get_nickname())

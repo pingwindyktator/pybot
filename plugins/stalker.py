@@ -43,7 +43,6 @@ class stalker(plugin):
         self.logger.info("updating whole stalker's database finished")
 
     def update_database(self, nick, host):
-        nick = nick.lower()
         result = self.get_nicknames_from_database(host)
         if result:
             if nick not in result:
@@ -67,7 +66,7 @@ class stalker(plugin):
 
         if result:
             result = json.loads(result[0])
-            result = [x.lower() for x in result]
+            result = [irc_nickname(x) for x in result]
 
         return result
 
@@ -78,7 +77,7 @@ class stalker(plugin):
 
         if result:
             result = [json.loads(x[0]) for x in result]
-            result = [[y.lower() for y in x] for x in result]
+            result = [[irc_nickname(y) for y in x] for x in result]
 
         return result
 
@@ -95,9 +94,9 @@ class stalker(plugin):
     @command
     def stalk_nick(self, sender_nick, args, **kwargs):
         if not args: return
-        nick = args[0]
+        nick = irc_nickname(args[0])
         all_hosts = self.get_all_hosts_from_database()
-        result = set([host for host in all_hosts if nick.lower() in self.get_nicknames_from_database(host)])
+        result = set([host for host in all_hosts if nick in self.get_nicknames_from_database(host)])
 
         if result:
             response = f'known hosts of {nick}: {result} '
@@ -110,11 +109,11 @@ class stalker(plugin):
     @command
     def stalk(self, sender_nick, args, **kwargs):
         if not args: return
-        nick = args[0]
+        nick = irc_nickname(args[0])
         result = set()
         all_nicknames = self.get_all_nicknames_from_database()
         for x in all_nicknames:
-            if nick.lower() in x: result.update(x)
+            if nick in x: result.update(x)
 
         if result:
             response = f'other nicks of {nick}: {result}'
