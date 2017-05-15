@@ -30,29 +30,6 @@ class privmsg_logger_handler(plugin):
         self.plh_handler.setLevel(logging.DEBUG)
         logging.getLogger('').addHandler(self.plh_handler)
 
-        self.int_to_level_str = {
-            logging.CRITICAL: 'critical',
-            logging.FATAL: 'fatal',
-            logging.ERROR: 'error',
-            logging.WARNING: 'warning',
-            logging.WARN: 'warn',
-            logging.INFO: 'info',
-            logging.DEBUG: 'debug',
-            logging.NOTSET: 'all',
-        }
-
-        self.level_str_to_int = {
-            'critical': logging.CRITICAL,
-            'fatal': logging.FATAL,
-            'error': logging.ERROR,
-            'warning': logging.WARNING,
-            'warn': logging.WARN,
-            'info': logging.INFO,
-            'debug': logging.DEBUG,
-            'notset': logging.NOTSET,
-            'all': logging.NOTSET
-        }
-
     def unload_plugin(self):
         logging.getLogger('').removeHandler(self.plh_handler)
 
@@ -61,11 +38,11 @@ class privmsg_logger_handler(plugin):
     def add_plh(self, sender_nick, args, **kwargs):
         if not args: return
         level = args[0].strip().lower()
-        if level not in self.level_str_to_int: return
+        if level not in utils.logging_level_str_to_int: return
         self.logger.warning(f'plh added: {sender_nick} at {level}')
-        level = self.level_str_to_int[level]
+        level = utils.logging_level_str_to_int[level]
         self.plhs[sender_nick] = level
-        self.bot.say(f'plh added: {sender_nick} at {self.int_to_level_str[level]}')
+        self.bot.say(f'plh added: {sender_nick} at {utils.int_to_logging_level_str[level]}')
 
     @command
     @admin
@@ -79,7 +56,7 @@ class privmsg_logger_handler(plugin):
     def get_plhs(self, sender_nick, **kwargs):
         response = self.plhs.copy()
         for target, level in response.items():
-            response[target] = self.int_to_level_str[level]
+            response[target] = utils.int_to_logging_level_str[level]
 
         self.bot.say(f'privmsg logger handlers registered: {response}')
         self.logger.info(f'plhs given to {sender_nick}: {response}')

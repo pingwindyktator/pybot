@@ -1,6 +1,7 @@
 import os
 import subprocess
 import sys
+import shutil
 
 from ruamel import yaml
 from threading import Lock
@@ -166,7 +167,7 @@ class builtins(plugin):
             for v_key, v_value in value.items():
                 self.update_config_impl(v_key, v_value, config[key])
 
-    def format_and_save_config(self, config):
+    def format_and_save_config(self, config, outfilename):
         config = config.copy()
         global_config = CommentedMap()
         plugins_config = CommentedMap()
@@ -177,12 +178,12 @@ class builtins(plugin):
             else:
                 plugins_config[key] = value
 
-        with open('./pybot.yaml', 'w') as outfile:
+        with open(outfilename, 'w') as outfile:
             yaml.dump(global_config, outfile, Dumper=yaml.RoundTripDumper)
             outfile.write('\n')
             yaml.dump(plugins_config, outfile, Dumper=yaml.RoundTripDumper)
 
-        with open('./pybot.yaml', 'r+') as outfile:
+        with open(outfilename, 'r+') as outfile:
             lines = outfile.readlines()
             outfile.truncate(0)
             outfile.seek(0)
@@ -193,15 +194,19 @@ class builtins(plugin):
                     outfile.write('\n')
 
     def update_config(self):
-        config = yaml.load(open("./pybot.yaml"), Loader=yaml.RoundTripLoader)
+        config = yaml.load(open('./pybot.yaml'), Loader=yaml.RoundTripLoader)
         if not config: config = {}
         for key, value in yaml.load(open("./pybot.template.yaml"), Loader=yaml.Loader).items():
             self.update_config_impl(key, value, config)
 
         if config == self.bot.config: return False
+        self.format_and_save_config(config, './.pybot.yaml')
 
+        _config = yaml.load(open('./.pybot.yaml'))
+        utils.ensure_config_is_ok(_config)
+
+        shutil.copyfile('./.pybot.yaml', './pybot.yaml')
         self.bot.config = config
-        self.format_and_save_config(config)
         self.logger.warning('config file updated')
         return True
 
