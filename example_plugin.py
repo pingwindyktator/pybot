@@ -2,12 +2,16 @@ from plugin import *
 
 # TIPS:
 # - all plugin functions will be called from one, main thread
-# - IRC nickname is case-insensitive. Generally you should'nt worry about it, since pybot API uses irc_nickname class
+# - IRC nickname is case-insensitive. Usually you should'nt worry about it, since pybot API uses irc_nickname class
 #     to represent it, but - for example - if you wan't to use database, use .casefold()
 # - All exceptions from commands and from on_* methods will be caught by bot - nothing bad will happen
+# - If you'r __init__ throws, plugin won't be loaded by bot. You can use it to assert environment compatibility,
+#     such as appropriate entries in config etc
+# - Plugin class name should be equal to module name
+# - Message you'd get ('msg', 'args' arguments) might be empty
 
 
-class example_plugin(plugin):  # plugin class name should equal module name!
+class example_plugin(plugin):
     def __init__(self, bot):
         super().__init__(bot)
 
