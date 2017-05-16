@@ -16,7 +16,7 @@ class timer(plugin):
 
     @command
     @doc('''
-    set_timer <time> <msg>: sets timer to <time>. <time> can be  %d-%m-%Y %H:%M  or  %H:%M or  %Hh %Mm  (eg. '2017-12-1 13:14' / '13:14' or '3h 2m')
+    set_timer <time> <msg>: sets timer to <time>. <time> can be  %d-%m-%Y %H:%M  or  %H:%M or  %Hh %Mm  (eg.  1-12-2017 13:14  or  13:14 or  3h 2m)
     ''')
     def set_timer(self, sender_nick, msg, **kwargs):
         now = datetime.now()
