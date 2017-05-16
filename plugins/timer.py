@@ -60,7 +60,11 @@ class timer(plugin):
                 day = now.strftime(r'%d-%m-%Y')
             else:
                 day = f'{time_reg_res[0][1].zfill(2)}-{time_reg_res[0][2].zfill(2)}-{time_reg_res[0][3].zfill(2)}'
+
             run_at = datetime.strptime(f'{day} {hour}', r'%d-%m-%Y %H:%M')
+            if run_at < now and not time_reg_res[0][0]:
+                run_at = run_at + timedelta(days=1)
+
             msg = time_reg_res[0][6].strip()
             return run_at, msg
 
@@ -68,6 +72,7 @@ class timer(plugin):
             hour_delta = int(delta_reg_res[0][0][:-1]) if delta_reg_res[0][0] else 0
             minute_delta = int(delta_reg_res[0][1][:-1]) if delta_reg_res[0][1] else 0
             if hour_delta == 0 and minute_delta == 0: return None, None
+
             msg = delta_reg_res[0][2]
             run_at = now + timedelta(hours=hour_delta, minutes=minute_delta)
             return run_at, msg
