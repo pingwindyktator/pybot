@@ -32,7 +32,7 @@ class timer(plugin):
             return
 
         if not msg: msg = 'time passed!'
-        delta_time = (run_at - now).seconds
+        delta_time = (run_at - now).total_seconds()
         timer_id = uuid.uuid4()
         t = Timer(delta_time, self.notice, kwargs={'timer_id': timer_id})
         self.to_notice[timer_id] = (sender_nick, msg,)
