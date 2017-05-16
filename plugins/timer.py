@@ -67,6 +67,7 @@ class timer(plugin):
         elif delta_reg_res:
             hour_delta = int(delta_reg_res[0][0][:-1]) if delta_reg_res[0][0] else 0
             minute_delta = int(delta_reg_res[0][1][:-1]) if delta_reg_res[0][1] else 0
+            if hour_delta == 0 and minute_delta == 0: return None, None
             msg = delta_reg_res[0][2]
             run_at = now + timedelta(hours=hour_delta, minutes=minute_delta)
             return run_at, msg
