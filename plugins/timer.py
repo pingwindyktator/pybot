@@ -1,63 +1,73 @@
 import re
-from threading import Timer
+import uuid
 
+from threading import Timer
 from plugin import *
 from datetime import datetime
+from datetime import timedelta
 
 
 class timer(plugin):
     def __init__(self, bot):
         super().__init__(bot)
-        self.time_regex = re.compile(r'^(([0-9]{1,2})-([0-9]{1,2})-([0-9]{4}) )?([0-9]{1,2}):([0-9]{1,2})$')
-        self.to_notice = {}  # {timer_name -> nicknames}
+        self.time_regex = re.compile(r'^(([0-9]{1,2})-([0-9]{1,2})-([0-9]{4}) )?([0-9]{1,2}):([0-9]{1,2})(.*)')
+        self.delta_regex = re.compile(r'([0-9]+[Hh])?\W*([0-9]+[Mm])?(.*)')
+        self.to_notice = {}  # {timer_id -> (sender_nick, msg)}
 
     @command
-    def set_timer(self, sender_nick, args, msg, **kwargs):
-        if len(args) < 2: return
-        name = args[0]
-        time_str = msg[len(name):].strip()
-        self.logger.info(f'{sender_nick} sets {name} timer to {time_str}')
-
-        if name in self.to_notice:
-            self.bot.say(f'{name} timer already exists')
-            return
-
-        reg_res = self.time_regex.findall(time_str)
+    @doc('''
+    set_timer <time> <msg>: sets timer to <time>. <time> can be '%Y-%m-%d %H:%M' / '%H:%M' or '%Hh %Mm' (eg. '2017-12-1 13:14' / '13:14' or '3h 2m')
+    ''')
+    def set_timer(self, sender_nick, msg, **kwargs):
         now = datetime.now()
-
-        if not reg_res:
-            self.bot.say('time should be YEAR-MONTH-DAY HOUR:MIN or HOUR:MIN formatted')
+        run_at, msg = self.prepare_run_time(msg, now)
+        if not run_at:
+            self.bot.say('possibly bad time format')
             return
 
-        hour = f'{reg_res[0][4].zfill(2)}:{reg_res[0][5].zfill(2)}'
-        if not reg_res[0][0]:
-            day = now.strftime(r'%d-%m-%Y')
-        else:
-            day = f'{reg_res[0][1].zfill(2)}-{reg_res[0][2].zfill(2)}-{reg_res[0][3].zfill(2)}'
+        self.logger.info(f'{sender_nick} sets timer to {run_at}: {msg}')
 
-        run_at = datetime.strptime(f'{day} {hour}', r'%d-%m-%Y %H:%M')
         if run_at < now:
             self.bot.say(f'seems that {run_at} already passed')
             return
 
+        if not msg: msg = 'time passed!'
         delta_time = (run_at - now).seconds
-        t = Timer(delta_time, self.notice, kwargs={'timer_name': name})
-        self.to_notice[name] = {sender_nick}
+        timer_id = uuid.uuid4()
+        t = Timer(delta_time, self.notice, kwargs={'timer_id': timer_id})
+        self.to_notice[timer_id] = (sender_nick, msg,)
         t.start()
-        self.bot.say(f'{name} timer set to {run_at}')
+        self.bot.say(f'timer set to {run_at}')
 
-    @command
-    def timer_enroll(self, sender_nick, args, **kwargs):
-        if not args: return
-        name = args[0]
-        self.logger.info(f'{sender_nick} enrolls to {name} timer')
-        if name not in self.to_notice:
-            self.bot.say(f'{name} timer does not exist')
-            return
+    def notice(self, timer_id):
+        self.bot.say(f'{self.to_notice[timer_id][0]}: {self.to_notice[timer_id][1]}')
+        del self.to_notice[timer_id]
 
-        self.to_notice[name].add(sender_nick)
-        self.bot.say(f'enrolled to {name} timer')
+    def prepare_run_time(self, msg, now):
+        try:
+            return self.prepare_run_time_impl(msg, now)
+        except Exception as e:
+            self.logger.info(f'possibly invalid time: {e}')
+            return None, None
 
-    def notice(self, timer_name):
-        self.bot.say(f"{timer_name}: {' '.join(self.to_notice[timer_name])}")
-        del self.to_notice[timer_name]
+    def prepare_run_time_impl(self, msg, now):
+        time_reg_res = self.time_regex.findall(msg)
+        delta_reg_res = self.delta_regex.findall(msg)
+
+        if time_reg_res:
+            hour = f'{time_reg_res[0][4].zfill(2)}:{time_reg_res[0][5].zfill(2)}'
+            if not time_reg_res[0][0]:
+                day = now.strftime(r'%d-%m-%Y')
+            else:
+                day = f'{time_reg_res[0][1].zfill(2)}-{time_reg_res[0][2].zfill(2)}-{time_reg_res[0][3].zfill(2)}'
+            run_at = datetime.strptime(f'{day} {hour}', r'%d-%m-%Y %H:%M')
+            msg = time_reg_res[0][6].strip()
+            return run_at, msg
+
+        elif delta_reg_res:
+            hour_delta = int(delta_reg_res[0][0][:-1]) if delta_reg_res[0][0] else 0
+            minute_delta = int(delta_reg_res[0][1][:-1]) if delta_reg_res[0][1] else 0
+            msg = delta_reg_res[0][2]
+            run_at = now + timedelta(hours=hour_delta, minutes=minute_delta)
+            return run_at, msg
+        else: return None, None
