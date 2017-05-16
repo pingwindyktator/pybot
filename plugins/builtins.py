@@ -35,7 +35,7 @@ class builtins(plugin):
 
             func = self.bot.commands[func_name]
             if hasattr(func, '__doc_string'):
-                self.bot.say(f'{func_name}: {getattr(func, "__doc_string")}')
+                self.bot.say(getattr(func, "__doc_string"))
             else:
                 self.bot.say(f'no help for {func_name}')
 

@@ -128,7 +128,7 @@ def command(function):
 
 def doc(doc_string):
     def doc_impl(function):
-        function.__doc_string = doc_string
+        function.__doc_string = doc_string.strip()
         return function
 
     return doc_impl
