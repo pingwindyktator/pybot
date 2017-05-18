@@ -61,7 +61,7 @@ class wolfram_alpha(plugin):
                 if not plaintext: continue
                 subpods.append(self.wa_subpod(plaintext, subtitle))
 
-            answers.append(self.wa_pod(title, position, subpods, primary))
+            if subpods: answers.append(self.wa_pod(title, position, subpods, primary))
 
         if not answers:
             self.logger.debug('******* NO DATA PARSED FROM WA RESPONSE *******')
