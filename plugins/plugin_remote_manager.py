@@ -14,6 +14,9 @@ class plugin_manager(plugin):
     class PluginNotEnabled(Exception):
         pass
 
+    class PluginAlreadyEnabled(Exception):
+        pass
+
     @command
     def plugins(self, sender_nick, **kwargs):
         self.bot.say(f'enabled plugins: {self.bot.get_plugins_names()}')
@@ -31,7 +34,10 @@ class plugin_manager(plugin):
                 self.bot.say(f'plugin {arg} enabled')
             except self.NoPluginsModuleFound as e:
                 self.logger.info(e)
-                self.bot.say(f'cannot enable {arg}, no appropriate module found')
+                self.bot.say(f'no such plugin: {arg}, use \'{self.bot.config["command_prefix"]}load_plugin {arg}\' to load new plugin')
+            except self.PluginAlreadyEnabled as e:
+                self.logger.info(e)
+                self.bot.say(f'plugin already enabled, use \'{self.bot.config["command_prefix"]}load_plugin {arg}\' to reload it')
             except Exception as e:
                 self.logger.error(f'Exception caught while trying to enable plugin {arg}: {e}')
 
@@ -47,7 +53,7 @@ class plugin_manager(plugin):
                 self.bot.say(f'plugin {arg} disabled')
             except self.PluginNotEnabled as e:
                 self.logger.info(e)
-                self.bot.say(f'cannot disable {arg}, plugin is not enabled')
+                self.bot.say(f'no such enabled plugin: {arg}')
             except Exception as e:
                 self.logger.error(f'Exception caught while trying to disable plugin {arg}: {e}')
 
@@ -55,8 +61,11 @@ class plugin_manager(plugin):
         """
         module has to be loaded! 
         """
+        enabled_plugins = {}
+        for p in self.bot.get_plugins(): enabled_plugins[type(p).__name__] = p
 
-        if f'plugins.{name}' not in sys.modules: raise self.NoPluginsModuleFound(f'Cannot enable {name}: no module plugins.{name} found')
+        if name in enabled_plugins: raise self.PluginAlreadyEnabled(f'Cannot enable {name}: plugin already enabled')
+        if f'plugins.{name}' not in sys.modules: raise self.NoPluginsModuleFound(f'Cannot enable {name}: no loaded module plugins.{name} found')
         plugin_class = getattr(sys.modules[f'plugins.{name}'], name)  # requires plugin class' name to be equal to module name
         new_class_instance = plugin_class(self.bot)
         self.bot.register_plugin(new_class_instance)
@@ -70,7 +79,7 @@ class plugin_manager(plugin):
 
         enabled_plugins = {}
         for p in self.bot.get_plugins(): enabled_plugins[type(p).__name__] = p
-        if name not in enabled_plugins: raise self.PluginNotEnabled(f'Cannot disable {name}: plugin is not enabled')
+        if name not in enabled_plugins: raise self.PluginNotEnabled(f'Cannot disable {name}: plugin is not enabled or does not exist')
         plugin_instance = enabled_plugins[name]
         plugin_class = type(plugin_instance)
         cmds = self.bot.get_plugin_commands(plugin_class.__name__)
@@ -116,28 +125,26 @@ class plugin_manager(plugin):
                         sys.modules[f'plugins.{plugin_name}'] = importlib.reload(sys.modules[f'plugins.{plugin_name}'])  # reloading module
                         self.logger.warning(f'module plugins.{plugin_name} reloaded')
                         self.enable_plugin_impl(plugin_name)  # enabling plugin
+                        self.bot.say(f'plugin {plugin_name} reloaded and enabled')
 
                     else:
                         sys.modules[f'plugins.{plugin_name}'] = importlib.reload(sys.modules[f'plugins.{plugin_name}'])  # reloading module
                         self.logger.warning(f'module plugins.{plugin_name} reloaded')
+                        self.bot.say(f'plugin {plugin_name} reloaded')
 
                 else:
                     importlib.import_module(f'plugins.{plugin_name}')  # loading new module
                     self.logger.warning(f'module plugins.{plugin_name} loaded')
                     self.enable_plugin_impl(plugin_name)  # enabling plugin
+                    self.bot.say(f'plugin {plugin_name} loaded and enabled')
 
-            except self.NoPluginsModuleFound as e:
+            except (self.NoPluginsModuleFound, ImportError, ModuleNotFoundError) as e:  # user error #1
                 self.logger.info(e)
                 self.bot.say(f'cannot enable {plugin_name}, no appropriate module found')
 
-            except self.PluginNotEnabled as e:
+            except self.PluginNotEnabled as e:  # user error #2
                 self.logger.info(e)
                 self.bot.say(f'cannot disable {plugin_name}, plugin is not enabled')
 
-            except (ImportError, ModuleNotFoundError) as e:
-                name = e.name
-                path = f' located at {e.path}' if e.path else ''
-                self.logger.error(f'Exception caught while trying to load plugin {plugin_name}: Cannot find {name}{path}')
-
-            except Exception as e:
+            except (Exception, self.PluginAlreadyEnabled) as e:  # implementation error
                 self.logger.error(f'Exception caught while trying to load plugin {plugin_name}: {e}')
