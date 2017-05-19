@@ -8,24 +8,11 @@ class plugin_manager(plugin):
     def __init__(self, bot):
         super().__init__(bot)
 
-    @command
-    @admin
-    def disable_plugin(self, sender_nick, args, **kwargs):
-        plugins = {}  # plugin_name -> plugin_instance
-        for p in self.bot.get_plugins(): plugins[type(p).__name__] = p
+    class NoPluginsModuleFound(Exception):
+        pass
 
-        for arg in args:
-            if arg not in plugins:
-                self.bot.say(f'not such plugin: [{arg}]')
-            else:
-                cmds = self.bot.get_plugin_commands(arg)
-                plugins[arg].unload_plugin()
-                self.bot.plugins.remove(plugins[arg])
-                for cmd in cmds:
-                    del self.bot.commands[cmd]
-
-                self.bot.say(f'plugin [{arg}] disabled with commands {cmds}')
-                self.logger.warning(f'plugin [{arg}] disabled with commands {cmds} by {sender_nick}')
+    class PluginNotEnabled(Exception):
+        pass
 
     @command
     def plugins(self, sender_nick, **kwargs):
@@ -35,85 +22,122 @@ class plugin_manager(plugin):
     @command
     @admin
     def enable_plugin(self, sender_nick, args, **kwargs):
-        plugins = {}  # plugin_name -> plugin_class
-        for plugin_class in plugin.__subclasses__():
-            plugins[plugin_class.__name__] = plugin_class
+        if not args: return
+        self.logger.warning(f'enabling {args} plugins for {sender_nick}')
 
         for arg in args:
-            if arg not in plugins:
-                self.bot.say(f'not such plugin: [{arg}]')
-            else:
-                p = plugins[arg](self.bot)
-                self.bot.register_plugin(p)
-                self.bot.register_commands_for_plugin(p)
-                cmds = self.bot.get_plugin_commands(type(p).__name__)
-                self.bot.say(f'plugin [{arg}] enabled with commands {cmds}')
-                self.logger.warning(f'plugin [{arg}] enabled with commands {cmds} by {sender_nick}')
+            try:
+                self.enable_plugin_impl(arg)
+                self.bot.say(f'plugin {arg} enabled')
+            except self.NoPluginsModuleFound as e:
+                self.logger.info(e)
+                self.bot.say(f'cannot enable {arg}, no appropriate module found')
+            except Exception as e:
+                self.logger.error(f'Exception caught while trying to enable plugin {arg}: {e}')
+
+    @command
+    @admin
+    def disable_plugin(self, sender_nick, args, **kwargs):
+        if not args: return
+        self.logger.warning(f'disabling {args} plugins for {sender_nick}')
+
+        for arg in args:
+            try:
+                self.disable_plugin_impl(arg)
+                self.bot.say(f'plugin {arg} disabled')
+            except self.PluginNotEnabled as e:
+                self.logger.info(e)
+                self.bot.say(f'cannot disable {arg}, plugin is not enabled')
+            except Exception as e:
+                self.logger.error(f'Exception caught while trying to disable plugin {arg}: {e}')
+
+    def enable_plugin_impl(self, name):
+        """
+        module has to be loaded! 
+        """
+
+        if f'plugins.{name}' not in sys.modules: raise self.NoPluginsModuleFound(f'Cannot enable {name}: no module plugins.{name} found')
+        plugin_class = getattr(sys.modules[f'plugins.{name}'], name)  # requires plugin class' name to be equal to module name
+        new_class_instance = plugin_class(self.bot)
+        self.bot.register_plugin(new_class_instance)
+        self.bot.register_commands_for_plugin(new_class_instance)
+        self.logger.warning(f'plugin {name} enabled')
+
+    def disable_plugin_impl(self, name):
+        """
+        plugin has to be enabled! 
+        """
+
+        enabled_plugins = {}
+        for p in self.bot.get_plugins(): enabled_plugins[type(p).__name__] = p
+        if name not in enabled_plugins: raise self.PluginNotEnabled(f'Cannot disable {name}: plugin is not enabled')
+        plugin_instance = enabled_plugins[name]
+        plugin_class = type(plugin_instance)
+        cmds = self.bot.get_plugin_commands(plugin_class.__name__)
+        plugin_instance.unload_plugin()
+        self.bot.plugins.remove(plugin_instance)
+        commands_copy = self.bot.commands.copy()
+        for cmd in cmds: del commands_copy[cmd]
+        self.bot.commands = commands_copy
+        self.logger.warning(f'plugin {name} disabled with commands {cmds}')
 
     @command
     @admin
     def load_plugin(self, sender_nick, args, **kwargs):
-        """
-        Loads **new** module.
-        """
-        args = [x for x in args if x not in self.bot.get_plugins_names()]
+        if not args: return
+        self.logger.warning(f'loading {args} plugins for {sender_nick}')
 
-        for arg in args:
+        # modules loaded by python
+        # e.g. ['plugins.man', 'plugins.stalker']
+        loaded_modules = [x for x in sys.modules.keys() if x.startswith('plugins.')]
+
+        # plugin_name -> plugin_instance
+        # plugins enabled by bot - should be "subset" of loaded_modules
+        # some modules can be loaded but not enabled by bot
+        # e.g. {'man': plugins.man object at..., 'stalker': plugins.stalker object at...}
+        enabled_plugins = {}
+        for p in self.bot.get_plugins(): enabled_plugins[type(p).__name__] = p
+
+        for plugin_name in args:
             try:
-                # loading module
-                new_module = importlib.import_module('plugins.' + arg)
-                plugin_class = getattr(new_module, arg)  # requires plugin class' name to be equal to module name
+                if self.__class__.__name__ == plugin_name:  # THIS plugin cannot be reloaded!
+                    self.bot.say(f'plugin {self.__class__.__name__} cannot be reloaded')
+                    continue
 
-                # loading plugin
-                new_class_instance = plugin_class(self.bot)
-                self.bot.register_plugin(new_class_instance)
-                self.bot.register_commands_for_plugin(new_class_instance)
-                self.logger.warning(f'plugin [{plugin_class.__name__}] loaded by {sender_nick}')
-                self.bot.say(f'plugin [{arg}] loaded')
+                if f'plugins.{plugin_name}' in loaded_modules:
+                    """
+                    Will cause reference leak! There's no possibility to fully unload module in python.
+                    Old module's class instance will be fixed in memory after this command.
+                    """
+
+                    if plugin_name in enabled_plugins:
+                        self.disable_plugin_impl(plugin_name)  # disabling plugin
+                        del enabled_plugins[plugin_name]  # freeing plugin instance reference
+                        sys.modules[f'plugins.{plugin_name}'] = importlib.reload(sys.modules[f'plugins.{plugin_name}'])  # reloading module
+                        self.logger.warning(f'module plugins.{plugin_name} reloaded')
+                        self.enable_plugin_impl(plugin_name)  # enabling plugin
+
+                    else:
+                        sys.modules[f'plugins.{plugin_name}'] = importlib.reload(sys.modules[f'plugins.{plugin_name}'])  # reloading module
+                        self.logger.warning(f'module plugins.{plugin_name} reloaded')
+
+                else:
+                    importlib.import_module(f'plugins.{plugin_name}')  # loading new module
+                    self.logger.warning(f'module plugins.{plugin_name} loaded')
+                    self.enable_plugin_impl(plugin_name)  # enabling plugin
+
+            except self.NoPluginsModuleFound as e:
+                self.logger.info(e)
+                self.bot.say(f'cannot enable {plugin_name}, no appropriate module found')
+
+            except self.PluginNotEnabled as e:
+                self.logger.info(e)
+                self.bot.say(f'cannot disable {plugin_name}, plugin is not enabled')
+
+            except (ImportError, ModuleNotFoundError) as e:
+                name = e.name
+                path = f' located at {e.path}' if e.path else ''
+                self.logger.error(f'Exception caught while trying to load plugin {plugin_name}: Cannot find {name}{path}')
+
             except Exception as e:
-                self.logger.error(f'exception caught while loading plugin [{plugin_class.__name__}] by {sender_nick}: {e}')
-                self.bot.say(f'exception caught while reloading plugin [{plugin_class.__name__}]')
-
-    @command
-    @admin
-    def reload_plugin(self, sender_nick, args, **kwargs):
-        """
-        Will cause reference leak! There's no possibility to fully unload module in python.
-        Old module's class instance will be fixed in memory after this command.
-
-        Reloading module has to be enabled before this command is executed.
-        """
-        args = [x for x in args if x in self.bot.get_plugins_names()]  # plugins asked to be reloaded
-
-        if self.__class__.__name__ in args:  # THIS plugin cannot be reloaded!
-            self.bot.say(f'plugin {self.__class__.__name__} cannot be reloaded')
-            args.remove(self.__class__.__name__)
-
-        plugin_name_to_instance = {}  # plugin_name -> plugin_instance
-        for p in self.bot.get_plugins(): plugin_name_to_instance[type(p).__name__] = p
-
-        plugins_to_reload = [type(plugin_instance) for plugin_instance in self.bot.get_plugins() if type(plugin_instance).__name__ in args]  # classes to reload
-
-        for plugin_class in plugins_to_reload:
-            try:
-                plugin_instance = plugin_name_to_instance[plugin_class.__name__]
-                # unloading plugin
-                cmds = self.bot.get_plugin_commands(plugin_class.__name__)
-                plugin_instance.unload_plugin()
-                self.bot.plugins.remove(plugin_instance)
-                for cmd in cmds: del self.bot.commands[cmd]
-
-                # reloading module
-                del plugin_instance
-                sys.modules[plugin_class.__module__] = importlib.reload(sys.modules[plugin_class.__module__])
-                plugin_class = getattr(sys.modules[plugin_class.__module__], plugin_class.__name__)  # requires plugin class' name to be equal to module name
-
-                # loading plugin
-                new_class_instance = plugin_class(self.bot)
-                self.bot.register_plugin(new_class_instance)
-                self.bot.register_commands_for_plugin(new_class_instance)
-                self.logger.warning(f'plugin [{plugin_class.__name__}] reloaded by {sender_nick}')
-                self.bot.say(f'plugin [{plugin_class.__name__}] reloaded')
-            except Exception as e:
-                self.logger.error(f'exception caught while reloading plugin [{plugin_class.__name__}] by {sender_nick}: {e}')
-                self.bot.say(f'exception caught while reloading plugin [{plugin_class.__name__}]')
+                self.logger.error(f'Exception caught while trying to load plugin {plugin_name}: {e}')
