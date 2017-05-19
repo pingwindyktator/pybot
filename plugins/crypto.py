@@ -22,12 +22,12 @@ class crypto(plugin):
     class currency_info:
         def __init__(self, id, raw_result):
             self.id = id
-            self.price_usd = float(raw_result['price_usd'])
-            self.price_btc = float(raw_result['price_btc'])
-            self.hour_change = float(raw_result['percent_change_1h'])
-            self.day_change = float(raw_result['percent_change_24h'])
-            self.week_change = float(raw_result['percent_change_7d'])
-            self.marker_cap_usd = float(raw_result['market_cap_usd'])
+            self.price_usd = float(raw_result['price_usd']) if raw_result['price_usd'] else None
+            self.price_btc = float(raw_result['price_btc']) if raw_result['price_btc'] else None
+            self.hour_change = float(raw_result['percent_change_1h']) if raw_result['percent_change_1h'] else None
+            self.day_change = float(raw_result['percent_change_24h']) if raw_result['percent_change_24h'] else None
+            self.week_change = float(raw_result['percent_change_7d']) if raw_result['percent_change_7d'] else None
+            self.marker_cap_usd = float(raw_result['market_cap_usd']) if raw_result['market_cap_usd'] else None
 
     def get_crypto_currencies(self):
         url = r'https://api.coinmarketcap.com/v1/ticker/'
@@ -56,18 +56,21 @@ class crypto(plugin):
         return self.currency_info(curr_id, raw_result)
 
     def generate_curr_price_change_output(self, curr_info):
-        results = []
+        result = ''
 
-        for change in [curr_info.hour_change, curr_info.day_change, curr_info.week_change]:
-            change_price = change * curr_info.price_usd / 100.
-            if change >= 0:
-                result = color.light_green(f'+{change}%') + ' | ' + color.light_green(f'+${change_price:.2f}')
-            else:
-                result = color.light_red(f'{change}%') + ' | ' + color.light_red('-$%.2f' % abs(change_price))
+        for change, change_str in zip([curr_info.hour_change, curr_info.day_change, curr_info.week_change], ['hourly', 'daily', 'weekly']):
+            if change:
+                change_price = change * curr_info.price_usd / 100. if curr_info.price_usd else None
+                if change >= 0:
+                    subresult = color.light_green(f'+{change}%')
+                    if change_price: subresult = subresult + ' | ' + color.light_green(f'+${change_price:.2f}')
+                else:
+                    subresult = color.light_red(f'{change}%')
+                    if change_price: subresult = subresult + ' | ' + color.light_red('-$%.2f' % abs(change_price))
 
-            results.append(result)
+                result = f'{result}[{subresult} {change_str}] '
 
-        return f'[{results[0]} hourly] [{results[1]} daily] [{results[2]} weekly]'
+        return result.strip()
 
     @command
     def crypto(self, sender_nick, msg, **kwargs):
@@ -76,8 +79,9 @@ class crypto(plugin):
         convert = self.convert_regex.findall(msg)
 
         if convert:
-            self.logger.info(f'{sender_nick} wants to convert {convert[0][0]} {convert[0][1]} to {convert[0][3]}')
-            self.convert_impl(float(convert[0][0]) if convert[0][0] else 1., convert[0][1], convert[0][3])
+            amount = float(convert[0][0]) if convert[0][0] else 1.
+            self.logger.info(f'{sender_nick} wants to convert {amount} {convert[0][1]} to {convert[0][3]}')
+            self.convert_impl(amount, convert[0][1], convert[0][3])
         else:
             self.logger.info(f'{sender_nick} asked coinmarketcap about {msg}')
             self.crypto_impl(msg)
@@ -89,7 +93,8 @@ class crypto(plugin):
             self.bot.say(f'no such crypto currency: {curr}')
             return
 
-        self.bot.say(color.orange(f'[{curr_info.id.name}]') + f' ${curr_info.price_usd} (US dollars) ' + self.generate_curr_price_change_output(curr_info))
+        price_usd = f' ${curr_info.price_usd} (US dollars) ' if curr_info.price_usd else ' unknown price '
+        self.bot.say(color.orange(f'[{curr_info.id.name}]') + price_usd + self.generate_curr_price_change_output(curr_info))
 
     # --------------------------------------------------------------------------------------------------------------
 
@@ -110,11 +115,19 @@ class crypto(plugin):
         convertions = [None, None, None]
 
         if _from_curr:
+            if not _from_curr.price_usd:
+                self.bot.say(f'unknown price of {from_curr}')
+                return
+
             convertions[0] = self.convertion(amount, _from_curr.id.symbol, amount * _from_curr.price_usd, 'usd')
             amount *= _from_curr.price_usd
             from_curr = 'usd'
 
         if _to_curr:
+            if not _to_curr.price_usd:
+                self.bot.say(f'unknown price of {to_curr}')
+                return
+
             convertions[1] = self.convertion(amount / _to_curr.price_usd, _to_curr.id.symbol, amount, 'usd')
             amount /= _to_curr.price_usd
             to_curr = 'usd'
