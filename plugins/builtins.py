@@ -2,12 +2,12 @@ import os
 import subprocess
 import sys
 import shutil
+import git
 
 from ruamel import yaml
 from threading import Lock
 from irc.client import NickMask
 from ruamel.yaml.comments import CommentedMap
-
 from plugin import *
 
 
@@ -213,29 +213,36 @@ class builtins(plugin):
     @command
     @admin
     def self_update(self, sender_nick, **kwargs):
-        if not self.update_possible():
-            self.logger.info(f'{sender_nick} asked for self-update, but there are local changes in {self.pybot_dir}')
+        self.logger.warning(f'{sender_nick} asked for self-update')
+        repo = git.Repo(self.pybot_dir)
+        origin = repo.remote()
+        remote_branch_name = repo.active_branch.tracking_branch()
+
+        if repo.head.commit.diff(None):
             self.bot.say('local changes prevents me from update')
+            self.logger.info(f'cannot self-update, local changes: {[x.a_path for x in repo.head.commit.diff(None)]}')
             return
 
-        cmd = f'git -C {self.pybot_dir} pull'
-        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-        process.wait()
+        if repo.head.commit.diff(remote_branch_name):
+            self.bot.say('local changes prevents me from update')
+            self.logger.info(f'cannot self-update, not pushed changes: {[x.a_path for x in repo.head.commit.diff(remote_branch_name)]}')
+            return
 
-        if process.returncode != 0:
-            self.logger.error(f'{sender_nick} asked for self-update, but {cmd} returned {process.returncode} exit code')
-            self.bot.say("cannot update, 'git pull' returns non-zero exit code")
-        else:
-            suffix = ''
-            try:
-                if self.update_config(): suffix = ', config file updated'
-            except Exception as e:
-                suffix = ', unable to update config file!'
-                self.logger.warning(f'exception caught while updating config file: {e}')
-                if self.bot.is_debug_mode_enabled(): raise
+        origin.fetch()
+        origin.pull()
+        self.logger.warning(f'updated {repo.head.commit} -> {repo.head.orig_head().commit}')
 
-            self.logger.warning(f'{sender_nick} asked for self-update')
-            self.bot.say(f'updated, now at "{self.get_current_head_pos()}"{suffix}')
+        try:
+            if self.update_config(): suffix = ', config file updated'
+            else: suffix = ''
+
+            self.bot.say(f'updated, now at "{str(repo.head.commit)[:6]}"{suffix}')
+            repo.head.orig_head().set_commit(repo.head)
+
+        except Exception as e:
+            self.logger.error(f'exception caught while updating config file: {e}. getting back to {repo.head.orig_head().commit}')
+            repo.head.reference = repo.head.orig_head()
+            if self.bot.is_debug_mode_enabled(): raise
 
     def on_whoisuser(self, nick, user, host, **kwargs):
         cmds = self.commands_as_other_user_to_send.copy()
