@@ -142,23 +142,6 @@ class builtins(plugin):
         os.chdir(os.getcwd())
         os.execv(sys.executable, args)
 
-    def update_possible(self):
-        cmd1 = f'git -C {self.pybot_dir} diff --exit-code'  # unstaged changes
-        process1 = subprocess.Popen(cmd1, shell=True, stdout=subprocess.PIPE)
-        process1.wait(2)
-
-        cmd2 = f'git -C {self.pybot_dir} cherry -v | wc -l'  # not committed changes
-        process2 = subprocess.Popen(cmd2, shell=True, stdout=subprocess.PIPE)
-        out, err = process2.communicate()
-
-        return process1.returncode == 0 and out == b'0\n'
-
-    def get_current_head_pos(self):
-        cmd = f"git -C {self.pybot_dir} log --oneline -n 1 | sed 's/ /: /'"
-        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-        out, err = process.communicate()
-        return ''.join([chr(x) for x in list(out)[:-1]])
-
     def update_config_impl(self, key, value, config):
         if key not in config:
             config[key] = value
@@ -213,6 +196,8 @@ class builtins(plugin):
     @command
     @admin
     def self_update(self, sender_nick, **kwargs):
+        # TODO pip requirements update
+        # TODO transactional update?
         self.logger.info(f'{sender_nick} asked for self-update')
         repo = git.Repo(self.pybot_dir)
         origin = repo.remote()
@@ -240,6 +225,7 @@ class builtins(plugin):
 
         except Exception as e:
             self.logger.error(f'exception caught while updating config file: {e}. getting back to {repo.head.orig_head().commit}')
+            self.bot.say('cannot update config file, aborting...')
             repo.head.reset(commit=repo.head.orig_head().commit, index=True, working_tree=True)
             if self.bot.is_debug_mode_enabled(): raise
 
