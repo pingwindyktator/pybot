@@ -213,11 +213,11 @@ class builtins(plugin):
     @command
     @admin
     def self_update(self, sender_nick, **kwargs):
-        self.logger.warning(f'{sender_nick} asked for self-update')
+        self.logger.info(f'{sender_nick} asked for self-update')
         repo = git.Repo(self.pybot_dir)
         origin = repo.remote()
 
-        if repo.head.commit.diff(None):
+        if repo.head.commit.diff(None):  # will not count files added to working tree
             self.bot.say('local changes prevents me from update')
             self.logger.info(f'cannot self-update, local changes: {[x.a_path for x in repo.head.commit.diff(None)]}')
             return
