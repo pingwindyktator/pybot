@@ -216,7 +216,6 @@ class builtins(plugin):
         self.logger.warning(f'{sender_nick} asked for self-update')
         repo = git.Repo(self.pybot_dir)
         origin = repo.remote()
-        remote_branch_name = repo.active_branch.tracking_branch()
 
         if repo.head.commit.diff(None):
             self.bot.say('local changes prevents me from update')
