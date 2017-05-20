@@ -198,7 +198,7 @@ class builtins(plugin):
     def self_update(self, sender_nick, **kwargs):
         # TODO pip requirements update
         # TODO transactional update?
-        # TODO getting back does not work?
+        # TODO updated, now at 123abc: aslkdaskd
         self.logger.info(f'{sender_nick} asked for self-update')
         repo = git.Repo(self.pybot_dir)
         origin = repo.remote()
@@ -215,7 +215,7 @@ class builtins(plugin):
 
         origin.fetch()
         origin.pull()
-        self.logger.warning(f'updated {repo.head.commit} -> {repo.head.orig_head().commit}')
+        self.logger.warning(f'updated {repo.head.orig_head().commit} -> {repo.head.commit}')
 
         try:
             if self.update_config(): suffix = ', config file updated'
