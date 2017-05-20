@@ -223,9 +223,9 @@ class builtins(plugin):
             self.logger.info(f'cannot self-update, local changes: {[x.a_path for x in repo.head.commit.diff(None)]}')
             return
 
-        if repo.head.commit.diff(remote_branch_name):
+        if repo.git.cherry('-v'):
             self.bot.say('local changes prevents me from update')
-            self.logger.info(f'cannot self-update, not pushed changes: {[x.a_path for x in repo.head.commit.diff(remote_branch_name)]}')
+            self.logger.info(f'cannot self-update, not pushed changes')
             return
 
         origin.fetch()
