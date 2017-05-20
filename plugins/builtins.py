@@ -198,6 +198,7 @@ class builtins(plugin):
     def self_update(self, sender_nick, **kwargs):
         # TODO pip requirements update
         # TODO transactional update?
+        # TODO getting back does not work?
         self.logger.info(f'{sender_nick} asked for self-update')
         repo = git.Repo(self.pybot_dir)
         origin = repo.remote()
@@ -220,14 +221,15 @@ class builtins(plugin):
             if self.update_config(): suffix = ', config file updated'
             else: suffix = ''
 
-            self.bot.say(f'updated, now at "{str(repo.head.commit)[:6]}"{suffix}')
-            repo.head.orig_head().set_commit(repo.head)
-
         except Exception as e:
             self.logger.error(f'exception caught while updating config file: {e}. getting back to {repo.head.orig_head().commit}')
             self.bot.say('cannot update config file, aborting...')
             repo.head.reset(commit=repo.head.orig_head().commit, index=True, working_tree=True)
             if self.bot.is_debug_mode_enabled(): raise
+            return
+
+        self.bot.say(f'updated, now at "{str(repo.head.commit)[:6]}"{suffix}')
+        repo.head.orig_head().set_commit(repo.head)
 
     def on_whoisuser(self, nick, user, host, **kwargs):
         cmds = self.commands_as_other_user_to_send.copy()
