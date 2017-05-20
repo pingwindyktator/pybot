@@ -240,7 +240,7 @@ class builtins(plugin):
 
         except Exception as e:
             self.logger.error(f'exception caught while updating config file: {e}. getting back to {repo.head.orig_head().commit}')
-            repo.head.reference = repo.head.orig_head()
+            repo.head.reset(commit=repo.head.orig_head().commit, index=True, working_tree=True)
             if self.bot.is_debug_mode_enabled(): raise
 
     def on_whoisuser(self, nick, user, host, **kwargs):
