@@ -226,7 +226,7 @@ class builtins(plugin):
             return
 
         self.logger.warning(f'updated {repo.head.orig_head().commit} -> {repo.head.commit}')
-        diff_str = f', diffs at {[x.a_path for x in repo.head.commit.diff(repo.head.orig_head().commit)]}'
+        diff_str = f', diffs at {", ".join([x.a_path for x in repo.head.commit.diff(repo.head.orig_head().commit)])}'
 
         try:
             if self.update_config(): config_updated_str = ', config file updated'
