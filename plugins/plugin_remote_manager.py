@@ -47,7 +47,7 @@ class plugin_manager(plugin):
 
     @command
     @admin
-    @doc('disable_plugin <name>...: disable enabled <name> plugin')
+    @doc('disable_plugin <name>...: unload and disable enabled <name> plugin')
     def disable_plugin(self, sender_nick, args, **kwargs):
         if not args: return
         self.logger.warning(f'disabling {args} plugins for {sender_nick}')
