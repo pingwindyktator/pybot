@@ -40,6 +40,7 @@ class plugin_manager(plugin):
                 self.bot.say(f'plugin already enabled, use \'{self.bot.config["command_prefix"]}load_plugin {arg}\' to reload it')
             except Exception as e:
                 self.logger.error(f'exception caught while trying to enable plugin {arg}: {e}')
+                self.bot.say(f'cannot enable {arg}: unexpected exception thrown')
                 if self.bot.is_debug_mode_enabled(): raise
 
     @command
@@ -57,6 +58,7 @@ class plugin_manager(plugin):
                 self.bot.say(f'no such enabled plugin: {arg}')
             except Exception as e:
                 self.logger.error(f'exception caught while trying to disable plugin {arg}: {e}')
+                self.bot.say(f'cannot disable {arg}: unexpected exception thrown')
                 if self.bot.is_debug_mode_enabled(): raise
 
     def enable_plugin_impl(self, name):
@@ -150,4 +152,5 @@ class plugin_manager(plugin):
 
             except (Exception, self.PluginAlreadyEnabled) as e:  # implementation error
                 self.logger.error(f'exception caught while trying to load plugin {plugin_name}: {e}')
+                self.bot.say(f'cannot load {plugin_name}: unexpected exception thrown')
                 if self.bot.is_debug_mode_enabled(): raise
