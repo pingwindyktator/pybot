@@ -3,6 +3,7 @@ import re
 from plugin import *
 
 
+@doc("correct you'r previous message, supports regular linux's sed format")
 class sed(plugin):
     def __init__(self, bot):
         super().__init__(bot)
