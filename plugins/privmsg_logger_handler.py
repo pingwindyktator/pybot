@@ -35,6 +35,7 @@ class privmsg_logger_handler(plugin):
 
     @command
     @admin
+    @doc('add_plh <level>: add privmsg logger handler at <level> level. bot will send you app logs in a private message')
     def add_plh(self, sender_nick, args, **kwargs):
         if not args: return
         level = args[0].strip().lower()
@@ -46,6 +47,7 @@ class privmsg_logger_handler(plugin):
 
     @command
     @admin
+    @doc('remove saved privmsg logger handler')
     def rm_plh(self, sender_nick, **kwargs):
         if sender_nick not in self.plhs: return
         del self.plhs[sender_nick]
@@ -53,6 +55,7 @@ class privmsg_logger_handler(plugin):
         self.bot.say('plh removed')
 
     @command
+    @doc('get all registered privmsg logger handlers')
     def get_plhs(self, sender_nick, **kwargs):
         response = self.plhs.copy()
         for target, level in response.items():
