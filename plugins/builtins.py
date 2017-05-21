@@ -2,12 +2,12 @@ import os
 import subprocess
 import sys
 import shutil
+import git
 
 from ruamel import yaml
 from threading import Lock
 from irc.client import NickMask
 from ruamel.yaml.comments import CommentedMap
-
 from plugin import *
 
 
@@ -142,23 +142,6 @@ class builtins(plugin):
         os.chdir(os.getcwd())
         os.execv(sys.executable, args)
 
-    def update_possible(self):
-        cmd1 = f'git -C {self.pybot_dir} diff --exit-code'  # unstaged changes
-        process1 = subprocess.Popen(cmd1, shell=True, stdout=subprocess.PIPE)
-        process1.wait(2)
-
-        cmd2 = f'git -C {self.pybot_dir} cherry -v | wc -l'  # not committed changes
-        process2 = subprocess.Popen(cmd2, shell=True, stdout=subprocess.PIPE)
-        out, err = process2.communicate()
-
-        return process1.returncode == 0 and out == b'0\n'
-
-    def get_current_head_pos(self):
-        cmd = f"git -C {self.pybot_dir} log --oneline -n 1 | sed 's/ /: /'"
-        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-        out, err = process.communicate()
-        return ''.join([chr(x) for x in list(out)[:-1]])
-
     def update_config_impl(self, key, value, config):
         if key not in config:
             config[key] = value
@@ -212,30 +195,52 @@ class builtins(plugin):
 
     @command
     @admin
-    def self_update(self, sender_nick, **kwargs):
-        if not self.update_possible():
-            self.logger.info(f'{sender_nick} asked for self-update, but there are local changes in {self.pybot_dir}')
+    def self_update(self, sender_nick, args, **kwargs):
+        # TODO pip requirements update
+        # TODO transactional update?
+        self.logger.info(f'{sender_nick} asked for self-update')
+        repo = git.Repo(self.pybot_dir)
+        origin = repo.remote()
+        force_str = ''
+
+        if repo.head.commit.diff(None):  # will not count files added to working tree
+            if len(args) > 0 and args[0].strip() == 'force':
+                self.logger.warning(f'discarding local changes: {[x.a_path for x in repo.head.commit.diff(None)]}')
+                repo.head.reset(commit=repo.head.commit, index=True, working_tree=True)
+                force_str = ', local changes discarded'
+            else:
+                self.bot.say(f'local changes prevents me from update, use \'{self.bot.config["command_prefix"]}self_update force\' to discard them')
+                self.logger.info(f'cannot self-update, local changes: {[x.a_path for x in repo.head.commit.diff(None)]}')
+                return
+
+        if repo.git.cherry('-v'):
             self.bot.say('local changes prevents me from update')
+            self.logger.info(f'cannot self-update, not pushed changes')
             return
 
-        cmd = f'git -C {self.pybot_dir} pull'
-        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-        process.wait()
+        origin.fetch()
+        origin.pull()
+        if repo.head.orig_head().commit == repo.head.commit:
+            self.logger.info(f'already up to date at {repo.head.commit}')
+            self.bot.say(f'already up to date at "{str(repo.head.commit)[:6]}: {repo.head.commit.message.strip()}"')
+            return
 
-        if process.returncode != 0:
-            self.logger.error(f'{sender_nick} asked for self-update, but {cmd} returned {process.returncode} exit code')
-            self.bot.say("cannot update, 'git pull' returns non-zero exit code")
-        else:
-            suffix = ''
-            try:
-                if self.update_config(): suffix = ', config file updated'
-            except Exception as e:
-                suffix = ', unable to update config file!'
-                self.logger.warning(f'exception caught while updating config file: {e}')
-                if self.bot.is_debug_mode_enabled(): raise
+        self.logger.warning(f'updated {repo.head.orig_head().commit} -> {repo.head.commit}')
+        diff_str = f', diffs at {[x.a_path for x in repo.head.commit.diff(repo.head.orig_head().commit)]}'
 
-            self.logger.warning(f'{sender_nick} asked for self-update')
-            self.bot.say(f'updated, now at "{self.get_current_head_pos()}"{suffix}')
+        try:
+            if self.update_config(): config_updated_str = ', config file updated'
+            else: config_updated_str = ''
+
+        except Exception as e:
+            self.logger.error(f'exception caught while updating config file: {e}. getting back to {repo.head.orig_head().commit}')
+            self.bot.say('cannot update config file, aborting...')
+            repo.head.reset(commit=repo.head.orig_head().commit, index=True, working_tree=True)
+            if self.bot.is_debug_mode_enabled(): raise
+            return
+
+        self.bot.say(f'updated, now at "{str(repo.head.commit)[:6]}: {repo.head.commit.message.strip()}"{config_updated_str}{diff_str}{force_str}')
+        repo.head.orig_head().set_commit(repo.head)
 
     def on_whoisuser(self, nick, user, host, **kwargs):
         cmds = self.commands_as_other_user_to_send.copy()
