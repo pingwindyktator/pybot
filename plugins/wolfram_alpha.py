@@ -26,6 +26,7 @@ class wolfram_alpha(plugin):
                         r'&excludepodid=Sequence'
         self.url = 'https://www.wolframalpha.com/input/?i=%s'
 
+    @doc('wa <ask>: ask Wolfram|Alpha about <ask>')
     @command
     def wa(self, msg, sender_nick, **kwargs):
         self.logger.info(f'{sender_nick} asked wolfram alpha "{msg}"')
@@ -64,9 +65,6 @@ class wolfram_alpha(plugin):
             if subpods: answers.append(self.wa_pod(title, position, subpods, primary))
 
         if not answers:
-            self.logger.debug('******* NO DATA PARSED FROM WA RESPONSE *******')
-            self.logger.debug(raw_response)
-            self.logger.debug('***********************************************')
             self.bot.say(f'no data available for "{msg}"')
             return
 
