@@ -37,7 +37,8 @@ class builtins(plugin):
 
             func = self.bot.commands[func_name]
             if hasattr(func, '__doc_string'):
-                self.bot.say(color.orange(f'[{func_name}] ') + getattr(func, "__doc_string"))
+                for reply in getattr(func, "__doc_string").split('\n'):
+                    self.bot.say(color.orange(f'[{func_name}] ') + reply)
             else:
                 self.bot.say(f'no help for {func_name}')
 
