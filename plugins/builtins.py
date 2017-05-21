@@ -27,6 +27,7 @@ class builtins(plugin):
             self.raw_msg = raw_msg
 
     @command
+    @doc('help command: give doc msg for command')
     def help(self, sender_nick, args, **kwargs):
         if args and args[0]:
             func_name = args[0].strip()
@@ -51,12 +52,14 @@ class builtins(plugin):
             self.logger.info(f'help given for {sender_nick}')
 
     @command
+    @doc('give pybot source code URL')
     def source(self, sender_nick, **kwargs):
         self.logger.info(f'source {self.config["source"]} given to {sender_nick}')
         self.bot.say(f'Patches are welcome! {self.config["source"]}')
 
     @command
     @admin
+    @doc('add_op nickname...: add bot operator')
     def add_op(self, sender_nick, args, **kwargs):
         if not args: return
         to_add = [irc_nickname(arg) for arg in args]
@@ -67,6 +70,7 @@ class builtins(plugin):
 
     @command
     @admin
+    @doc('rm_op nickname...: remove bot operator')
     def rm_op(self, sender_nick, args, **kwargs):
         if not args: return
         to_remove = [irc_nickname(arg) for arg in args]
@@ -80,6 +84,7 @@ class builtins(plugin):
 
     @command
     @admin
+    @doc('get bot operators')
     def ops(self, sender_nick, **kwargs):
         if len(self.bot.config['ops']) == 0:
             reply = 'no bot operators'
@@ -91,6 +96,7 @@ class builtins(plugin):
 
     @command
     @admin
+    @doc("ignore_user username...: ignore user's messages")
     def ignore_user(self, sender_nick, args, **kwargs):
         if not args: return
         to_ignore = [irc_nickname(arg) for arg in args]
@@ -105,6 +111,7 @@ class builtins(plugin):
 
     @command
     @admin
+    @doc("unignore_user username...: unignore user messages")
     def unignore_user(self, sender_nick, args, **kwargs):
         if not args: return
         if 'ignored_users' not in self.bot.config: return
@@ -119,6 +126,7 @@ class builtins(plugin):
 
     @command
     @admin
+    @doc('get ignored users')
     def ignored_users(self, sender_nick, **kwargs):
         ignored = self.bot.config['ignored_users'] if 'ignored_users' in self.bot.config else []
 
@@ -132,6 +140,7 @@ class builtins(plugin):
 
     @command
     @admin
+    @doc('restart pybot app')
     def restart(self, sender_nick, **kwargs):
         args = sys.argv[:]
 
@@ -196,6 +205,7 @@ class builtins(plugin):
 
     @command
     @admin
+    @doc('self_update <force>: pull changes from git remote ref and update config file, use <force> to discard local changes')
     def self_update(self, sender_nick, args, **kwargs):
         # TODO pip requirements update
         # TODO transactional update?
@@ -273,6 +283,7 @@ class builtins(plugin):
 
     @command
     @admin
+    @doc('as_other_user username message: send message as other user')
     def as_other_user(self, sender_nick, msg, raw_msg, **kwargs):
         if not msg: return
         hacked_nick = irc_nickname(msg.split()[0])
