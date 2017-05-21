@@ -9,8 +9,10 @@ from plugin import *
 #     such as appropriate entries in config etc
 # - Plugin class name should be equal to module name
 # - Message you'd get ('msg', 'args' arguments) might be empty
+# - Help docs should follow docopt standard (see http://docopt.org)
 
 
+@doc("this is what you will see as plugin's help")
 class example_plugin(plugin):
     def __init__(self, bot):
         super().__init__(bot)

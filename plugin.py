@@ -127,9 +127,9 @@ def command(function):
 
 
 def doc(doc_string):
-    def doc_impl(function):
-        function.__doc_string = doc_string.strip()
-        return function
+    def doc_impl(obj):
+        obj.__doc_string = doc_string.strip()
+        return obj
 
     return doc_impl
 
