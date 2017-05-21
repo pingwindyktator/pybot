@@ -220,10 +220,11 @@ class builtins(plugin):
             return
 
         self.logger.warning(f'updated {repo.head.orig_head().commit} -> {repo.head.commit}')
+        diff_str = f', diffs at {[x.a_path for x in repo.head.commit.diff(repo.head.orig_head().commit)]}'
 
         try:
-            if self.update_config(): suffix = ', config file updated'
-            else: suffix = ''
+            if self.update_config(): config_updated_str = ', config file updated'
+            else: config_updated_str = ''
 
         except Exception as e:
             self.logger.error(f'exception caught while updating config file: {e}. getting back to {repo.head.orig_head().commit}')
@@ -232,7 +233,7 @@ class builtins(plugin):
             if self.bot.is_debug_mode_enabled(): raise
             return
 
-        self.bot.say(f'updated, now at "{str(repo.head.commit)[:6]}: {repo.head.commit.message.strip()}"{suffix}')
+        self.bot.say(f'updated, now at "{str(repo.head.commit)[:6]}: {repo.head.commit.message.strip()}"{config_updated_str}{diff_str}')
         repo.head.orig_head().set_commit(repo.head)
 
     def on_whoisuser(self, nick, user, host, **kwargs):
