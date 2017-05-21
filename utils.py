@@ -65,6 +65,9 @@ def ensure_config_is_ok(config):
     c_assert('ops' in config, 'you have to specify bot operators (can be empty)')
     c_assert(type(config['ops']) is list, 'ops field type should be list')
 
+    c_assert('colors' in config, 'you have to specify whether to enable colors in bot answers or not')
+    c_assert(type(config['colors']) is bool, 'colors field type should be bool')
+
     if 'debug' in config:
         c_assert(type(config['debug']) is bool, 'debug field type should be boolean')
 

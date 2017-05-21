@@ -1,8 +1,8 @@
 import os
-import subprocess
 import sys
 import shutil
 import git
+import color as _color
 
 from ruamel import yaml
 from threading import Lock
@@ -146,6 +146,22 @@ class builtins(plugin):
 
     @command
     @admin
+    @doc('enable colors in bot answers')
+    def enable_colors(self, sender_nick, **kwargs):
+        _color.load_colors()
+        self.logger.info(f'{sender_nick} enables colors')
+        self.bot.say('ok!')
+
+    @command
+    @admin
+    @doc('disable colors in bot answers')
+    def disable_colors(self, sender_nick, **kwargs):
+        _color.unload_colors()
+        self.logger.info(f'{sender_nick} enables colors')
+        self.bot.say('ok!')
+
+    @command
+    @admin
     @doc('restart pybot app')
     def restart(self, sender_nick, **kwargs):
         args = sys.argv[:]
@@ -161,7 +177,7 @@ class builtins(plugin):
     def update_config_impl(self, key, value, config):
         if key not in config:
             config[key] = value
-            self.logger.info(f'inserting {key}:{value} to config file')
+            self.logger.info(f'inserting {key}: {value} to config file')
         elif type(value) is dict:  # do not override non-dict values
             for v_key, v_value in value.items():
                 self.update_config_impl(v_key, v_value, config[key])
@@ -201,7 +217,7 @@ class builtins(plugin):
         if config == self.bot.config: return False
         self.format_and_save_config(config, './.pybot.yaml')
 
-        _config = yaml.load(open('./.pybot.yaml'))
+        _config = yaml.load(open('./.pybot.yaml'), Loader=yaml.Loader)
         utils.ensure_config_is_ok(_config)
 
         shutil.copyfile('./.pybot.yaml', './pybot.yaml')

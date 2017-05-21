@@ -26,6 +26,7 @@ class example_plugin(plugin):
     def example_command(self, sender_nick, args, **kwargs):
         self.logger.info(f'example command called by {sender_nick} with {args}')
         self.bot.say('example command called!')
+        self.bot.say(f'{color.red("whoa, red answer")} and normal one')
         self.bot.say('private msg', sender_nick)
         # you can easily access everything you need from self.bot
         # you can access plugin's config file section via self.config and whole config via self.bot.config

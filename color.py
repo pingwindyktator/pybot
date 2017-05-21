@@ -26,5 +26,17 @@ class color:
 
         return _template_impl
 
-for code, name in colors.items():
-    setattr(color, name, color._template(code))
+
+def load_colors():
+    for code, name in colors.items():
+        setattr(color, name, color._template(code))
+
+
+def unload_colors():
+    for code, name in colors.items():
+        setattr(color, name, lambda x: x)
+
+
+def init():
+    for code, name in colors.items():
+        setattr(color, name, lambda x: x)

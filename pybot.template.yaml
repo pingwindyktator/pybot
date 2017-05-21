@@ -12,6 +12,7 @@ stdout_logging_level: info
 # disabled_plugins: []
 command_prefix: '!'
 ignored_users: []
+colors: on
 debug: false
 
 bot_remote_manager:
