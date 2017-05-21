@@ -5,6 +5,7 @@ from lxml.html import fromstring
 from plugin import *
 
 
+@doc('parse URL to get webpage title')
 class webtitle_parser(plugin):
     def __init__(self, bot):
         super().__init__(bot)
