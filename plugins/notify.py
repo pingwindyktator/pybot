@@ -20,6 +20,7 @@ class notify(plugin):
                     break
 
     @command
+    @doc("notify <arg>...: set notify for <args>. bot will call you'r nickname when one of <arg> appears on chat. supports regular expressions")
     def notify(self, sender_nick, args, **kwargs):
         if len(args) == 0: return
 
@@ -32,6 +33,7 @@ class notify(plugin):
         self.logger.info(f'now notifying: {args} -> {sender_nick}')
 
     @command
+    @doc('rm_notify <arg>...: remove notify for <arg>')
     def rm_notify(self, sender_nick, args, **kwargs):
         if sender_nick not in self.database: return
         to_remove = [arg for arg in args if arg in self.database[sender_nick]]
@@ -39,10 +41,11 @@ class notify(plugin):
 
         for arg in to_remove: self.database[sender_nick].remove(arg)
 
-        self.bot.say(f'notifying for {to_remove} disabled')
+        self.bot.say(f'no longer notifying for {to_remove}')
         self.logger.info(f'stop notifying: {to_remove} -> {sender_nick}')
 
     @command
+    @doc("get you'r notifies saved")
     def notifies(self, sender_nick, **kwargs):
         result = self.database[sender_nick] if sender_nick in self.database else {}
         if result:
