@@ -18,6 +18,7 @@ class get(plugin):
         self.case_insensitive_text = 'COLLATE NOCASE' if not self.config['case_sensitive'] else ''
 
     @command
+    @doc('get <entry>: get saved message for <entry>')
     def get(self, sender_nick, msg, **kwargs):
         entry = self.prepare_entry(msg)
         with self.db_mutex:
@@ -30,6 +31,7 @@ class get(plugin):
 
     @command
     @admin
+    @doc('rm_set <entry>: remove <entry> entry')
     def rm_set(self, sender_nick, msg, **kwargs):
         entry = self.prepare_entry(msg)
         with self.db_mutex:
@@ -40,6 +42,7 @@ class get(plugin):
 
     @command
     @admin
+    @doc('set <entry> <message>: save <message> for <entry>')
     def set(self, sender_nick, msg, **kwargs):
         entry = msg.split()[0]
         val = msg[len(entry):].strip()
