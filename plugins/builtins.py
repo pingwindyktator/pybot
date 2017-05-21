@@ -29,13 +29,14 @@ class builtins(plugin):
     @command
     def help(self, sender_nick, args, **kwargs):
         if args and args[0]:
-            func_name = args[0]
+            func_name = args[0].strip()
             if func_name not in self.bot.commands:
+                self.bot.say(f'no such command: {func_name}')
                 return
 
             func = self.bot.commands[func_name]
             if hasattr(func, '__doc_string'):
-                self.bot.say(getattr(func, "__doc_string"))
+                self.bot.say(color.orange(f'[{func_name}] ') + getattr(func, "__doc_string"))
             else:
                 self.bot.say(f'no help for {func_name}')
 
