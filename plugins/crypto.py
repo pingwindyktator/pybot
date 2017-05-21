@@ -73,6 +73,8 @@ class crypto(plugin):
         return result.strip()
 
     @command
+    @doc("""crypto <currency>: get information about <currency> cryptocurrency (updated every 1 hour from coinmarketcap)
+            crypto <amount> <currency_from> to <currency_to>: convert <amount> of <currency_from> to <currency_to> (based on coinmarketcap and fixer.io)""")
     def crypto(self, sender_nick, msg, **kwargs):
         if not msg: return
         msg = msg.strip()
