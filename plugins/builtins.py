@@ -27,30 +27,35 @@ class builtins(plugin):
             self.raw_msg = raw_msg
 
     @command
-    @doc('help <command>: give doc msg for <command>')
+    @doc('help <entry>: give doc msg for <entry> command or plugin')
     def help(self, sender_nick, args, **kwargs):
         if args and args[0]:
-            func_name = args[0].strip()
-            if func_name not in self.bot.commands:
-                self.bot.say(f'no such command: {func_name}')
-                return
-
-            func = self.bot.commands[func_name]
-            if hasattr(func, '__doc_string'):
-                for reply in getattr(func, "__doc_string").split('\n'):
-                    self.bot.say(color.orange(f'[{func_name}] ') + reply.strip())
-            else:
-                self.bot.say(f'no help for {func_name}')
-
-            self.logger.info(f'help of {func_name} given for {sender_nick}')
-
+            self.help_entry_impl(args[0].strip())
+            self.logger.info(f'help of {args[0]} given for {sender_nick}')
         else:
-            commands = self.bot.get_commands_by_plugin()
-            for p in commands:
-                if commands[p]:
-                    self.bot.say(f'available commands for {p}: {", ".join(commands[p])}')
-
+            self.help_impl()
             self.logger.info(f'help given for {sender_nick}')
+
+    def help_impl(self):
+        commands = self.bot.get_commands_by_plugin()
+        for reply in [cmd for cmd in commands if commands[cmd]]:
+            self.bot.say(f'available commands for {reply}: {", ".join(commands[reply])}')
+
+    def help_entry_impl(self, entry):
+        if entry not in self.bot.commands:
+            if entry not in self.bot.get_plugins_names():
+                self.bot.say(f'no such command: {entry}')
+                return
+            else:
+                obj = (x for x in self.bot.get_plugins() if x.__class__.__name__ == entry).__next__()
+        else:
+            obj = self.bot.commands[entry]
+
+        if hasattr(obj, '__doc_string'):
+            for reply in getattr(obj, "__doc_string").split('\n'):
+                self.bot.say(color.orange(f'[{entry}] ') + reply.strip())
+        else:
+            self.bot.say(f'no help for {entry}')
 
     @command
     @doc('give pybot source code URL')
