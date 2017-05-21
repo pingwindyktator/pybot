@@ -195,17 +195,23 @@ class builtins(plugin):
 
     @command
     @admin
-    def self_update(self, sender_nick, **kwargs):
+    def self_update(self, sender_nick, args, **kwargs):
         # TODO pip requirements update
         # TODO transactional update?
         self.logger.info(f'{sender_nick} asked for self-update')
         repo = git.Repo(self.pybot_dir)
         origin = repo.remote()
+        force_str = ''
 
         if repo.head.commit.diff(None):  # will not count files added to working tree
-            self.bot.say('local changes prevents me from update')
-            self.logger.info(f'cannot self-update, local changes: {[x.a_path for x in repo.head.commit.diff(None)]}')
-            return
+            if len(args) > 0 and args[0].strip() == 'force':
+                self.logger.warning(f'discarding local changes: {[x.a_path for x in repo.head.commit.diff(None)]}')
+                repo.head.reset(commit=repo.head.commit, index=True, working_tree=True)
+                force_str = ', local changes discarded'
+            else:
+                self.bot.say(f'local changes prevents me from update, use \'{self.bot.config["command_prefix"]}self_update force\' to discard them')
+                self.logger.info(f'cannot self-update, local changes: {[x.a_path for x in repo.head.commit.diff(None)]}')
+                return
 
         if repo.git.cherry('-v'):
             self.bot.say('local changes prevents me from update')
@@ -233,7 +239,7 @@ class builtins(plugin):
             if self.bot.is_debug_mode_enabled(): raise
             return
 
-        self.bot.say(f'updated, now at "{str(repo.head.commit)[:6]}: {repo.head.commit.message.strip()}"{config_updated_str}{diff_str}')
+        self.bot.say(f'updated, now at "{str(repo.head.commit)[:6]}: {repo.head.commit.message.strip()}"{config_updated_str}{diff_str}{force_str}')
         repo.head.orig_head().set_commit(repo.head)
 
     def on_whoisuser(self, nick, user, host, **kwargs):
