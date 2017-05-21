@@ -8,6 +8,7 @@ class man(plugin):
         self.man_url = r'http://man.he.net/?topic=%s&section=all'
 
     @command
+    @doc('man <command>: get unix manual entry for <command> from man.he.net')
     def man(self, sender_nick, args, **kwargs):
         if not args: return
         ask = args[0].strip()
