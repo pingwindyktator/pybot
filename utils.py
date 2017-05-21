@@ -79,8 +79,8 @@ def ensure_config_is_ok(config):
         c_assert('disabled_plugins' not in config, 'you cannot have both enabled_plugins and disabled_plugins specified')
         c_assert(type(config['enabled_plugins']) is list, 'enabled_plugins field type should be list')
 
-    if 'banned_users' in config:
-        c_assert(type(config['banned_users']) is list, 'banned_users field type should be list')
+    if 'ignored_users' in config:
+        c_assert(type(config['ignored_users']) is list, 'ignored_users field type should be list')
 
     c_assert('file_logging_level' in config, 'you have to specify file logging level')
     c_assert(config['file_logging_level'] in logging_level_str_to_int, f'file_logging_level can be one of: {", ".join((logging_level_str_to_int.keys()))}')

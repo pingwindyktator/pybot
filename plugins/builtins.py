@@ -91,44 +91,44 @@ class builtins(plugin):
 
     @command
     @admin
-    def ban_user(self, sender_nick, args, **kwargs):
+    def ignore_user(self, sender_nick, args, **kwargs):
         if not args: return
-        to_ban = [irc_nickname(arg) for arg in args]
-        if 'banned_users' not in self.bot.config:
-            self.bot.config['banned_users'] = to_ban
+        to_ignore = [irc_nickname(arg) for arg in args]
+        if 'ignored_users' not in self.bot.config:
+            self.bot.config['ignored_users'] = to_ignore
         else:
-            self.bot.config['banned_users'].extend(to_ban)
+            self.bot.config['ignored_users'].extend(to_ignore)
 
-        reply = f'{to_ban[0]} is now banned' if len(to_ban) == 1 else f'{to_ban} are now banned'
+        reply = f'{to_ignore[0]} is now ignored' if len(to_ignore) == 1 else f'{to_ignore} are now ignored'
         self.bot.say(reply)
-        self.logger.warning(f'{sender_nick} banned {to_ban}')
+        self.logger.warning(f'{sender_nick} ignored {to_ignore}')
 
     @command
     @admin
-    def unban_user(self, sender_nick, args, **kwargs):
+    def unignore_user(self, sender_nick, args, **kwargs):
         if not args: return
-        if 'banned_users' not in self.bot.config: return
-        to_ban = [irc_nickname(arg) for arg in args]
-        to_ban = [arg for arg in to_ban if arg in self.bot.config['banned_users']]
-        for arg in to_ban:
-            self.bot.config['banned_users'].remove(arg)
+        if 'ignored_users' not in self.bot.config: return
+        to_unignore = [irc_nickname(arg) for arg in args]
+        to_unignore = [arg for arg in to_unignore if arg in self.bot.config['ignored_users']]
+        for arg in to_unignore:
+            self.bot.config['ignored_users'].remove(arg)
 
-        reply = f'{to_ban[0]} is no longer banned' if len(to_ban) == 1 else f'{to_ban} are no longer banned'
+        reply = f'{to_unignore[0]} is no longer ignored' if len(to_unignore) == 1 else f'{to_unignore} are no longer ignored'
         self.bot.say(reply)
-        self.logger.warning(f'{sender_nick} unbaned: {to_ban}')
+        self.logger.warning(f'{sender_nick} ignored: {to_unignore}')
 
     @command
     @admin
-    def banned_users(self, sender_nick, **kwargs):
-        banned = self.bot.config['banned_users'] if 'banned_users' in self.bot.config else []
+    def ignored_users(self, sender_nick, **kwargs):
+        ignored = self.bot.config['ignored_users'] if 'ignored_users' in self.bot.config else []
 
-        if len(banned) == 0:
-            reply = 'no banned users'
+        if len(ignored) == 0:
+            reply = 'no ignored users'
         else:
-            reply = f'banned users: {banned}'
+            reply = f'ignored users: {ignored}'
 
         self.bot.say(reply)
-        self.logger.info(f'{sender_nick} asked for banned users: {banned}')
+        self.logger.info(f'{sender_nick} asked for ignored users: {ignored}')
 
     @command
     @admin

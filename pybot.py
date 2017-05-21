@@ -94,8 +94,8 @@ class pybot(irc.bot.SingleServerIRCBot):
         sender_nick = irc_nickname(raw_msg.source.nick)
         logging.info(f'[PRIVATE MSG] {sender_nick}: {full_msg}')
 
-        if self.is_user_banned(sender_nick):
-            self.logger.debug(f'user {sender_nick} is banned, skipping msg')
+        if self.is_user_ignored(sender_nick):
+            self.logger.debug(f'user {sender_nick} is ignored, skipping msg')
             return
 
         self.call_plugins_methods('on_privmsg', raw_msg=raw_msg, source=raw_msg.source, msg=full_msg)
@@ -105,8 +105,8 @@ class pybot(irc.bot.SingleServerIRCBot):
         full_msg = raw_msg.arguments[0].strip()
         sender_nick = irc_nickname(raw_msg.source.nick)
 
-        if self.is_user_banned(sender_nick):
-            self.logger.debug(f'user {sender_nick} is banned, skipping msg')
+        if self.is_user_ignored(sender_nick):
+            self.logger.debug(f'user {sender_nick} is ignored, skipping msg')
             return
 
         self.call_plugins_methods('on_pubmsg', raw_msg=raw_msg, source=raw_msg.source, msg=full_msg)
@@ -250,9 +250,9 @@ class pybot(irc.bot.SingleServerIRCBot):
         else:
             self.connection.privmsg(target, msg)
 
-    def is_user_banned(self, nickname):
+    def is_user_ignored(self, nickname):
         nickname = irc_nickname(nickname)
-        return ('banned_users' in self.config and nickname in self.config['banned_users']) and (nickname not in self.config['ops'])
+        return ('ignored_users' in self.config and nickname in self.config['ignored_users']) and (nickname not in self.config['ops'])
 
     @staticmethod
     def is_msg_too_long(msg):
