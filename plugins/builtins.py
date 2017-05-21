@@ -214,6 +214,11 @@ class builtins(plugin):
 
         origin.fetch()
         origin.pull()
+        if repo.head.orig_head().commit == repo.head.commit:
+            self.logger.info(f'already up to date at {repo.head.commit}')
+            self.bot.say(f'already up to date at "{str(repo.head.commit)[:6]}: {repo.head.commit.message.strip()}"')
+            return
+
         self.logger.warning(f'updated {repo.head.orig_head().commit} -> {repo.head.commit}')
 
         try:
