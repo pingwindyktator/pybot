@@ -209,7 +209,7 @@ class pybot(irc.bot.SingleServerIRCBot):
 
     def get_commands_by_plugin(self):
         """
-        :return: dict {plugin_name1: [command1, command2], plugin_name2: [command3, command4], ...}
+        :return: dict {plugin_name1: [command1, command2, ...], plugin_name2: [command3, command4, ...], ...}
         """
         result = {}
         for plugin_name in self.get_plugins_names():
