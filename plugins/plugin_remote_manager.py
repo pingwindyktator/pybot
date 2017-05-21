@@ -18,12 +18,14 @@ class plugin_manager(plugin):
         pass
 
     @command
+    @doc('get enabled plugins')
     def plugins(self, sender_nick, **kwargs):
         self.bot.say(f'enabled plugins: {self.bot.get_plugins_names()}')
         self.logger.info(f'plugins given to {sender_nick}')
 
     @command
     @admin
+    @doc('enable_plugin <name>...: enable <name> plugin from loaded module')
     def enable_plugin(self, sender_nick, args, **kwargs):
         if not args: return
         self.logger.warning(f'enabling {args} plugins for {sender_nick}')
@@ -45,6 +47,7 @@ class plugin_manager(plugin):
 
     @command
     @admin
+    @doc('disable_plugin <name>...: disable enabled <name> plugin')
     def disable_plugin(self, sender_nick, args, **kwargs):
         if not args: return
         self.logger.warning(f'disabling {args} plugins for {sender_nick}')
@@ -96,6 +99,7 @@ class plugin_manager(plugin):
 
     @command
     @admin
+    @doc('load_plugin <name>...: load new plugin or reload existing one')
     def load_plugin(self, sender_nick, args, **kwargs):
         if not args: return
         self.logger.warning(f'loading {args} plugins for {sender_nick}')
