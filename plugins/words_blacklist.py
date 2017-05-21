@@ -16,6 +16,7 @@ class words_blacklist(plugin):
 
     @command
     @admin
+    @doc('ban_word <word>...: ban <word> words. when one of them appears on chat, bot will kick its sender')
     def ban_word(self, sender_nick, args, **kwargs):
         if not args: return
         self.blacklist.update(args)
@@ -24,6 +25,7 @@ class words_blacklist(plugin):
 
     @command
     @admin
+    @doc('unban_word <word>...: unban <word> words')
     def unban_word(self, sender_nick, args, **kwargs):
         to_unban = [arg for arg in args if arg in self.blacklist]
         if not to_unban: return
