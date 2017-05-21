@@ -198,7 +198,6 @@ class builtins(plugin):
     def self_update(self, sender_nick, **kwargs):
         # TODO pip requirements update
         # TODO transactional update?
-        # TODO updated, now at 123abc: aslkdaskd
         self.logger.info(f'{sender_nick} asked for self-update')
         repo = git.Repo(self.pybot_dir)
         origin = repo.remote()
@@ -228,7 +227,7 @@ class builtins(plugin):
             if self.bot.is_debug_mode_enabled(): raise
             return
 
-        self.bot.say(f'updated, now at "{str(repo.head.commit)[:6]}"{suffix}')
+        self.bot.say(f'updated, now at "{str(repo.head.commit)[:6]}: {repo.head.commit.message.strip()}"{suffix}')
         repo.head.orig_head().set_commit(repo.head)
 
     def on_whoisuser(self, nick, user, host, **kwargs):
