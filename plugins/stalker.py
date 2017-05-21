@@ -7,6 +7,7 @@ from threading import Thread, Lock
 from plugin import *
 
 
+@doc('track users to detect multiple nicknames used')
 class stalker(plugin):
     def __init__(self, bot):
         super().__init__(bot)
@@ -92,6 +93,7 @@ class stalker(plugin):
         return result
 
     @command
+    @doc('stalk_nick <nickname>: get all known hosts of <nickname> user')
     def stalk_nick(self, sender_nick, args, **kwargs):
         if not args: return
         nick = irc_nickname(args[0])
@@ -107,6 +109,7 @@ class stalker(plugin):
         self.logger.info(f'{sender_nick} asks about hosts of {nick}: {result}')
 
     @command
+    @doc("stalk <nickname>: get other <nickname> user's nicknames")
     def stalk(self, sender_nick, args, **kwargs):
         if not args: return
         nick = irc_nickname(args[0])
@@ -123,6 +126,7 @@ class stalker(plugin):
         self.logger.info(f'{sender_nick} stalks {nick}: {result}')
 
     @command
+    @doc('stalk_host <host>: get all nicknames from <host>')
     def stalk_host(self, sender_nick, args, **kwargs):
         if not args: return
         host = args[0]
