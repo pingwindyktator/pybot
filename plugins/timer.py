@@ -12,12 +12,20 @@ class timer(plugin):
         super().__init__(bot)
         self.time_regex = re.compile(r'^(([0-9]{1,2})-([0-9]{1,2})-([0-9]{4}) )?([0-9]{1,2}):([0-9]{1,2})(.*)')
         self.delta_regex = re.compile(r'([0-9]+[Hh])?\W*([0-9]+[Mm])?(.*)')
-        self.to_notice = {}  # {timer_id -> (sender_nick, msg)}
+        self.to_notice = {}  # {timer_id -> timer_desc}
+
+    def unload_plugin(self):
+        for t in self.to_notice.values():
+            t.timer_object.cancel()
+
+    class timer_desc:
+        def __init__(self, sender_nick, msg, timer_object):
+            self.sender_nick = sender_nick
+            self.msg = msg
+            self.timer_object = timer_object
 
     @command
-    @doc('''
-    set_timer <time> <msg>: sets timer to <time>. <time> can be  %d-%m-%Y %H:%M  or  %H:%M or  %Hh %Mm  (eg.  1-12-2017 13:14  or  13:14 or  3h 2m)
-    ''')
+    @doc('set_timer <time> <msg>: sets timer to <time>. <time> can be  %d-%m-%Y %H:%M  or  %H:%M or  %Hh %Mm  (eg.  1-12-2017 13:14  or  13:14 or  3h 2m)')
     def set_timer(self, sender_nick, msg, **kwargs):
         now = datetime.now()
         run_at, msg = self.prepare_run_time(msg, now)
@@ -35,12 +43,12 @@ class timer(plugin):
         delta_time = (run_at - now).total_seconds()
         timer_id = uuid.uuid4()
         t = Timer(delta_time, self.notice, kwargs={'timer_id': timer_id})
-        self.to_notice[timer_id] = (sender_nick, msg,)
+        self.to_notice[timer_id] = self.timer_desc(sender_nick, msg, t)
         t.start()
         self.bot.say(f'timer set to {run_at}')
 
     def notice(self, timer_id):
-        self.bot.say(f'{self.to_notice[timer_id][0]}: {self.to_notice[timer_id][1]}')
+        self.bot.say(f'{self.to_notice[timer_id].sender_nick}: {self.to_notice[timer_id].msg}')
         del self.to_notice[timer_id]
 
     def prepare_run_time(self, msg, now):
