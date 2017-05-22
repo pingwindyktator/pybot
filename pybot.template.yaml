@@ -31,3 +31,6 @@ wolfram_alpha:
 get:
   db_location: ./db/get.db
   case_sensitive: false
+
+note:
+  db_location: ./db/note.db
