@@ -60,8 +60,7 @@ class crypto(plugin):
 
         for change, change_str in zip([curr_info.hour_change, curr_info.day_change, curr_info.week_change], ['hourly', 'daily', 'weekly']):
             if change:
-                change /= 100
-                change_price = curr_info.price_usd - (curr_info.price_usd / (1 + change)) if curr_info.price_usd else None
+                change_price = curr_info.price_usd - (curr_info.price_usd / (1 + change / 100.)) if curr_info.price_usd else None
                 if change >= 0:
                     subresult = color.light_green(f'+{change}%')
                     if change_price: subresult = subresult + ' | ' + color.light_green(f'+${change_price:.2f}')
