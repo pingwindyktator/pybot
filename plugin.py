@@ -6,7 +6,6 @@ from color import color
 from functools import wraps
 
 
-
 class plugin:
     def __init__(self, bot):
         self.bot = bot
