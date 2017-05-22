@@ -30,6 +30,7 @@ class example_plugin(plugin):
         self.bot.say('private msg', sender_nick)
         # you can easily access everything you need from self.bot
         # you can access plugin's config file section via self.config and whole config via self.bot.config
+        # self.config is simply self.bot.config['your_plugin's_name']
         #
         # every command should take **kwargs argument(!) and positional ones as needed:
         #   sender_nick - nickname of msg sender
