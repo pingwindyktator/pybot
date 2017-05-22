@@ -90,7 +90,12 @@ class plugin_manager(plugin):
         plugin_instance = enabled_plugins[name]
         plugin_class = type(plugin_instance)
         cmds = self.bot.get_plugin_commands(plugin_class.__name__)
-        plugin_instance.unload_plugin()
+
+        try:
+            plugin_instance.unload_plugin()
+        except Exception as e:
+            self.logger.error(f'{name}.unload_plugin() throws: {e}. continuing anyway...')
+
         self.bot.plugins.remove(plugin_instance)
         commands_copy = self.bot.commands.copy()
         for cmd in cmds: del commands_copy[cmd]
