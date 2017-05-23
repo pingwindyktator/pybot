@@ -9,6 +9,7 @@ import irc.bot
 import irc.connection
 
 from functools import total_ordering
+from color import color
 
 
 @total_ordering
@@ -27,6 +28,14 @@ class irc_nickname(str):
 class pybot(irc.bot.SingleServerIRCBot):
     def __init__(self, config):
         self.logger = logging.getLogger(__name__)
+
+        if config['colors']:
+            color.enable_colors()
+            self.logger.debug('colors loaded')
+        else:
+            color.disable_colors()
+            self.logger.debug('colors loaded')
+
         self.logger.debug('initiating irc.bot.SingleServerIRCBot...')
         connection_args = {}
         if config['use_ssl']:
