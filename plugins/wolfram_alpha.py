@@ -3,7 +3,6 @@ import urllib.parse
 import xml.etree.ElementTree
 
 from plugin import *
-from color import Color
 
 
 class wolfram_alpha(plugin):
@@ -73,7 +72,7 @@ class wolfram_alpha(plugin):
 
         for it in range(0, len(answers)):
             if it > 0 and not answers[it].primary: break
-            prefix = Color.orange(f'[{answers[it].title}] ')
+            prefix = color.orange(f'[{answers[it].title}] ')
             for subpod in answers[it].subpods:
                 result = prefix
                 if subpod.title:

@@ -1,6 +1,5 @@
 import requests
 from plugin import *
-from color import Color
 
 
 class man(plugin):
@@ -28,6 +27,6 @@ class man(plugin):
         if self.bot.is_msg_too_long(result):
             self.bot.say(result, sender_nick)
         else:
-            self.bot.say(Color.orange(f'[{ask}] ') + result)
+            self.bot.say(color.orange(f'[{ask}] ') + result)
 
-        self.bot.say(Color.orange(f'[{ask}] ') + url)
+        self.bot.say(color.orange(f'[{ask}] ') + url)

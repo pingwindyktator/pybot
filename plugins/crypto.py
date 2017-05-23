@@ -3,7 +3,6 @@ import re
 import requests
 
 from plugin import *
-from color import Color
 
 
 class crypto(plugin):
@@ -63,11 +62,11 @@ class crypto(plugin):
             if change:
                 change_price = curr_info.price_usd - (curr_info.price_usd / (1 + change / 100.)) if curr_info.price_usd else None
                 if change >= 0:
-                    subresult = Color.light_green(f'+{change}%')
-                    if change_price: subresult = subresult + ' | ' + Color.light_green(f'+${change_price:.2f}')
+                    subresult = color.light_green(f'+{change}%')
+                    if change_price: subresult = subresult + ' | ' + color.light_green(f'+${change_price:.2f}')
                 else:
-                    subresult = Color.light_red(f'{change}%')
-                    if change_price: subresult = subresult + ' | ' + Color.light_red('-$%.2f' % abs(change_price))
+                    subresult = color.light_red(f'{change}%')
+                    if change_price: subresult = subresult + ' | ' + color.light_red('-$%.2f' % abs(change_price))
 
                 result = f'{result}[{subresult} {change_str}] '
 
@@ -97,7 +96,7 @@ class crypto(plugin):
             return
 
         price_usd = f' ${curr_info.price_usd} (US dollars) ' if curr_info.price_usd else ' unknown price '
-        self.bot.say(Color.orange(f'[{curr_info.id.name}]') + price_usd + self.generate_curr_price_change_output(curr_info))
+        self.bot.say(color.orange(f'[{curr_info.id.name}]') + price_usd + self.generate_curr_price_change_output(curr_info))
 
     # --------------------------------------------------------------------------------------------------------------
 
@@ -156,4 +155,4 @@ class crypto(plugin):
                 convertions[2] = self.convertion(amount, from_curr, result, to_curr)
 
         self.logger.info(convertions)
-        self.bot.say(Color.orange('[Result]') + f' {result} {to_curr_org}')
+        self.bot.say(color.orange('[Result]') + f' {result} {to_curr_org}')

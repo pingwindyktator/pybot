@@ -2,6 +2,7 @@ import logging
 import utils
 
 from pybot import irc_nickname
+from color import color
 from functools import wraps
 
 

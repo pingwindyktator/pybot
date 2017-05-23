@@ -1,10 +1,10 @@
 import sys
 import _main
 import logging
-from color import Color
 
 from unittest import mock
 from irc.bot import ExponentialBackoff, missing
+from color import color
 
 
 class raw_msg_builder:
@@ -139,7 +139,7 @@ def configure_logger(*args, **kwargs):
 
 def simulator_main():
     _main.configure_logger = configure_logger
-    Color.disable()
+    color.disable_colors()
         
     patcher = mock.patch.object(_main.pybot, '__bases__', (SingleServerIRCBot_mock,))
     with patcher:
