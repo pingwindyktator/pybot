@@ -1,42 +1,78 @@
-colors = {
-    "00": "white",
-    "01": "black",
-    "02": "blue",
-    "03": "green",
-    "04": "light_red",
-    "05": "red",
-    "06": "purple",
-    "07": "orange",
-    "08": "yellow",
-    "09": "light_green",
-    "10": "cyan",
-    "11": "light_cyan",
-    "12": "light_blue",
-    "13": "pink",
-    "14": "gray",
-    "15": "light_grey",
-}
+class Color:
 
+    on_template = '\x03{0:02d}{1}\x0F'
+    off_template = '{1}'
 
-class color:
-    @staticmethod
-    def _template(code):
-        def _template_impl(str):
-            return '\x03' + code + str + '\x0F'
+    template = on_template
 
-        return _template_impl
+    @classmethod
+    def enable(cls):
+        cls.template = cls.on_template
 
+    @classmethod
+    def disable(cls):
+        cls.template = cls.off_template
 
-def load_colors():
-    for code, name in colors.items():
-        setattr(color, name, color._template(code))
+    @classmethod
+    def white(cls, text):
+        return cls.template.format(0, text)
 
+    @classmethod
+    def black(cls, text):
+        return cls.template.format(1, text)
 
-def unload_colors():
-    for code, name in colors.items():
-        setattr(color, name, lambda x: x)
+    @classmethod
+    def blue(cls, text):
+        return cls.template.format(2, text)
 
+    @classmethod
+    def green(cls, text):
+        return cls.template.format(3, text)
 
-def init():
-    for code, name in colors.items():
-        setattr(color, name, lambda x: x)
+    @classmethod
+    def light_red(cls, text):
+        return cls.template.format(4, text)
+
+    @classmethod
+    def red(cls, text):
+        return template.cls.format(5, text)
+
+    @classmethod
+    def purple(cls, text):
+        return cls.template.format(6, text)
+
+    @classmethod
+    def orange(cls, text):
+        return cls.template.format(7, text)
+
+    @classmethod
+    def yellow(cls, text):
+        return cls.template.format(8, text)
+
+    @classmethod
+    def light_green(cls, text):
+        return cls.template.format(9, text)
+
+    @classmethod
+    def cyan(cls, text):
+        return cls.template.format(10, text)
+
+    @classmethod
+    def light_cyan(cls, text):
+        return cls.template.format(11, text)
+
+    @classmethod
+    def light_blue(cls, text):
+        return cls.template.format(12, text)
+
+    @classmethod
+    def pink(cls, text):
+        return cls.template.format(13, text)
+
+    @classmethod
+    def gray(cls, text):
+        return cls.template.format(14, text)
+
+    @classmethod
+    def light_grey(cls, text):
+        return cls.template.format(15, text)

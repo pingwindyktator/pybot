@@ -1,7 +1,7 @@
 import sys
 import _main
 import logging
-import color
+from color import Color
 
 from unittest import mock
 from irc.bot import ExponentialBackoff, missing
@@ -139,8 +139,7 @@ def configure_logger(*args, **kwargs):
 
 def simulator_main():
     _main.configure_logger = configure_logger
-    color.unload_colors()
-    color.load_colors = lambda: None
+    Color.disable()
         
     patcher = mock.patch.object(_main.pybot, '__bases__', (SingleServerIRCBot_mock,))
     with patcher:

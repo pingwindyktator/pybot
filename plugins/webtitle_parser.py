@@ -3,6 +3,7 @@ import requests
 
 from lxml.html import fromstring
 from plugin import *
+from color import Color
 
 
 @doc('parse URL to get webpage title')
@@ -29,7 +30,7 @@ class webtitle_parser(plugin):
                 tree = fromstring(req.content)
                 title = tree.findtext('.//title').strip()
                 if title is not None and title != '':
-                    self.bot.say(color.light_green(title))
+                    self.bot.say(Color.light_green(title))
 
         except Exception:
             self.logger.info(f'possibly invalid URL: {url}')

@@ -2,7 +2,7 @@ import os
 import sys
 import shutil
 import git
-import color as _color
+from color import Color
 
 from ruamel import yaml
 from threading import Lock
@@ -53,7 +53,7 @@ class builtins(plugin):
 
         if hasattr(obj, '__doc_string'):
             for reply in getattr(obj, "__doc_string").split('\n'):
-                self.bot.say(color.orange(f'[{entry}] ') + reply.strip())
+                self.bot.say(Color.orange(f'[{entry}] ') + reply.strip())
         else:
             self.bot.say(f'no help for {entry}')
 
@@ -148,7 +148,7 @@ class builtins(plugin):
     @admin
     @doc('enable colors in bot answers')
     def enable_colors(self, sender_nick, **kwargs):
-        _color.load_colors()
+        Color.enable()
         self.logger.info(f'{sender_nick} enables colors')
         self.bot.say('ok!')
 
@@ -156,7 +156,7 @@ class builtins(plugin):
     @admin
     @doc('disable colors in bot answers')
     def disable_colors(self, sender_nick, **kwargs):
-        _color.unload_colors()
+        Color.disable()
         self.logger.info(f'{sender_nick} enables colors')
         self.bot.say('ok!')
 
