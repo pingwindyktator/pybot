@@ -161,6 +161,35 @@ class builtins(plugin):
 
     @command
     @admin
+    @doc('change_log_level <file|stdout> <level>: change logging level')
+    def change_log_level(self, sender_nick, args, **kwargs):
+        if len(args) < 2: return
+        handler_name = args[0].lower()
+        level_name = args[1].lower()
+
+        if level_name.lower() not in utils.logging_level_str_to_int:
+            self.bot.say(f'unknown level: {level_name}, supported levels: {", ".join(utils.logging_level_str_to_int.keys())}')
+            return
+
+        root_logger = logging.getLogger('')
+        level = utils.logging_level_str_to_int[level_name]
+        try:
+            if handler_name == 'stdout':
+                (x for x in root_logger.handlers if type(x) is logging.StreamHandler).__next__().setLevel(level)
+            elif handler_name == 'file':
+                (x for x in root_logger.handlers if type(x) is logging.FileHandler).__next__().setLevel(level)
+            else:
+                self.bot.say(f'unknown handler: {handler_name}, supported handlers: stdout, file')
+                return
+        except StopIteration:
+            self.bot.say(f'no {handler_name} registered handler')
+            return
+
+        self.logger.warning(f'{sender_nick} changes {handler_name} logging level to {level_name}')
+        self.bot.say('ok!')
+
+    @command
+    @admin
     @doc('restart pybot app')
     def restart(self, sender_nick, **kwargs):
         args = sys.argv[:]
