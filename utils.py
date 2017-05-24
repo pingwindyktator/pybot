@@ -58,6 +58,9 @@ def ensure_config_is_ok(config):
     c_assert('use_ssl' in config, 'you have to specify whether to use sll or not')
     c_assert(type(config['use_ssl']) is bool, 'use_ssl field type should be boolean')
 
+    c_assert('flood_protection' in config, 'you have to specify whether to prevent Flood Excess or not')
+    c_assert(type(config['flood_protection']) is bool, 'flood_protection field type should be boolean')
+
     c_assert('max_autorejoin_attempts' in config, 'you have to specify maximum number of autorejoin attempts')
     c_assert(type(config['max_autorejoin_attempts']) is int, 'max_autorejoin_attempts field type should be int')
     c_assert(config['max_autorejoin_attempts'] >= 0, 'max_autorejoin_attempts should be >= 0')

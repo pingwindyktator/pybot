@@ -1,6 +1,7 @@
 import inspect
 import logging
 import ssl
+import time
 import textwrap
 import sys
 import plugin
@@ -8,6 +9,8 @@ import msg_parser
 import irc.bot
 import irc.connection
 
+from queue import Queue
+from threading import Thread
 from functools import total_ordering
 from color import color
 
@@ -53,7 +56,14 @@ class pybot(irc.bot.SingleServerIRCBot):
 
         self.plugins = set()
         self.commands = {}  # map command -> func
+        self._say_queue = Queue()
+        self._say_thread = None
         self._load_plugins()
+
+    class _say_info:
+        def __init__(self, target, msg):
+            self.target = target
+            self.msg = msg
 
     def start(self):
         ssl_info = ' over SSL' if self.config['use_ssl'] else ''
@@ -261,14 +271,44 @@ class pybot(irc.bot.SingleServerIRCBot):
 
     def say(self, msg, target=None):
         if not target: target = self.config['channel']
-        self.logger.debug(f'sending reply to {target}: {msg}')
 
         if self.is_msg_too_long(msg):
             self.logger.debug('privmsg too long, wrapping...')
             for part in textwrap.wrap(msg, 450):
-                self.say(part, target)
+                self._say_impl(part, target)
+        else:
+            self._say_impl(msg, target)
+
+    def _say_impl(self, msg, target):
+        if self.config['flood_protection']:
+            self._say_queue.put(self._say_info(target, msg))
+
+            if self._say_thread is None or not self._say_thread.is_alive():
+                self.logger.debug('starting _say_thread...')
+                self._say_thread = Thread(target=self._process_say)
+                self._say_thread.start()
         else:
             self.connection.privmsg(target, msg)
+
+    def _process_say(self):
+        msgs_sent = 0
+
+        while not self._say_queue.empty() and msgs_sent < 5:
+            say_info = self._say_queue.get()
+            self.logger.debug(f'sending reply to {say_info.target}: {say_info.msg}')
+            self.connection.privmsg(say_info.target, say_info.msg)
+            msgs_sent += 1
+            self._say_queue.task_done()
+
+        time.sleep(0.5)  # to not get kicked because of Excess Flood
+
+        while not self._say_queue.empty():
+            say_info = self._say_queue.get()
+            self.logger.debug(f'sending reply to {say_info.target}: {say_info.msg}')
+            self.connection.privmsg(say_info.target, say_info.msg)
+            time.sleep(0.5)  # to not get kicked because of Excess Flood
+
+        self.logger.debug('no more msgs to send, exiting...')
 
     def is_user_ignored(self, nickname):
         nickname = irc_nickname(nickname)

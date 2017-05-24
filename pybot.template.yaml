@@ -14,6 +14,7 @@ command_prefix: '!'
 ignored_users: []
 colors: on
 debug: false
+flood_protection: on
 
 bot_remote_manager:
   disconnect_msg: '[disconnect]'
