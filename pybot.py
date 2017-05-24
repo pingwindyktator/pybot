@@ -133,6 +133,7 @@ class pybot(irc.bot.SingleServerIRCBot):
 
         if cmd in self.commands:
             func = self.commands[cmd]
+            self.logger.debug(f'calling command  {cmd}(sender_nick={sender_nick}, args={args_list}, msg={raw_cmd}, raw_msg=...)...')
             func(sender_nick=sender_nick, args=args_list, msg=raw_cmd, raw_msg=raw_msg)
 
     def on_kick(self, connection, raw_msg):
