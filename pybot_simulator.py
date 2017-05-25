@@ -38,11 +38,13 @@ class buffer_class_t:
         self.errors = ''
 
 
+# noinspection PyUnusedLocal
 class connection_t:
     def __init__(self, bot_nickname, handlers):
         self.buffer_class = buffer_class_t()
         self.bot_nickname = bot_nickname
         self.handlers = handlers
+        self.connected = False
 
     def call_handler(self, handler_name, *args):
         if handler_name not in self.handlers: return
@@ -66,6 +68,9 @@ class connection_t:
 
     def kick(self, channel, nick, comment=''):
         print(f'> {self.get_nickname()} has kicked {nick} ({comment})')
+
+    def is_connected(self):
+        return self.connected
 
 
 class source_t:
@@ -110,6 +115,7 @@ class SingleServerIRCBot_mock:
 
     def init_bot(self):
         self.connection.call_handler('on_welcome', self.connection, None)
+        self.connection.connected = True
 
         raw_msg = raw_msg_builder.build_for_on_on_join_on_nick(self.connection.get_nickname())
         self.connection.call_handler('on_join', self.connection, raw_msg)
