@@ -1,6 +1,5 @@
 import importlib
 import sys
-import copy
 
 from plugin import *
 
@@ -98,7 +97,7 @@ class plugin_manager(plugin):
             self.logger.error(f'{name}.unload_plugin() throws: {e}. continuing anyway...')
 
         self.bot.plugins.remove(plugin_instance)
-        commands_copy = copy.deepcopy(self.bot.commands)
+        commands_copy = self.bot.commands.copy()
         for cmd in cmds: del commands_copy[cmd]
         self.bot.commands = commands_copy
         self.logger.warning(f'plugin {name} disabled with commands {cmds}')
