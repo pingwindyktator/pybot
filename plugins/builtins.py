@@ -2,6 +2,7 @@ import os
 import sys
 import shutil
 import git
+import copy
 
 from ruamel import yaml
 from threading import Lock
@@ -217,7 +218,7 @@ class builtins(plugin):
                 self.update_config_impl(v_key, v_value, config[key])
 
     def format_and_save_config(self, config, outfilename):
-        config = config.copy()
+        config = copy.deepcopy(config)
         global_config = CommentedMap()
         plugins_config = CommentedMap()
 
@@ -312,7 +313,7 @@ class builtins(plugin):
         repo.head.orig_head().set_commit(repo.head)
 
     def on_whoisuser(self, nick, user, host, **kwargs):
-        cmds = self.commands_as_other_user_to_send.copy()
+        cmds = copy.deepcopy(self.commands_as_other_user_to_send)
         try:
             args = (x for x in cmds if
                     x.hacked_nick == nick).__next__()

@@ -1,3 +1,5 @@
+import copy
+
 from plugin import *
 
 
@@ -57,7 +59,7 @@ class privmsg_logger_handler(plugin):
     @command
     @doc('get all registered privmsg logger handlers')
     def get_plhs(self, sender_nick, **kwargs):
-        response = self.plhs.copy()
+        response = copy.deepcopy(self.plhs)
         for target, level in response.items():
             response[target] = utils.int_to_logging_level_str[level]
 
