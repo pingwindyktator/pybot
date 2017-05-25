@@ -7,6 +7,7 @@ from ruamel import yaml
 from threading import Lock
 from irc.client import NickMask
 from ruamel.yaml.comments import CommentedMap
+from ruamel.yaml.parser import ParserError
 from plugin import *
 
 
@@ -192,13 +193,18 @@ class builtins(plugin):
     @admin
     @doc('restart pybot app')
     def restart(self, sender_nick, **kwargs):
-        args = sys.argv[:]
+        # TODO check if we can indeed start bot!
+        self.bot.say("I'l be back soon...")
+        self.restart_impl(sender_nick)
 
+    def restart_impl(self, sender_nick=None):
+        args = sys.argv[:]
         args.insert(0, sys.executable)
         if sys.platform == 'win32':
             args = [f'"{arg}"' for arg in args]
 
-        self.logger.warning(f"re-spawning '{' '.join(args)}' by {sender_nick}")
+        sender_nick = f' by {sender_nick}' if sender_nick else ''
+        self.logger.warning(f"re-spawning '{' '.join(args)}'{sender_nick}")
         os.chdir(os.getcwd())
         os.execv(sys.executable, args)
 
@@ -243,10 +249,12 @@ class builtins(plugin):
             self.update_config_impl(key, value, config)
 
         if config == self.bot.config: return False
+
+        # seems to be more safe to first save config, then load it and check consistency
         self.format_and_save_config(config, './.pybot.yaml')
 
-        _config = yaml.load(open('./.pybot.yaml'), Loader=yaml.Loader)
-        utils.ensure_config_is_ok(_config)
+        config = yaml.load(open('./.pybot.yaml'), Loader=yaml.Loader)
+        utils.ensure_config_is_ok(config)
 
         shutil.copyfile('./.pybot.yaml', './pybot.yaml')
         self.bot.config = config
@@ -348,3 +356,48 @@ class builtins(plugin):
         # when /whois response received, we've got needed user and host and we can do appropriate call
         self.clean_commands_as_other_user_to_send()
         self.bot.whois(hacked_nick)
+
+    @command
+    @admin
+    @doc('change_config <entry> <value>: change, save, apply bot config file and ** restart **. use ":" to separate config nesting (eg. "a:b:c" means config["a"]["b"]["c"])')
+    def change_config(self, msg, sender_nick, **kwargs):
+        if not msg: return
+        keys = msg.split()[0].split(':')
+        keys = [k.strip() for k in keys]
+        if not keys: return
+        value = msg[len(msg.split()[0]):].strip()
+        try:
+            value = yaml.load(value, Loader=yaml.RoundTripLoader)
+        except ParserError as e:
+            self.bot.say(f'cannot parse value: {value}')
+            return
+
+        config = yaml.load(open('./pybot.yaml'), Loader=yaml.RoundTripLoader)
+        config_entry = config
+
+        for key_it, key in enumerate(keys):
+            if key not in config_entry:
+                self.bot.say(f'no such key: {msg.split()[0]}')
+                return
+
+            if key_it == len(keys) - 1:
+                config_entry[key] = value
+            else:
+                config_entry = config_entry[key]
+
+        # seems to be more safe to first save config, then load it and check consistency
+        self.format_and_save_config(config, './.pybot.yaml')
+
+        config = yaml.load(open('./.pybot.yaml'), Loader=yaml.Loader)
+
+        try:
+            utils.ensure_config_is_ok(config)
+        except utils.c_AssertionError as e:
+            self.bot.say(f'invalid value: {e}')
+            return
+
+        shutil.copyfile('./.pybot.yaml', './pybot.yaml')
+        self.bot.config = config
+        self.logger.warning(f'{sender_nick} changed config entry {keys} = {value}')
+        self.bot.say('config entry applied, restarting...')
+        self.restart_impl(sender_nick)
