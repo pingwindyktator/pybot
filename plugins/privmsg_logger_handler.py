@@ -1,21 +1,20 @@
-import copy
-
 from plugin import *
 
 
 class irc_privmsg_logger_handler(logging.StreamHandler):
-    def __init__(self, connection, plhs):
+    def __init__(self, bot, plhs):
         super().__init__()
         self.plhs = plhs
-        self.connection = connection
+        self.bot = bot
+        self.ignored_funcs = ['send_raw', '_say_impl', 'say', '_process_say']
 
     def emit(self, record):
-        if record.funcName == 'send_raw': return
+        if record.funcName in self.ignored_funcs: return
         try:
             msg = self.format(record)
             for target, level in self.plhs.items():
-                if record.levelno >= level and self.connection.is_connected():
-                    self.connection.privmsg(target, msg)
+                if record.levelno >= level and self.bot.connection.is_connected():
+                    self.bot.say(msg, target)
         except (KeyboardInterrupt, SystemExit):
             raise
         except:
@@ -27,7 +26,7 @@ class privmsg_logger_handler(plugin):
         super().__init__(bot)
         self.logger = logging.getLogger(__name__)
         self.plhs = {}  # username -> logging_level
-        self.plh_handler = irc_privmsg_logger_handler(self.bot.connection, self.plhs)
+        self.plh_handler = irc_privmsg_logger_handler(self.bot, self.plhs)
         self.plh_handler.setFormatter(logging.Formatter('%(levelname)-10s%(filename)s:%(funcName)-16s: %(message)s'))
         self.plh_handler.setLevel(logging.DEBUG)
         logging.getLogger('').addHandler(self.plh_handler)
@@ -59,9 +58,8 @@ class privmsg_logger_handler(plugin):
     @command
     @doc('get all registered privmsg logger handlers')
     def get_plhs(self, sender_nick, **kwargs):
-        response = copy.deepcopy(self.plhs)
-        for target, level in response.items():
-            response[target] = utils.int_to_logging_level_str[level]
+        response = {t: utils.int_to_logging_level_str[level] for t, level in self.plhs.items()}
 
-        self.bot.say(f'privmsg logger handlers registered: {response}')
+        response_str = f'privmsg logger handlers registered: {response}' if response else 'no privmsg logger handlers registered'
+        self.bot.say(response_str)
         self.logger.info(f'plhs given to {sender_nick}: {response}')
