@@ -5,7 +5,6 @@ import git
 import copy
 
 from ruamel import yaml
-from threading import Lock
 from irc.client import NickMask
 from ruamel.yaml.comments import CommentedMap
 from ruamel.yaml.parser import ParserError
@@ -18,7 +17,6 @@ class builtins(plugin):
         self.pybot_dir = os.path.dirname(os.path.realpath(__file__))
         self.pybot_dir = os.path.abspath(os.path.join(self.pybot_dir, os.pardir))
         self.commands_as_other_user_to_send = []
-        self.mutex = Lock()
 
     class as_other_user_command:
         def __init__(self, sender_nick, hacked_nick, connection, raw_msg):
@@ -28,7 +26,7 @@ class builtins(plugin):
             self.raw_msg = raw_msg
 
     @command
-    @doc('help <entry>: give doc msg for <entry> command or plugin')
+    @doc('help <entry>: give doc msg for <entry> command / plugin or get supported commands if <entry> is empty')
     def help(self, sender_nick, args, **kwargs):
         if args and args[0]:
             self.help_entry_impl(args[0].strip())
@@ -313,7 +311,7 @@ class builtins(plugin):
         repo.head.orig_head().set_commit(repo.head)
 
     def on_whoisuser(self, nick, user, host, **kwargs):
-        cmds = copy.deepcopy(self.commands_as_other_user_to_send)
+        cmds = self.commands_as_other_user_to_send
         try:
             args = (x for x in cmds if
                     x.hacked_nick == nick).__next__()
@@ -324,21 +322,18 @@ class builtins(plugin):
         hacked_raw_msg.source = hacked_source
         hacked_raw_msg.arguments = (hacked_raw_msg.arguments[0],)
 
-        self.logger.warning(
-            f'{args.sender_nick} runs command ({hacked_raw_msg.arguments[0]}) as {args.hacked_nick}')
-        with self.mutex:
-            self.commands_as_other_user_to_send.remove(args)
+        self.logger.warning(f'{args.sender_nick} runs command ({hacked_raw_msg.arguments[0]}) as {args.hacked_nick}')
+        self.commands_as_other_user_to_send.remove(args)
 
         self.bot.on_pubmsg(args.connection, hacked_raw_msg)
 
     def clean_commands_as_other_user_to_send(self):
         users = list(self.bot.channel.users())
 
-        with self.mutex:
-            for x in self.commands_as_other_user_to_send:
-                if x.hacked_nick not in users:
-                    self.logger.info(f'removing {x.sender_nick} command ({x.raw_msg.arguments[0]}) as {x.hacked_nick}')
-                    self.commands_as_other_user_to_send.remove(x)
+        for x in self.commands_as_other_user_to_send:
+            if x.hacked_nick not in users:
+                self.logger.info(f'removing {x.sender_nick} command ({x.raw_msg.arguments[0]}) as {x.hacked_nick}')
+                self.commands_as_other_user_to_send.remove(x)
 
     @command
     @admin
@@ -349,8 +344,7 @@ class builtins(plugin):
         new_msg = msg[len(hacked_nick):].strip()
         raw_msg.arguments = (new_msg, raw_msg.arguments[1:])
         self.logger.info(f'{sender_nick} queued command ({new_msg}) as {hacked_nick}')
-        with self.mutex:
-            self.commands_as_other_user_to_send.append(self.as_other_user_command(sender_nick, hacked_nick, self.bot.connection, raw_msg))
+        self.commands_as_other_user_to_send.append(self.as_other_user_command(sender_nick, hacked_nick, self.bot.connection, raw_msg))
 
         # now we don't know ho to set raw_msg fields (user and host)
         # that's why we are queuing this call, then calling /whois hacked_user
