@@ -35,3 +35,6 @@ get:
 
 note:
   db_location: ./db/note.db
+
+seen:
+  db_location: ./db/seen.db
