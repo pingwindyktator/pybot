@@ -20,9 +20,10 @@ class seen(plugin):
     class activity_type:
         pubmsg = 0
         join = 1
-        quit = 2
+        part = 2
         nick_changed = 3
         kicked = 4
+        quit = 5
 
     class seen_data:
         def __init__(self, timestamp, activity, data):
@@ -40,31 +41,33 @@ class seen(plugin):
 
         def to_response(self, nickname):
             now = datetime.now()
-            timestamp = datetime.strptime(self.timestamp, r'%d-%m-%Y %H:%M')
-            remainder = (timestamp - now).total_seconds()
+            timestamp = datetime.strptime(self.timestamp, r'%d-%m-%Y %H:%M:%S')
+            remainder = (now - timestamp).total_seconds()
 
             days, remainder = divmod(remainder, 86400)
             hours, remainder = divmod(remainder, 3600)
             minutes, seconds = divmod(remainder, 60)
             delta_time = []
-            if days > 0: delta_time.append(f'{days} days')
-            if hours > 0: delta_time.append(f'{hours} hours')
-            if minutes > 0: delta_time.append(f'{minutes} minutes')
-            if seconds > 0: delta_time.append(f'{seconds} seconds')
+            if days > 0: delta_time.append(f'{days:.0f} days')
+            if hours > 0: delta_time.append(f'{hours:.0f} hours')
+            if minutes > 0: delta_time.append(f'{minutes:.0f} minutes')
+            if seconds > 0: delta_time.append(f'{seconds:.0f} seconds')
             delta_time = ', '.join(delta_time)
 
             if self.activity == seen.activity_type.pubmsg:
                 return f'{nickname} was last seen {delta_time} ago saying "{self.data[0]}"'
             if self.activity == seen.activity_type.join:
                 return f'{nickname} was last seen {delta_time} ago joining channel'
-            if self.activity == seen.activity_type.quit:
+            if self.activity == seen.activity_type.part:
                 return f'{nickname} was last seen {delta_time} ago quitting channel'
             if self.activity == seen.activity_type.nick_changed:
                 return f'{nickname} was last seen {delta_time} ago changing nickname to {self.data[0]}'
             if self.activity == seen.activity_type.kicked:
                 return f'{nickname} was last seen {delta_time} ago kicked by {self.data[0]}'
+            if self.activity == seen.activity_type.quit:
+                return f'{nickname} was last seen {delta_time} ago disconnecting from server'
             else:
-                raise RuntimeError(f"ups, you didn't implemented case for {self.activity}")
+                raise RuntimeError(f"seen_data: ups, you didn't implemented case for activity_type={self.activity}")
 
     def on_pubmsg(self, source, msg, **kwargs):
         self.update_database(irc_nickname(source.nick), [msg], self.activity_type.pubmsg)
@@ -73,6 +76,9 @@ class seen(plugin):
         self.update_database(irc_nickname(source.nick), [], self.activity_type.join)
 
     def on_part(self, source, **kwargs):
+        self.update_database(irc_nickname(source.nick), [], self.activity_type.part)
+
+    def on_quit(self, source, **kwargs):
         self.update_database(irc_nickname(source.nick), [], self.activity_type.quit)
 
     def on_nick(self, old_nickname, new_nickname, **kwargs):
@@ -83,7 +89,7 @@ class seen(plugin):
 
     def update_database(self, nickname, data, activity):
         nickname = irc_nickname(nickname)
-        timestamp = datetime.now().strftime("%d-%m-%Y %H:%M")
+        timestamp = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
         serialized = self.seen_data(timestamp, activity, data).to_json()
 
         with self.db_mutex:
@@ -94,7 +100,7 @@ class seen(plugin):
     @doc('TODO')
     def seen(self, sender_nick, args, **kwargs):
         if not args: return
-        nickname = irc_nickname(args[0].lower())
+        nickname = irc_nickname(args[0])
         self.logger.info(f'{sender_nick} asks about {nickname}')
 
         with self.db_mutex:
