@@ -275,11 +275,11 @@ class pybot(irc.bot.SingleServerIRCBot):
         if self.is_msg_too_long(msg):
             self.logger.debug('privmsg too long, wrapping...')
             for part in textwrap.wrap(msg, 450):
-                self._say_impl(part, target)
+                self._say_proxy(part, target)
         else:
-            self._say_impl(msg, target)
+            self._say_proxy(msg, target)
 
-    def _say_impl(self, msg, target):
+    def _say_proxy(self, msg, target):
         if self.config['flood_protection']:
             self._say_queue.put(self._say_info(target, msg))
 
@@ -288,7 +288,13 @@ class pybot(irc.bot.SingleServerIRCBot):
                 self._say_thread = Thread(target=self._process_say)
                 self._say_thread.start()
         else:
+            self._say_impl(msg, target)
+
+    def _say_impl(self, msg, target):
+        try:
             self.connection.privmsg(target, msg)
+        except Exception as e:
+            self.logger.error(f'cannot send "{msg}": {e}. discarding msg...')
 
     def _process_say(self):
         msgs_sent = 0
@@ -296,7 +302,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         while not self._say_queue.empty() and msgs_sent < 5:
             say_info = self._say_queue.get()
             self.logger.debug(f'sending reply to {say_info.target}: {say_info.msg}')
-            self.connection.privmsg(say_info.target, say_info.msg)
+            self._say_impl(say_info.msg, say_info.target)
             msgs_sent += 1
             self._say_queue.task_done()
 
@@ -305,7 +311,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         while not self._say_queue.empty():
             say_info = self._say_queue.get()
             self.logger.debug(f'sending reply to {say_info.target}: {say_info.msg}')
-            self.connection.privmsg(say_info.target, say_info.msg)
+            self._say_impl(say_info.msg, say_info.target)
             time.sleep(0.5)  # to not get kicked because of Excess Flood
 
         self.logger.debug('no more msgs to send, exiting...')

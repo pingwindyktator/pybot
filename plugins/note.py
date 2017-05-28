@@ -1,8 +1,8 @@
 import json
 import os
 import sqlite3
-import datetime
 
+from datetime import datetime
 from threading import Lock
 from plugin import *
 
@@ -38,7 +38,7 @@ class note(plugin):
         new_note = msg[len(target):].strip()
         self.logger.info(f'{sender_nick} notes "{new_note}" for {target}')
         if not new_note: return
-        new_note = f'{datetime.datetime.now().strftime("%d-%m-%Y %H:%M")}  <{sender_nick}> {new_note}'
+        new_note = f'{datetime.now().strftime("%d-%m-%Y %H:%M")}  <{sender_nick}> {new_note}'
 
         saved_notes = self.get_notes_for_user(target)
 

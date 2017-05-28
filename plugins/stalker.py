@@ -103,7 +103,7 @@ class stalker(plugin):
         if result:
             response = f'known hosts of {nick}: {result} '
         else:
-            response = f"I know nothing about {nick}"
+            response = f'I know nothing about {nick}'
 
         self.bot.say(response)
         self.logger.info(f'{sender_nick} asks about hosts of {nick}: {result}')
