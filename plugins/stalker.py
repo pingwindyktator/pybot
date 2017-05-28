@@ -29,6 +29,9 @@ class stalker(plugin):
     def on_join(self, source, **kwargs):
         self.update_database(source.nick, source.host)
 
+    def on_nick(self, source, new_nickname, **kwargs):
+        self.update_database(new_nickname, source.host)
+
     def on_me_joined(self, **kwargs):
         if self.updating_thread is None or not self.updating_thread.is_alive():
             self.updating_thread = Thread(target=self.update_all)
