@@ -38,7 +38,7 @@ class plugin:
         """
         called by bot when somebody joins channel
         raw_msg - raw IRC msg
-        source  - source of joined person
+        source  - source of joined user
         """
         pass
 
@@ -46,7 +46,6 @@ class plugin:
         """
         called by bot when joined channel
         raw_msg - raw IRC msg
-        channel - channel
         """
         pass
 
@@ -104,6 +103,22 @@ class plugin:
         busy_nickname - nickname bot was trying to use
         """
         pass
+
+    def on_nick(self, *args, **kwargs):
+        """
+        called by bot when somebody changes nickname
+        raw_msg      - raw IRC msg
+        source       - changer's source (with old nickname!)
+        old_nickname - old nickname
+        new_nickname - new nickname
+        """
+
+    def on_part(self, *args, **kwargs):
+        """
+        called by bot when somebody lefts channel
+        raw_msg - raw IRC msg
+        source  - source of left user
+        """
 
     def unload_plugin(self):
         """

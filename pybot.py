@@ -147,12 +147,14 @@ class pybot(irc.bot.SingleServerIRCBot):
             func(sender_nick=sender_nick, args=args_list, msg=raw_cmd, raw_msg=raw_msg)
 
     def on_kick(self, connection, raw_msg):
+        """ called by super() when somebody gets kicked """
         if raw_msg.arguments[0] == self.get_nickname():
             self.on_me_kicked(self.connection, raw_msg)
         else:
             self._call_plugins_methods('on_kick', raw_msg=raw_msg, who=raw_msg.arguments[0], source=raw_msg.source)
 
     def on_me_kicked(self, connection, raw_msg):
+        """ called when bot gets kicked """
         self.logger.warning(f'kicked by {raw_msg.source.nick}')
         self._call_plugins_methods('on_me_kicked', raw_msg=raw_msg, source=raw_msg.source)
         self._joined_to_channel = False
@@ -173,6 +175,7 @@ class pybot(irc.bot.SingleServerIRCBot):
             self.join_channel()
 
     def on_whoisuser(self, connection, raw_msg):
+        """ called by super() when WHOIS response arrives """
         # workaround here:
         # /whois me triggers on_me_joined call because when first time on self.on_join (== when bot joins channel) users-list is not updated yet
         if raw_msg.arguments[0] == self.get_nickname() and not self._joined_to_channel:
@@ -181,9 +184,20 @@ class pybot(irc.bot.SingleServerIRCBot):
         self._call_plugins_methods('on_whoisuser', raw_msg=raw_msg, nick=irc_nickname(raw_msg.arguments[0]), user=raw_msg.arguments[1], host=raw_msg.arguments[2])
 
     def on_me_joined(self, connection, raw_msg):
+        """ called when bot joins channel """
         self._joined_to_channel = True
         self.channel = self.channels[self.config['channel']]
-        self._call_plugins_methods('on_me_joined', raw_msg=raw_msg, channel=self.config['channel'])
+        self._call_plugins_methods('on_me_joined', raw_msg=raw_msg)
+
+    def on_nick(self, connection, raw_msg):
+        """ called by super() when somebody changes nickname """
+        self._call_plugins_methods('on_nick', raw_msg=raw_msg, source=raw_msg.source, old_nickname=irc_nickname(raw_msg.source.nick), new_nickname=irc_nickname(raw_msg.target))
+        pass
+
+    def on_part(self, connection, raw_msg):
+        """ called by super() when somebody lefts channel """
+        self._call_plugins_methods('on_part', raw_msg=raw_msg, source=raw_msg.source)
+        pass
 
     def login(self):
         # TODO add more login ways
