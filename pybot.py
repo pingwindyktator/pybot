@@ -192,12 +192,14 @@ class pybot(irc.bot.SingleServerIRCBot):
     def on_nick(self, connection, raw_msg):
         """ called by super() when somebody changes nickname """
         self._call_plugins_methods('on_nick', raw_msg=raw_msg, source=raw_msg.source, old_nickname=irc_nickname(raw_msg.source.nick), new_nickname=irc_nickname(raw_msg.target))
-        pass
 
     def on_part(self, connection, raw_msg):
         """ called by super() when somebody lefts channel """
         self._call_plugins_methods('on_part', raw_msg=raw_msg, source=raw_msg.source)
-        pass
+
+    def on_quit(self, connection, raw_msg):
+        """ called by super() when somebody disconnects from IRC server """
+        self._call_plugins_methods('on_quit', raw_msg=raw_msg, source=raw_msg.source)
 
     def login(self):
         # TODO add more login ways

@@ -120,6 +120,13 @@ class plugin:
         source  - source of left user
         """
 
+    def on_quit(self, **kwargs):
+        """
+        called by bot when somebody disconnects from IRC server
+        raw_msg - raw IRC msg
+        source  - source of disconnected user
+        """
+
     def unload_plugin(self):
         """
         called when plugin needs to be disabled / reloaded 
