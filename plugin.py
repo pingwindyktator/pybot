@@ -15,7 +15,7 @@ class plugin:
     def _get_class_name(self):
         return self.__class__.__name__
 
-    def on_welcome(self, *args, **kwargs):
+    def on_welcome(self, **kwargs):
         """
         called by bot when connected to server
         raw_msg  - raw IRC msg
@@ -25,7 +25,7 @@ class plugin:
         """
         pass
 
-    def on_disconnect(self, *args, **kwargs):
+    def on_disconnect(self, **kwargs):
         """
         called by bot when disconnected from server
         raw_msg - raw IRC msg
@@ -34,7 +34,7 @@ class plugin:
         """
         pass
 
-    def on_join(self, *args, **kwargs):
+    def on_join(self, **kwargs):
         """
         called by bot when somebody joins channel
         raw_msg - raw IRC msg
@@ -42,14 +42,14 @@ class plugin:
         """
         pass
 
-    def on_me_joined(self, *args, **kwargs):
+    def on_me_joined(self, **kwargs):
         """
         called by bot when joined channel
         raw_msg - raw IRC msg
         """
         pass
 
-    def on_pubmsg(self, *args, **kwargs):
+    def on_pubmsg(self, **kwargs):
         """
         called by bot when public msg received
         raw_msg - raw IRC msg
@@ -58,7 +58,7 @@ class plugin:
         """
         pass
 
-    def on_kick(self, *args, **kwargs):
+    def on_kick(self, **kwargs):
         """
         called by bot when somebody got kicked
         raw_msg - raw IRC msg
@@ -67,7 +67,7 @@ class plugin:
         """
         pass
 
-    def on_me_kicked(self, *args, **kwargs):
+    def on_me_kicked(self, **kwargs):
         """
         called by bot when kicked from channel
         raw_msg - raw IRC msg
@@ -75,7 +75,7 @@ class plugin:
         """
         pass
 
-    def on_privmsg(self, *args, **kwargs):
+    def on_privmsg(self, **kwargs):
         """
         called by bot when private msg received
         raw_msg - raw IRC msg
@@ -86,7 +86,7 @@ class plugin:
 
     # see https://www.alien.net.au/irc/irc2numerics.html
     # for deep explanation
-    def on_whoisuser(self, *args, **kwargs):
+    def on_whoisuser(self, **kwargs):
         """
         called by bot when /whois response received
         raw_msg - raw IRC msg
@@ -96,7 +96,7 @@ class plugin:
         """
         pass
 
-    def on_nicknameinuse(self, *args, **kwargs):
+    def on_nicknameinuse(self, **kwargs):
         """
         called by bot when given nickname is reserved
         raw_msg       - raw IRC msg
@@ -104,7 +104,7 @@ class plugin:
         """
         pass
 
-    def on_nick(self, *args, **kwargs):
+    def on_nick(self, **kwargs):
         """
         called by bot when somebody changes nickname
         raw_msg      - raw IRC msg
@@ -113,7 +113,7 @@ class plugin:
         new_nickname - new nickname
         """
 
-    def on_part(self, *args, **kwargs):
+    def on_part(self, **kwargs):
         """
         called by bot when somebody lefts channel
         raw_msg - raw IRC msg
