@@ -201,6 +201,10 @@ class pybot(irc.bot.SingleServerIRCBot):
         """ called by super() when somebody disconnects from IRC server """
         self._call_plugins_methods('on_quit', raw_msg=raw_msg, source=raw_msg.source)
 
+    def on_ctcp(self, connection, raw_msg):
+        """ called by super() when ctcp arrives (/me ...) """
+        self._call_plugins_methods('on_ctcp', raw_msg=raw_msg, source=raw_msg.source, msg=raw_msg.arguments[1] if len(raw_msg.arguments) > 1 else '')
+
     def login(self):
         # TODO add more login ways
         # TODO plugin

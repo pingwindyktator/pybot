@@ -127,6 +127,14 @@ class plugin:
         source  - source of disconnected user
         """
 
+    def on_ctcp(self, **kwargs):
+        """
+        called by bot when ctcp arrives (/me ...)
+        raw_msg - raw IRC msg
+        source  - source of ctcped user
+        msg     - ctcp message
+        """
+
     def unload_plugin(self):
         """
         called when plugin needs to be disabled / reloaded 
