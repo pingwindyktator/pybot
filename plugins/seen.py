@@ -29,6 +29,7 @@ class seen(plugin):
         nick_changed = 3
         kicked = 4
         quit = 5
+        ctcp = 6
 
     class seen_data:
         def __init__(self, timestamp, activity, data):
@@ -61,6 +62,8 @@ class seen(plugin):
 
             if self.activity == seen.activity_type.pubmsg:
                 return f'{nickname} was last seen {delta_time} ago saying "{self.data[0]}"'
+            if self.activity == seen.activity_type.ctcp:
+                return f'{nickname} was last seen {delta_time} ago doing "{nickname} {self.data[0]}"'
             if self.activity == seen.activity_type.join:
                 return f'{nickname} was last seen {delta_time} ago joining channel'
             if self.activity == seen.activity_type.part:
@@ -76,6 +79,9 @@ class seen(plugin):
 
     def on_pubmsg(self, source, msg, **kwargs):
         self.update_database(irc_nickname(source.nick), [msg], self.activity_type.pubmsg)
+
+    def on_ctcp(self, source, msg, **kwargs):
+        self.update_database(irc_nickname(source.nick), [msg], self.activity_type.ctcp)
 
     def on_join(self, source, **kwargs):
         if not self.config['register_pubmsg_only']:
@@ -109,11 +115,19 @@ class seen(plugin):
         self.logger.debug(f'new database entry: {nickname} -> {serialized}')
 
     @command
-    @doc('TODO')
+    @doc('seen <nickname>: get last activity of <nickname>')
     def seen(self, sender_nick, args, **kwargs):
         if not args: return
         nickname = irc_nickname(args[0])
         self.logger.info(f'{sender_nick} asks about {nickname}')
+
+        if nickname == self.bot.get_nickname():
+            self.bot.say("I'm here, bro")
+            return
+
+        if nickname == sender_nick:
+            self.bot.say('o rly?')
+            return
 
         with self.db_mutex:
             self.db_cursor.execute(f"SELECT data FROM '{self.db_name}' WHERE nickname = ? COLLATE NOCASE", (nickname,))
