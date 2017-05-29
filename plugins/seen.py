@@ -10,7 +10,7 @@ from plugin import *
 class seen(plugin):
     def __init__(self, bot):
         super().__init__(bot)
-        self.db_name = "seen"
+        self.db_name = self.bot.config['channel']
         os.makedirs(os.path.dirname(os.path.realpath(self.config['db_location'])), exist_ok=True)
         self.db_connection = sqlite3.connect(self.config['db_location'], check_same_thread=False)
         self.db_cursor = self.db_connection.cursor()
