@@ -11,7 +11,7 @@ from plugin import *
 class stalker(plugin):
     def __init__(self, bot):
         super().__init__(bot)
-        self.db_name = 'stalker'
+        self.db_name = self.bot.config['server']
         os.makedirs(os.path.dirname(os.path.realpath(self.config['db_location'])), exist_ok=True)
 
         self.db_connection = sqlite3.connect(self.config['db_location'], check_same_thread=False)
