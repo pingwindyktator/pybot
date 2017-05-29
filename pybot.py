@@ -192,12 +192,18 @@ class pybot(irc.bot.SingleServerIRCBot):
     def on_nick(self, connection, raw_msg):
         """ called by super() when somebody changes nickname """
         self._call_plugins_methods('on_nick', raw_msg=raw_msg, source=raw_msg.source, old_nickname=irc_nickname(raw_msg.source.nick), new_nickname=irc_nickname(raw_msg.target))
-        pass
 
     def on_part(self, connection, raw_msg):
         """ called by super() when somebody lefts channel """
         self._call_plugins_methods('on_part', raw_msg=raw_msg, source=raw_msg.source)
-        pass
+
+    def on_quit(self, connection, raw_msg):
+        """ called by super() when somebody disconnects from IRC server """
+        self._call_plugins_methods('on_quit', raw_msg=raw_msg, source=raw_msg.source)
+
+    def on_ctcp(self, connection, raw_msg):
+        """ called by super() when ctcp arrives (/me ...) """
+        self._call_plugins_methods('on_ctcp', raw_msg=raw_msg, source=raw_msg.source, msg=raw_msg.arguments[1] if len(raw_msg.arguments) > 1 else '')
 
     def login(self):
         # TODO add more login ways
@@ -236,6 +242,43 @@ class pybot(irc.bot.SingleServerIRCBot):
             self.register_commands_for_plugin(plugin_instance)
 
         self.logger.debug('plugins loaded')
+
+    def _say_proxy(self, msg, target):
+        if self.config['flood_protection']:
+            self._say_queue.put(self._say_info(target, msg))
+
+            if self._say_thread is None or not self._say_thread.is_alive():
+                self.logger.debug('starting _say_thread...')
+                self._say_thread = Thread(target=self._process_say)
+                self._say_thread.start()
+        else:
+            self._say_impl(msg, target)
+
+    def _say_impl(self, msg, target):
+        try:
+            self.connection.privmsg(target, msg)
+        except Exception as e:
+            self.logger.error(f'cannot send "{msg}": {e}. discarding msg...')
+
+    def _process_say(self):
+        msgs_sent = 0
+
+        while not self._say_queue.empty() and msgs_sent < 5:
+            say_info = self._say_queue.get()
+            self.logger.debug(f'sending reply to {say_info.target}: {say_info.msg}')
+            self._say_impl(say_info.msg, say_info.target)
+            msgs_sent += 1
+            self._say_queue.task_done()
+
+        time.sleep(0.5)  # to not get kicked because of Excess Flood
+
+        while not self._say_queue.empty():
+            say_info = self._say_queue.get()
+            self.logger.debug(f'sending reply to {say_info.target}: {say_info.msg}')
+            self._say_impl(say_info.msg, say_info.target)
+            time.sleep(0.5)  # to not get kicked because of Excess Flood
+
+        self.logger.debug('no more msgs to send, exiting...')
 
     # API funcs
 
@@ -292,43 +335,6 @@ class pybot(irc.bot.SingleServerIRCBot):
                 self._say_proxy(part, target)
         else:
             self._say_proxy(msg, target)
-
-    def _say_proxy(self, msg, target):
-        if self.config['flood_protection']:
-            self._say_queue.put(self._say_info(target, msg))
-
-            if self._say_thread is None or not self._say_thread.is_alive():
-                self.logger.debug('starting _say_thread...')
-                self._say_thread = Thread(target=self._process_say)
-                self._say_thread.start()
-        else:
-            self._say_impl(msg, target)
-
-    def _say_impl(self, msg, target):
-        try:
-            self.connection.privmsg(target, msg)
-        except Exception as e:
-            self.logger.error(f'cannot send "{msg}": {e}. discarding msg...')
-
-    def _process_say(self):
-        msgs_sent = 0
-
-        while not self._say_queue.empty() and msgs_sent < 5:
-            say_info = self._say_queue.get()
-            self.logger.debug(f'sending reply to {say_info.target}: {say_info.msg}')
-            self._say_impl(say_info.msg, say_info.target)
-            msgs_sent += 1
-            self._say_queue.task_done()
-
-        time.sleep(0.5)  # to not get kicked because of Excess Flood
-
-        while not self._say_queue.empty():
-            say_info = self._say_queue.get()
-            self.logger.debug(f'sending reply to {say_info.target}: {say_info.msg}')
-            self._say_impl(say_info.msg, say_info.target)
-            time.sleep(0.5)  # to not get kicked because of Excess Flood
-
-        self.logger.debug('no more msgs to send, exiting...')
 
     def is_user_ignored(self, nickname):
         nickname = irc_nickname(nickname)

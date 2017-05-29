@@ -23,6 +23,9 @@ class stalker(plugin):
     def on_pubmsg(self, source, **kwargs):
         self.update_database(source.nick, source.host)
 
+    def on_ctcp(self, source, **kwargs):
+        self.update_database(source.nick, source.host)
+
     def on_whoisuser(self, nick, host, **kwargs):
         self.update_database(nick, host)
 
