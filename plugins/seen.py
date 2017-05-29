@@ -73,19 +73,24 @@ class seen(plugin):
         self.update_database(irc_nickname(source.nick), [msg], self.activity_type.pubmsg)
 
     def on_join(self, source, **kwargs):
-        self.update_database(irc_nickname(source.nick), [], self.activity_type.join)
+        if not self.config['register_pubmsg_only']:
+            self.update_database(irc_nickname(source.nick), [], self.activity_type.join)
 
     def on_part(self, source, **kwargs):
-        self.update_database(irc_nickname(source.nick), [], self.activity_type.part)
+        if not self.config['register_pubmsg_only']:
+            self.update_database(irc_nickname(source.nick), [], self.activity_type.part)
 
     def on_quit(self, source, **kwargs):
-        self.update_database(irc_nickname(source.nick), [], self.activity_type.quit)
+        if not self.config['register_pubmsg_only']:
+            self.update_database(irc_nickname(source.nick), [], self.activity_type.quit)
 
     def on_nick(self, old_nickname, new_nickname, **kwargs):
-        self.update_database(irc_nickname(old_nickname), [new_nickname], self.activity_type.nick_changed)
+        if not self.config['register_pubmsg_only']:
+            self.update_database(irc_nickname(old_nickname), [new_nickname], self.activity_type.nick_changed)
 
     def on_kick(self, who, source, **kwargs):
-        self.update_database(irc_nickname(who), [source.nick], self.activity_type.kicked)
+        if not self.config['register_pubmsg_only']:
+            self.update_database(irc_nickname(who), [source.nick], self.activity_type.kicked)
 
     def update_database(self, nickname, data, activity):
         nickname = irc_nickname(nickname)
@@ -95,6 +100,8 @@ class seen(plugin):
         with self.db_mutex:
             self.db_cursor.execute(f"INSERT OR REPLACE into '{self.db_name}' VALUES (?, ?)", (nickname, serialized))
             self.db_connection.commit()
+
+        self.logger.debug(f'new database entry: {nickname} -> {serialized}')
 
     @command
     @doc('TODO')
