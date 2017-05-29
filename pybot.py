@@ -243,7 +243,7 @@ class pybot(irc.bot.SingleServerIRCBot):
 
         self.logger.debug('plugins loaded')
 
-    def _say_proxy(self, msg, target):
+    def _say_dispatcher(self, msg, target):
         if self.config['flood_protection']:
             self._say_queue.put(self._say_info(target, msg))
 
@@ -332,9 +332,9 @@ class pybot(irc.bot.SingleServerIRCBot):
         if self.is_msg_too_long(msg):
             self.logger.debug('privmsg too long, wrapping...')
             for part in textwrap.wrap(msg, 450):
-                self._say_proxy(part, target)
+                self._say_dispatcher(part, target)
         else:
-            self._say_proxy(msg, target)
+            self._say_dispatcher(msg, target)
 
     def is_user_ignored(self, nickname):
         nickname = irc_nickname(nickname)
