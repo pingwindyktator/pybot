@@ -39,3 +39,4 @@ note:
 seen:
   db_location: ./db/seen.db
   register_pubmsg_only: no
+  clear_db_at_startup: no

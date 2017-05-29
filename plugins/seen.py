@@ -14,6 +14,11 @@ class seen(plugin):
         os.makedirs(os.path.dirname(os.path.realpath(self.config['db_location'])), exist_ok=True)
         self.db_connection = sqlite3.connect(self.config['db_location'], check_same_thread=False)
         self.db_cursor = self.db_connection.cursor()
+        if self.config['clear_db_at_startup']:
+            self.db_cursor.execute(f"DROP TABLE IF EXISTS '{self.db_name}'")
+            self.db_connection.commit()
+            self.logger.info(f"table '{self.db_name}' dropped")
+
         self.db_cursor.execute(f"CREATE TABLE IF NOT EXISTS '{self.db_name}' (nickname TEXT primary key not null, data TEXT)")  # nickname -> seen_data
         self.db_mutex = Lock()
 
