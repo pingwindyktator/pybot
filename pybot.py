@@ -97,6 +97,7 @@ class pybot(irc.bot.SingleServerIRCBot):
     def on_disconnect(self, connection, raw_msg):
         """ called by super() when disconnected to server """
         self._call_plugins_methods('on_disconnect', raw_msg=raw_msg, server=self.config['server'], port=self.config['port'])
+        self.start()
 
     def on_join(self, connection, raw_msg):
         """ called by super() when somebody joins channel """
@@ -335,6 +336,9 @@ class pybot(irc.bot.SingleServerIRCBot):
                 self._say_dispatcher(part, target)
         else:
             self._say_dispatcher(msg, target)
+
+    def notice(self, msg, target):
+        self.connection.notice(target, msg)
 
     def is_user_ignored(self, nickname):
         nickname = irc_nickname(nickname)
