@@ -412,7 +412,6 @@ class builtins(plugin):
             return
 
         shutil.copyfile('./.pybot.yaml', './pybot.yaml')
-        self.bot.config = config
         self.logger.warning(f'{sender_nick} changed config entry {keys} = {value}')
         self.bot.say('config entry applied, restarting...')
         self.restart_impl(sender_nick)
