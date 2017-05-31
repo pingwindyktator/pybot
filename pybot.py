@@ -66,6 +66,7 @@ class pybot(irc.bot.SingleServerIRCBot):
             self.msg = msg
 
     def start(self):
+        self._joined_to_channel = False
         ssl_info = ' over SSL' if self.config['use_ssl'] else ''
         self.logger.info(f'connecting to {self.config["server"]}:{self.config["port"]}{ssl_info}...')
         self.connection.buffer_class.errors = 'replace'
@@ -96,6 +97,7 @@ class pybot(irc.bot.SingleServerIRCBot):
 
     def on_disconnect(self, connection, raw_msg):
         """ called by super() when disconnected to server """
+        self.logger.warning(f'disconnected from {self.config["server"]}: {raw_msg.arguments[0] if raw_msg.arguments else ""}')
         self._call_plugins_methods('on_disconnect', raw_msg=raw_msg, server=self.config['server'], port=self.config['port'])
         self.start()
 
