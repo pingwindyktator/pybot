@@ -48,7 +48,7 @@ class reminder(plugin):
         self.bot.say(f'reminder set to {run_at.strftime(r"%d-%m-%Y %H:%M")}')
 
     def notice(self, timer_id):
-        self.bot.say(f'{color.light_red("[Reminder] ")}{self.to_notice[timer_id].sender_nick}: {self.to_notice[timer_id].msg.strip()}')
+        self.bot.say(f'{color.light_red("[Reminder] ")}{self.to_notice[timer_id].sender_nick}: {self.to_notice[timer_id].msg}')
         del self.to_notice[timer_id]
 
     def prepare_run_time(self, msg, now):
@@ -81,7 +81,7 @@ class reminder(plugin):
             minute_delta = int(delta_reg_res[0][1][:-1]) if delta_reg_res[0][1] else 0
             if hour_delta == 0 and minute_delta == 0: return None, None
 
-            msg = delta_reg_res[0][2]
+            msg = delta_reg_res[0][2].strip()
             run_at = now + timedelta(hours=hour_delta, minutes=minute_delta)
             return run_at, msg
         else: return None, None
