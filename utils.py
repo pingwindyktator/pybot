@@ -96,3 +96,7 @@ def ensure_config_is_ok(config):
     c_assert('command_prefix' in config, 'you have to specify command prefix')
     c_assert(type(config['command_prefix']) is str, 'command_prefix field type should be string')
     c_assert(config['command_prefix'].strip(), 'you have to specify command prefix')
+
+
+class yaml_config(dict):
+    __getattr__ = dict.__getitem__
