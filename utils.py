@@ -99,4 +99,8 @@ def ensure_config_is_ok(config):
 
 
 class yaml_config(dict):
-    __getattr__ = dict.__getitem__
+    def __getattr__(self, attr):
+        res = super().__getitem__(attr)
+        if type(res) is dict: return yaml_config(res)
+        if type(res) is yaml_config: return res
+        else: return res
