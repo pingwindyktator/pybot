@@ -1,4 +1,5 @@
 import importlib
+import inspect
 import sys
 
 from plugin import *
@@ -76,7 +77,7 @@ class plugin_manager(plugin):
         plugin_class = getattr(sys.modules[f'plugins.{name}'], name)  # requires plugin class' name to be equal to module name
         new_class_instance = plugin_class(self.bot)
         self.bot.register_plugin(new_class_instance)
-        self.bot.register_commands_for_plugin(new_class_instance)
+        self.bot.register_plugin_handlers(new_class_instance)
         self.logger.warning(f'plugin {name} enabled')
 
     def disable_plugin_impl(self, name):
@@ -97,9 +98,19 @@ class plugin_manager(plugin):
             self.logger.error(f'{name}.unload_plugin() throws: {e}. continuing anyway...')
 
         self.bot.plugins.remove(plugin_instance)
+
+        # using copy and update here
         commands_copy = self.bot.commands.copy()
         for cmd in cmds: del commands_copy[cmd]
+
+        msg_regexes_copy = self.bot.msg_regexes.copy()
+        for f in inspect.getmembers(plugin_instance, predicate=inspect.ismethod):
+            func = f[1]
+            __regex = getattr(func, '__regex') if hasattr(func, '__regex') else None
+            if (__regex) and (__regex in msg_regexes_copy) and (func in msg_regexes_copy[__regex]): msg_regexes_copy[__regex].remove(func)
+
         self.bot.commands = commands_copy
+        self.bot.msg_regexes = msg_regexes_copy
         self.logger.warning(f'plugin {name} disabled with commands {cmds}')
 
     @command
@@ -143,7 +154,7 @@ class plugin_manager(plugin):
                     else:
                         sys.modules[f'plugins.{plugin_name}'] = importlib.reload(sys.modules[f'plugins.{plugin_name}'])  # reloading module
                         self.logger.warning(f'module plugins.{plugin_name} reloaded')
-                        self.bot.say(f'plugin {plugin_name} reloaded')
+                        self.bot.say(f"plugin {plugin_name} reloaded, but it's not enabled")
 
                 else:
                     importlib.import_module(f'plugins.{plugin_name}')  # loading new module

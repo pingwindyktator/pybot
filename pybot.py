@@ -55,7 +55,8 @@ class pybot(irc.bot.SingleServerIRCBot):
         self.channel = None
 
         self.plugins = set()
-        self.commands = {}  # map command -> func
+        self.commands = {}  # command -> func
+        self.msg_regexes = {}  # regex -> [funcs]
         self._say_queue = Queue()
         self._say_thread = None
         self._load_plugins()
@@ -71,6 +72,8 @@ class pybot(irc.bot.SingleServerIRCBot):
         self.logger.info(f'connecting to {self.config["server"]}:{self.config["port"]}{ssl_info}...')
         self.connection.buffer_class.errors = 'replace'
         super(pybot, self).start()
+
+    # callbacks
 
     def on_nicknameinuse(self, connection, raw_msg):
         """ called by super() when given nickname is reserved """
@@ -146,8 +149,15 @@ class pybot(irc.bot.SingleServerIRCBot):
 
         if cmd in self.commands:
             func = self.commands[cmd]
-            self.logger.debug(f'calling command  {cmd}(sender_nick={sender_nick}, args={args_list}, msg={raw_cmd}, raw_msg=...)...')
+            self.logger.debug(f'calling command  {func.__qualname__}(sender_nick={sender_nick}, args={args_list}, msg=\'{raw_cmd}\', raw_msg=...)...')
             func(sender_nick=sender_nick, args=args_list, msg=raw_cmd, raw_msg=raw_msg)
+
+        for reg in self.msg_regexes:
+            regex_search_result = reg.findall(full_msg)
+            if regex_search_result:
+                for func in self.msg_regexes[reg]:
+                    self.logger.debug(f'calling message regex handler  {func.__qualname__}(sender_nick={sender_nick}, msg=\'{full_msg}\', reg_res={regex_search_result}, raw_msg=...)...')
+                    func(sender_nick=sender_nick, msg=full_msg, reg_res=regex_search_result, raw_msg=raw_msg)
 
     def on_kick(self, connection, raw_msg):
         """ called by super() when somebody gets kicked """
@@ -217,12 +227,14 @@ class pybot(irc.bot.SingleServerIRCBot):
             if password is not None and password != '':
                 self.logger.info(f'identifying as {self.get_nickname()}...')
 
+    # don't touch this
+
     def _call_plugins_methods(self, func_name, **kwargs):
         for p in self.get_plugins():
             try:
                 p.__getattribute__(func_name)(**kwargs)
             except Exception as e:
-                self.logger.error(f'exception caught calling {p.__getattribute__(func_name)}: {e}')
+                self.logger.error(f'exception caught calling {p.__getattribute__(func_name).__qualname__}: {e}')
                 if self.is_debug_mode_enabled(): raise
 
     def _load_plugins(self):
@@ -242,7 +254,7 @@ class pybot(irc.bot.SingleServerIRCBot):
                 continue
 
             self.register_plugin(plugin_instance)
-            self.register_commands_for_plugin(plugin_instance)
+            self.register_plugin_handlers(plugin_instance)
 
         self.logger.debug('plugins loaded')
 
@@ -286,16 +298,37 @@ class pybot(irc.bot.SingleServerIRCBot):
     # API funcs
 
     def register_plugin(self, plugin_instance):
+        if plugin_instance in self.plugins:
+            self.logger.warning(f'plugin {type(plugin_instance).__name__} already registered, skipping...')
+            return
+
         self.plugins.add(plugin_instance)
         self.logger.info(f'+ plugin {type(plugin_instance).__name__} loaded')
 
-    def register_commands_for_plugin(self, plugin_instance):
+    def register_plugin_handlers(self, plugin_instance):
+        if plugin_instance not in self.plugins:
+            self.logger.error(f'plugin {type(plugin_instance).__name__} not registered, aborting...')
+            raise RuntimeError(f'plugin {type(plugin_instance).__name__} not registered!')
+
         for f in inspect.getmembers(plugin_instance, predicate=inspect.ismethod):
             func = f[1]
             func_name = f[0]
             if hasattr(func, '__command'):
+                if func_name in self.commands:
+                    self.logger.warning(f'command {func_name} already registered, skipping...')
+                    continue
+
                 self.commands[func_name] = func
                 self.logger.debug(f'command {func_name} registered')
+
+            if hasattr(func, '__regex'):
+                __regex = getattr(func, '__regex')
+                if __regex not in self.msg_regexes:
+                    self.msg_regexes[__regex] = []
+
+                self.msg_regexes[__regex].append(func)
+                self.msg_regexes[__regex] = list(set(self.msg_regexes[__regex]))
+                self.logger.debug(f'regex for {func.__qualname__} registered: \'{getattr(func, "__regex").pattern}\'')
 
     def get_commands_by_plugin(self):
         """

@@ -1,4 +1,6 @@
 import logging
+import re
+import sys
 import utils
 
 from pybot import irc_nickname
@@ -148,12 +150,39 @@ def command(function):
         try:
             function(self, **kwargs)
         except Exception as e:
-            self.logger.error(f'exception caught calling {function}: {e}')
+            self.logger.error(f'exception caught calling {function.__qualname__}: {e}')
             self.bot.say('internal error, sorry :(')
             if self.bot.is_debug_mode_enabled(): raise
 
+    if hasattr(command_impl, '__regex'):
+        print(f'function {function.__qualname__} already registered as regex handler')
+        sys.exit(8)
+
     command_impl.__command = True
     return command_impl
+
+
+def on_message(regex_str):
+    def on_message_impl(function):
+        @wraps(function)
+        def on_message_impl_impl(self, **kwargs):
+            try:
+                function(self, **kwargs)
+            except Exception as e:
+                self.logger.error(f'exception caught calling {function.__qualname__}: {e}')
+                if self.bot.is_debug_mode_enabled(): raise
+
+        if hasattr(on_message_impl_impl, '__command'):
+            print(f'function {function.__qualname__} already registered as command')
+            sys.exit(7)
+        try:
+            on_message_impl_impl.__regex = re.compile(regex_str)
+            return on_message_impl_impl
+        except Exception as e:
+            print(f'invalid regex for regex handler {function.__qualname__}: {e}')
+            sys.exit(5)
+
+    return on_message_impl
 
 
 def doc(doc_string):
