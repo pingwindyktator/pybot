@@ -140,7 +140,7 @@ class SingleServerIRCBot_mock:
 
 def configure_logger(*args, **kwargs):
     logging_format = '%(levelname)-10s%(asctime)s %(filename)s:%(funcName)-16s: %(message)s'
-    logging.basicConfig(format=logging_format, level=logging.INFO, stream=sys.stdout)
+    logging.basicConfig(format=logging_format, level=logging.DEBUG, stream=sys.stdout)
 
 
 def simulator_main():
