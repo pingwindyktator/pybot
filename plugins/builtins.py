@@ -127,7 +127,7 @@ class builtins(plugin):
 
         reply = f'{to_unignore[0]} is no longer ignored' if len(to_unignore) == 1 else f'{to_unignore} are no longer ignored'
         self.bot.say(reply)
-        self.logger.warning(f'{sender_nick} ignored: {to_unignore}')
+        self.logger.warning(f'{sender_nick} unignored {to_unignore}')
 
     @command
     @admin
@@ -156,7 +156,7 @@ class builtins(plugin):
     @doc('disable colorful answers')
     def disable_colors(self, sender_nick, **kwargs):
         color.disable_colors()
-        self.logger.info(f'{sender_nick} enables colors')
+        self.logger.info(f'{sender_nick} disables colors')
         self.bot.say('ok!')
 
     @command
