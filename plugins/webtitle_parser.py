@@ -9,10 +9,7 @@ from plugin import *
 class webtitle_parser(plugin):
     def __init__(self, bot):
         super().__init__(bot)
-
-    def on_pubmsg(self, msg, **kwargs):
-        urls = msg.strip().split()
-        regex = re.compile(
+        self.regex = re.compile(
             r'^(?:http)s?://'  # http:// or https://
             r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain...
             r'localhost|'  # localhost...
@@ -20,11 +17,13 @@ class webtitle_parser(plugin):
             r'(?::\d+)?'  # optional port
             r'(?:/?|[/?]\S+)$', re.IGNORECASE)
 
-        for url in urls: self.parse_url(url.strip(), regex)
+    def on_pubmsg(self, msg, **kwargs):
+        urls = msg.strip().split()
+        for url in urls: self.parse_url(url.strip())
 
-    def parse_url(self, url, regex):
+    def parse_url(self, url):
         try:
-            if regex.findall(url):
+            if self.regex.findall(url):
                 req = requests.get(url, timeout=5)
                 tree = fromstring(req.content)
                 title = tree.findtext('.//title').strip()
