@@ -38,89 +38,59 @@ def c_assert(expr, text):
 
 
 def ensure_config_is_ok(config):
-    possible_keys = [
-        'server',
-        'port',
-        'channel',
-        'nickname',
-        'use_ssl',
-        'flood_protection',
-        'max_autorejoin_attempts',
-        'ops',
-        'colors',
-        'debug',
-        'password',
-        'disabled_plugins',
-        'enabled_plugins',
-        'ignored_users',
-        'file_logging_level',
-        'stdout_logging_level',
-        'command_prefix',
-    ]
+    class config_key_info:
+        def __init__(self, required, type):
+            self.required = required
+            self.type = type
+            
+    config_keys = {
+        'server': config_key_info(True, str),
+        'port': config_key_info(True, int),
+        'channel': config_key_info(True, str),
+        'nickname': config_key_info(True, list),
+        'use_ssl': config_key_info(True, bool),
+        'flood_protection': config_key_info(True, bool),
+        'max_autorejoin_attempts': config_key_info(True, int),
+        'ops': config_key_info(True, list),
+        'colors': config_key_info(True, bool),
+        'debug': config_key_info(False, bool),
+        'password': config_key_info(False, list),
+        'disabled_plugins': config_key_info(False, list),
+        'enabled_plugins': config_key_info(False, list),
+        'ignored_users': config_key_info(False, list),
+        'file_logging_level': config_key_info(True, str),
+        'stdout_logging_level': config_key_info(True, str),
+        'command_prefix': config_key_info(True, str),
+    }
 
     for key, value in config.items():
         if type(value) is not dict:  # dict is config for plugin
             if type(value) is not CommentedMap:  # CommentedMap is special order-aware dict from ruamel.yaml
-                c_assert(key in possible_keys, f'unknown config file key: {key}')
+                c_assert(key in config_keys, f'unknown config file key: {key}')
 
-    c_assert('server' in config, 'you have to specify server address')
-    c_assert(type(config['server']) is str, 'server field type should be string')
-    c_assert(config['server'], 'you have to specify server address')
+    for key, key_info in config_keys.items():
+        if key_info.required:
+            c_assert(key in config, f'you have to specify {key} field')
 
-    c_assert('port' in config, 'you have to specify port')
-    c_assert(type(config['port']) is int, 'port field type should be integer')
+        if key in config:
+            c_assert(type(config[key]) is key_info.type, f'{key} field type should be {key_info.type.__name__}')
+
+    c_assert(config['server'].strip(), 'you have to specify server address')
+
     c_assert(config['port'] >= 1024, 'port should be >= 1024')
     c_assert(config['port'] <= 49151, 'port should be <= 49151')
-
-    c_assert('channel' in config, 'you have to specify channel to join')
-    c_assert(type(config['channel']) is str, 'channel field type should be string')
-    c_assert(config['channel'], 'you have to specify channel to join')
     c_assert(config['channel'].startswith('#'), 'channel should start with #')
-
-    c_assert('nickname' in config, "you have to specify at least one nickname to use")
-    c_assert(type(config['nickname']) is list, 'nickname field type should be list')
     c_assert(config['nickname'], 'you have to specify at least one nickname to use')
-
-    c_assert('use_ssl' in config, 'you have to specify whether to use sll or not')
-    c_assert(type(config['use_ssl']) is bool, 'use_ssl field type should be boolean')
-
-    c_assert('flood_protection' in config, 'you have to specify whether to prevent Flood Excess or not')
-    c_assert(type(config['flood_protection']) is bool, 'flood_protection field type should be boolean')
-
-    c_assert('max_autorejoin_attempts' in config, 'you have to specify maximum number of autorejoin attempts')
-    c_assert(type(config['max_autorejoin_attempts']) is int, 'max_autorejoin_attempts field type should be integer')
     c_assert(config['max_autorejoin_attempts'] >= 0, 'max_autorejoin_attempts should be >= 0')
-
-    c_assert('ops' in config, 'you have to specify bot operators (can be empty)')
-    c_assert(type(config['ops']) is list, 'ops field type should be list')
-
-    c_assert('colors' in config, 'you have to specify whether to enable colors in bot answers or not')
-    c_assert(type(config['colors']) is bool, 'colors field type should be boolean')
-
-    if 'debug' in config:
-        c_assert(type(config['debug']) is bool, 'debug field type should be boolean')
-
-    if 'password' in config:
-        c_assert(type(config['password']) is list, 'password field type should be list')
 
     if 'disabled_plugins' in config:
         c_assert('enabled_plugins' not in config, 'you cannot have both enabled_plugins and disabled_plugins specified')
-        c_assert(type(config['disabled_plugins']) is list, 'disabled_plugins field type should be list')
 
     if 'enabled_plugins' in config:
         c_assert('disabled_plugins' not in config, 'you cannot have both enabled_plugins and disabled_plugins specified')
-        c_assert(type(config['enabled_plugins']) is list, 'enabled_plugins field type should be list')
 
-    if 'ignored_users' in config:
-        c_assert(type(config['ignored_users']) is list, 'ignored_users field type should be list')
-
-    c_assert('file_logging_level' in config, 'you have to specify file logging level')
     c_assert(config['file_logging_level'] in logging_level_str_to_int, f'file_logging_level can be one of: {", ".join((logging_level_str_to_int.keys()))}')
-    c_assert('stdout_logging_level' in config, 'you have to specify stdout logging level')
     c_assert(config['stdout_logging_level'] in logging_level_str_to_int, f'stdout_logging_level can be one of: {", ".join((logging_level_str_to_int.keys()))}')
-
-    c_assert('command_prefix' in config, 'you have to specify command prefix')
-    c_assert(type(config['command_prefix']) is str, 'command_prefix field type should be string')
     c_assert(config['command_prefix'].strip(), 'you have to specify command prefix')
 
 
