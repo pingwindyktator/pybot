@@ -8,7 +8,7 @@ class sed(plugin):
     def __init__(self, bot):
         super().__init__(bot)
         self.database = {}  # {nickname -> last_msg}
-        self.regex = re.compile(r'^s/(.*)/(.*)/(g?)$')
+        self.regex = re.compile(r'^s/(.+)/(.*)/(g?)$')
 
     def on_pubmsg(self, source, msg, **kwargs):
         found = self.regex.findall(msg)
