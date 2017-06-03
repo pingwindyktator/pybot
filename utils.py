@@ -37,12 +37,13 @@ def c_assert(expr, text):
     if not expr: raise c_AssertionError(text)
 
 
+class config_key_info:
+    def __init__(self, required, type):
+        self.required = required
+        self.type = type
+
+
 def ensure_config_is_ok(config):
-    class config_key_info:
-        def __init__(self, required, type):
-            self.required = required
-            self.type = type
-            
     config_keys = {
         'server': config_key_info(True, str),
         'port': config_key_info(True, int),
