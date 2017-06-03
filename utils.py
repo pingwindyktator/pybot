@@ -100,5 +100,6 @@ class yaml_config(dict):
     def __getattr__(self, attr):
         res = super().__getitem__(attr)
         if type(res) is dict: return yaml_config(res)
+        if type(res) is CommentedMap: return yaml_config(res)
         if type(res) is yaml_config: return res
         else: return res
