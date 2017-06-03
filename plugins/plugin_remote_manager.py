@@ -77,7 +77,6 @@ class plugin_manager(plugin):
         plugin_class = getattr(sys.modules[f'plugins.{name}'], name)  # requires plugin class' name to be equal to module name
         new_class_instance = plugin_class(self.bot)
         self.bot.register_plugin(new_class_instance)
-        self.bot.register_plugin_handlers(new_class_instance)
         self.logger.warning(f'plugin {name} enabled')
 
     def disable_plugin_impl(self, name):

@@ -254,7 +254,6 @@ class pybot(irc.bot.SingleServerIRCBot):
                 continue
 
             self.register_plugin(plugin_instance)
-            self.register_plugin_handlers(plugin_instance)
 
         self.logger.debug('plugins loaded')
 
@@ -295,17 +294,7 @@ class pybot(irc.bot.SingleServerIRCBot):
 
         self.logger.debug('no more msgs to send, exiting...')
 
-    # API funcs
-
-    def register_plugin(self, plugin_instance):
-        if plugin_instance in self.plugins:
-            self.logger.warning(f'plugin {type(plugin_instance).__name__} already registered, skipping...')
-            return
-
-        self.plugins.add(plugin_instance)
-        self.logger.info(f'+ plugin {type(plugin_instance).__name__} loaded')
-
-    def register_plugin_handlers(self, plugin_instance):
+    def _register_plugin_handlers(self, plugin_instance):
         if plugin_instance not in self.plugins:
             self.logger.error(f'plugin {type(plugin_instance).__name__} not registered, aborting...')
             raise RuntimeError(f'plugin {type(plugin_instance).__name__} not registered!')
@@ -329,6 +318,21 @@ class pybot(irc.bot.SingleServerIRCBot):
                 self.msg_regexes[__regex].append(func)
                 self.msg_regexes[__regex] = list(set(self.msg_regexes[__regex]))
                 self.logger.debug(f'regex for {func.__qualname__} registered: \'{getattr(func, "__regex").pattern}\'')
+
+    # API funcs
+
+    def register_plugin(self, plugin_instance):
+        if not issubclass(type(plugin_instance), plugin.plugin):
+            self.logger.error(f'trying to register no-plugin class {type(plugin_instance).__name__} as plugin, aborting...')
+            raise RuntimeError(f'class {type(plugin_instance).__name__} does not inherit from plugin!')
+
+        if plugin_instance in self.plugins:
+            self.logger.warning(f'plugin {type(plugin_instance).__name__} already registered, skipping...')
+            return
+
+        self.plugins.add(plugin_instance)
+        self.logger.info(f'+ plugin {type(plugin_instance).__name__} loaded')
+        self._register_plugin_handlers(plugin_instance)
 
     def get_commands_by_plugin(self):
         """
