@@ -1,6 +1,7 @@
 import sys
-
 import logging
+
+from ruamel.yaml.comments import CommentedMap
 
 logging_level_str_to_int = {
     'disabled': sys.maxsize,
@@ -37,6 +38,31 @@ def c_assert(expr, text):
 
 
 def ensure_config_is_ok(config):
+    possible_keys = [
+        'server',
+        'port',
+        'channel',
+        'nickname',
+        'use_ssl',
+        'flood_protection',
+        'max_autorejoin_attempts',
+        'ops',
+        'colors',
+        'debug',
+        'password',
+        'disabled_plugins',
+        'enabled_plugins',
+        'ignored_users',
+        'file_logging_level',
+        'stdout_logging_level',
+        'command_prefix',
+    ]
+
+    for key, value in config.items():
+        if type(value) is not dict:  # dict is config for plugin
+            if type(value) is not CommentedMap:  # CommentedMap is special order-aware dict from ruamel.yaml
+                c_assert(key in possible_keys, f'unknown config file key: {key}')
+
     c_assert('server' in config, 'you have to specify server address')
     c_assert(type(config['server']) is str, 'server field type should be string')
     c_assert(config['server'], 'you have to specify server address')
