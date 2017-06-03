@@ -88,14 +88,14 @@ def ensure_config_is_ok(config):
     c_assert(type(config['flood_protection']) is bool, 'flood_protection field type should be boolean')
 
     c_assert('max_autorejoin_attempts' in config, 'you have to specify maximum number of autorejoin attempts')
-    c_assert(type(config['max_autorejoin_attempts']) is int, 'max_autorejoin_attempts field type should be int')
+    c_assert(type(config['max_autorejoin_attempts']) is int, 'max_autorejoin_attempts field type should be integer')
     c_assert(config['max_autorejoin_attempts'] >= 0, 'max_autorejoin_attempts should be >= 0')
 
     c_assert('ops' in config, 'you have to specify bot operators (can be empty)')
     c_assert(type(config['ops']) is list, 'ops field type should be list')
 
     c_assert('colors' in config, 'you have to specify whether to enable colors in bot answers or not')
-    c_assert(type(config['colors']) is bool, 'colors field type should be bool')
+    c_assert(type(config['colors']) is bool, 'colors field type should be boolean')
 
     if 'debug' in config:
         c_assert(type(config['debug']) is bool, 'debug field type should be boolean')
