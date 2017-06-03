@@ -221,7 +221,7 @@ class pybot(irc.bot.SingleServerIRCBot):
     def login(self):
         # TODO add more login ways
         # TODO plugin
-        if self.config['password'] is not None and self._nickname_id < len(self.config['password']):
+        if 'password' in self.config and self._nickname_id < len(self.config['password']):
             password = self.config['password'][self._nickname_id]
             self.say('NickServ', f"identify {self.get_nickname()} {password}")
             if password is not None and password != '':
