@@ -1,3 +1,5 @@
+import random
+
 from plugin import *
 
 
@@ -10,3 +12,9 @@ class echo(plugin):
     def echo(self, sender_nick, msg, **kwargs):
         self.bot.say(msg)
         self.logger.info(f"echo '{msg}' for {sender_nick}")
+
+    @command
+    def thx(self, sender_nick, **kwargs):
+        replies = ['spx', 'np', f'np, {sender_nick}', ':)']
+        self.bot.say(random.choice(replies))
+        self.logger.info(f"thx from {sender_nick}!")
