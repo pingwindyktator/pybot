@@ -12,7 +12,7 @@ class reminder(plugin):
         super().__init__(bot)
         self.time_regex = re.compile(r'^(([0-9]{1,2})-([0-9]{1,2})-([0-9]{4}) )?([0-9]{1,2}):([0-9]{1,2})(.*)')
         self.delta_regex = re.compile(r'([0-9]+[Hh])?\W*([0-9]+[Mm])?(.*)')
-        self.to_notice = {}  # {timer_id -> timer_desc}
+        self.to_notice = {}  # {timer_id -> remind_desc}
 
     def unload_plugin(self):
         for t in self.to_notice.values():
@@ -25,7 +25,7 @@ class reminder(plugin):
             self.timer_object = timer_object
 
     @command
-    @doc('remind <time> <msg>: sets timer to <time>. <time> can be  %d-%m-%Y %H:%M  or  %H:%M or  %Hh %Mm  (eg.  1-12-2017 13:14  or  13:14 or  3h 2m)')
+    @doc('remind <time> <msg>: sets timer to <time>. <time> can be  %d-%m-%Y %H:%M  or  %H:%M  or  %Hh %Mm  (eg.  1-12-2017 13:14  or  13:14  or  3h 2m)')
     def remind(self, sender_nick, msg, **kwargs):
         now = datetime.now()
         run_at, msg = self.prepare_run_time(msg, now)
@@ -42,12 +42,12 @@ class reminder(plugin):
         if not msg: msg = 'time passed!'
         delta_time = (run_at - now).total_seconds()
         timer_id = uuid.uuid4()
-        t = Timer(delta_time, self.notice, kwargs={'timer_id': timer_id})
+        t = Timer(delta_time, self.remind_say, kwargs={'timer_id': timer_id})
         self.to_notice[timer_id] = self.remind_desc(sender_nick, msg, t)
         t.start()
         self.bot.say(f'reminder set to {run_at.strftime(r"%d-%m-%Y %H:%M")}')
 
-    def notice(self, timer_id):
+    def remind_say(self, timer_id):
         self.bot.say(f'{color.light_red("[Reminder] ")}{self.to_notice[timer_id].sender_nick}: {self.to_notice[timer_id].msg}')
         del self.to_notice[timer_id]
 
