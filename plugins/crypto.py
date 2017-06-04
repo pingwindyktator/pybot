@@ -1,5 +1,8 @@
 import json
 import re
+from datetime import timedelta
+from threading import Timer
+
 import requests
 
 from plugin import *
@@ -10,8 +13,15 @@ class crypto(plugin):
         super().__init__(bot)
         self.known_crypto_currencies = self.get_crypto_currencies()
         self.convert_regex = re.compile(r'^([0-9]*\.?[0-9]*)\W*([A-Za-z]+)\W+(to|in)\W+([A-Za-z]+)$')
+        self.time_delta_regex = re.compile(r'([0-9]+[Hh])?\W*([0-9]+[Mm])?(.*)')
         self.coinmarketcap_url = r'https://api.coinmarketcap.com/v1/ticker/%s'
         self.fixer_url = r'http://api.fixer.io/latest?base=%s'
+        self.watch_timers = {}  # {curr -> watch_desc}
+
+    class watch_desc:
+        def __init__(self, timer_object, timedelta):
+            self.timer_object = timer_object
+            self.timedelta = timedelta
 
     class currency_id:
         def __init__(self, id, name, symbol):
@@ -29,9 +39,13 @@ class crypto(plugin):
             self.week_change = float(raw_result['percent_change_7d']) if raw_result['percent_change_7d'] else None
             self.marker_cap_usd = float(raw_result['market_cap_usd']) if raw_result['market_cap_usd'] else None
 
+    def unload_plugin(self):
+        for t in self.watch_timers.values():
+            t.timer_object.cancel()
+
     def get_crypto_currencies(self):
         url = r'https://api.coinmarketcap.com/v1/ticker/'
-        content = requests.get(url, timeout=5).content.decode('utf-8')
+        content = requests.get(url, timeout=10).content.decode('utf-8')
         raw_result = json.loads(content)
         result = []
         for entry in raw_result:
@@ -42,7 +56,7 @@ class crypto(plugin):
     def get_crypto_currency_id(self, alias):
         alias = alias.lower()
         for entry in self.known_crypto_currencies:
-            if entry.id == alias or entry.name.lower() == alias or entry.symbol.lower() == alias:
+            if entry.id.lower() == alias or entry.name.lower() == alias or entry.symbol.lower() == alias:
                 return entry
 
         return None
@@ -156,3 +170,58 @@ class crypto(plugin):
 
         self.logger.info(convertions)
         self.bot.say(color.orange('[Result]') + f' {result} {to_curr_org}')
+
+    # --------------------------------------------------------------------------------------------------------------
+
+    @command
+    @doc('crypto_watch <crypto_currency> <time>: watches <crypto_currency> every <time> time. <time> should be %H:%M  (eg.  1h 42m)')
+    def crypto_watch(self, sender_nick, msg, **kwargs):
+        if not msg: return
+        curr = msg.split()[0]
+        curr_id = self.get_crypto_currency_id(curr)
+        reg_res = self.time_delta_regex.findall(msg[len(curr):].strip())
+        if not reg_res: return
+        hours = int(reg_res[0][0][:-1]) if reg_res[0][0] else 0
+        minutes = int(reg_res[0][1][:-1]) if reg_res[0][1] else 0
+        if hours == 0 and minutes == 0: return
+
+        if not curr_id:
+            self.bot.say(f'no such crypto currency: {curr}')
+            return
+
+        delta_time = timedelta(hours=hours, minutes=minutes).total_seconds()
+        t = Timer(delta_time, self.watch_say, kwargs={'curr': curr_id.id})
+        wd = self.watch_desc(t, delta_time)
+        self.watch_timers[curr_id.id] = wd
+        t.start()
+        self.bot.say('ok!')
+        self.logger.info(f'{sender_nick} sets crypto watch: {curr_id.id}: {delta_time}s')
+
+    @command
+    @doc('stop_crypto_watch <crypto_currency>: stops watching <crypto_currency>')
+    def stop_crypto_watch(self, sender_nick, args, **kwargs):
+        if not args: return
+        curr = args[0]
+        curr_id = self.get_crypto_currency_id(curr)
+        if not curr_id:
+            self.bot.say(f'no such crypto currency: {curr}')
+            return
+
+        if curr_id.id not in self.watch_timers:
+            self.bot.say(f'no watch set for {curr_id.id}')
+            return
+
+        self.watch_timers[curr_id.id].timer_object.cancel()
+        del self.watch_timers[curr_id.id]
+        self.logger.info(f'{sender_nick} removes crypto watch: {curr_id.id}')
+        self.bot.say('ok!')
+
+    def watch_say(self, curr):
+        if curr not in self.watch_timers:
+            self.logger.error(f'no such currency in crypto_watch memory: {curr}')
+            raise RuntimeError(f'no such currency in crypto_watch memory: {curr}')
+
+        self.crypto_impl(curr)
+        t = Timer(self.watch_timers[curr].timedelta, self.watch_say, kwargs={'curr': curr})
+        self.watch_timers[curr].timer_object = t
+        t.start()
