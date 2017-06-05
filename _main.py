@@ -34,8 +34,8 @@ def main():
         sys.exit(6)
 
     try:
-        utils.ensure_config_is_ok(config)
-    except utils.c_AssertionError as e:
+        utils.ensure_config_is_ok(config, assert_unknown_keys=True)
+    except utils.config_error as e:
         print(f'Invalid config file: {e}')
         sys.exit(3)
 

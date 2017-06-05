@@ -192,11 +192,11 @@ class builtins(plugin):
         """
         :returns: reason why restart is not safe or None if it is
         """
-        # TODO pip requirements!
         try:
+            # TODO pip requirements!
             config = yaml.load(open('./pybot.yaml'), Loader=yaml.Loader)
             utils.ensure_config_is_ok(config)
-        except utils.c_AssertionError as e:
+        except utils.config_error as e:
             return f'invalid config value: {e}'
         except Exception as e:
             self.logger.error(f'unexpected exception: {e}')
@@ -407,7 +407,7 @@ class builtins(plugin):
 
         try:
             utils.ensure_config_is_ok(config)
-        except utils.c_AssertionError as e:
+        except utils.config_error as e:
             self.bot.say(f'invalid value: {e}')
             return
 

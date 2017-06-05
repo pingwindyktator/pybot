@@ -29,12 +29,8 @@ int_to_logging_level_str = {
 }
 
 
-class c_AssertionError(Exception):
+class config_error(Exception):
     pass
-
-
-def c_assert(expr, text):
-    if not expr: raise c_AssertionError(text)
 
 
 class config_key_info:
@@ -43,7 +39,10 @@ class config_key_info:
         self.type = type
 
 
-def ensure_config_is_ok(config):
+def ensure_config_is_ok(config, assert_unknown_keys=False):
+    def c_assert_error(expr, text):
+        if not expr: raise config_error(text)
+
     config_keys = {
         'server': config_key_info(True, str),
         'port': config_key_info(True, int),
@@ -66,36 +65,37 @@ def ensure_config_is_ok(config):
         'ignored_users': config_key_info(False, list),
     }
 
-    for key, value in config.items():
-        if type(value) is not dict:  # dict is config for plugin
-            if type(value) is not CommentedMap:  # CommentedMap is special order-aware dict from ruamel.yaml
-                c_assert(key in config_keys, f'unknown config file key: {key}')
-
     for key, key_info in config_keys.items():
         if key_info.required:
-            c_assert(key in config, f'you have to specify {key} field')
+            c_assert_error(key in config, f'you have to specify {key} field')
 
         if key in config:
-            c_assert(type(config[key]) is key_info.type, f'{key} field type should be {key_info.type.__name__}')
+            c_assert_error(type(config[key]) is key_info.type, f'{key} field type should be {key_info.type.__name__}')
 
-    c_assert(config['server'].strip(), 'you have to specify server address')
-    c_assert(config['port'] >= 1024, 'port should be >= 1024')
-    c_assert(config['port'] <= 49151, 'port should be <= 49151')
-    c_assert(config['channel'].startswith('#'), 'channel should start with #')
-    c_assert(config['nickname'], 'you have to specify at least one nickname to use')
-    c_assert(config['max_autorejoin_attempts'] >= 0, 'max_autorejoin_attempts should be >= 0')
-    c_assert(config['file_logging_level'] in logging_level_str_to_int, f'file_logging_level can be one of: {", ".join((logging_level_str_to_int.keys()))}')
-    c_assert(config['stdout_logging_level'] in logging_level_str_to_int, f'stdout_logging_level can be one of: {", ".join((logging_level_str_to_int.keys()))}')
-    c_assert(config['command_prefix'].strip(), 'you have to specify command prefix')
+    c_assert_error(config['server'].strip(), 'you have to specify server address')
+    c_assert_error(config['port'] >= 1024, 'port should be >= 1024')
+    c_assert_error(config['port'] <= 49151, 'port should be <= 49151')
+    c_assert_error(config['channel'].startswith('#'), 'channel should start with #')
+    c_assert_error(config['nickname'], 'you have to specify at least one nickname to use')
+    c_assert_error(config['max_autorejoin_attempts'] >= 0, 'max_autorejoin_attempts should be >= 0')
+    c_assert_error(config['file_logging_level'] in logging_level_str_to_int, f'file_logging_level can be one of: {", ".join((logging_level_str_to_int.keys()))}')
+    c_assert_error(config['stdout_logging_level'] in logging_level_str_to_int, f'stdout_logging_level can be one of: {", ".join((logging_level_str_to_int.keys()))}')
+    c_assert_error(config['command_prefix'].strip(), 'you have to specify command prefix')
 
     if 'disabled_plugins' in config:
-        c_assert('enabled_plugins' not in config, 'you cannot have both enabled_plugins and disabled_plugins specified')
+        c_assert_error('enabled_plugins' not in config, 'you cannot have both enabled_plugins and disabled_plugins specified')
 
     if 'enabled_plugins' in config:
-        c_assert('disabled_plugins' not in config, 'you cannot have both enabled_plugins and disabled_plugins specified')
+        c_assert_error('disabled_plugins' not in config, 'you cannot have both enabled_plugins and disabled_plugins specified')
 
     for nickname in config['nickname']:
-        c_assert(nickname.strip(), 'you cannot have empty nickname')
+        c_assert_error(nickname.strip(), 'you cannot have empty nickname')
+
+    if assert_unknown_keys:
+        for key, value in config.items():
+            if type(value) is not dict:  # dict is config for plugin
+                if type(value) is not CommentedMap:  # CommentedMap is special order-aware dict from ruamel.yaml
+                    c_assert_error(key in config_keys, f'unknown config file key: {key}')
 
 
 class yaml_config(dict):
