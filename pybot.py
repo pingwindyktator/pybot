@@ -156,7 +156,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         elif self.config['try_autocorrect']:
             possible_cmd = self._get_best_command_match(cmd)
             if possible_cmd:
-                self.say(f'no such command: {cmd}, did you meant {possible_cmd}?')
+                self.say(f"no such command: {cmd}, did you meant '{possible_cmd}'?")
             else:
                 self.say(f'no such command: {cmd}')
 
