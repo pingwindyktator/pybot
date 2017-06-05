@@ -189,6 +189,10 @@ class crypto(plugin):
             self.bot.say(f'no such crypto currency: {curr}')
             return
 
+        if curr_id.id in self.watch_timers:
+            self.logger.info(f'removed previous crypto watch for {curr_id.id}')
+            self.watch_timers[curr_id.id].timer_object.cancel()
+
         delta_time = timedelta(hours=hours, minutes=minutes).total_seconds()
         t = Timer(delta_time, self.watch_say, kwargs={'curr': curr_id.id})
         wd = self.watch_desc(t, delta_time)
