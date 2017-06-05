@@ -102,7 +102,8 @@ class pybot(irc.bot.SingleServerIRCBot):
 
     def on_disconnect(self, connection, raw_msg):
         """ called by super() when disconnected to server """
-        self.logger.warning(f'disconnected from {self.config["server"]}: {raw_msg.arguments[0] if raw_msg.arguments else ""}')
+        msg = f': {raw_msg.arguments[0]}' if raw_msg.arguments else ''
+        self.logger.warning(f'disconnected from {self.config["server"]}{msg}')
         self._call_plugins_methods('on_disconnect', raw_msg=raw_msg, server=self.config['server'], port=self.config['port'])
 
     def on_join(self, connection, raw_msg):
