@@ -144,7 +144,7 @@ class pybot(irc.bot.SingleServerIRCBot):
             raw_cmd = msg_parser.trim_msg(self.get_nickname() + ',', full_msg)
 
         args_list = raw_cmd.split()
-        cmd = args_list[0] if len(args_list) > 0 else ''
+        cmd = args_list[0].strip() if len(args_list) > 0 else ''
         args_list = args_list[1:]
         assert raw_cmd.startswith(cmd)
         raw_cmd = raw_cmd[len(cmd):].strip()
