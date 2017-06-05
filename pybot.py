@@ -13,6 +13,8 @@ from queue import Queue
 from threading import Thread
 from functools import total_ordering
 from color import color
+from fuzzywuzzy import process
+from fuzzywuzzy import fuzz
 
 
 @total_ordering
@@ -151,6 +153,12 @@ class pybot(irc.bot.SingleServerIRCBot):
             func = self.commands[cmd]
             self.logger.debug(f'calling command  {func.__qualname__}(sender_nick={sender_nick}, args={args_list}, msg=\'{raw_cmd}\', raw_msg=...)...')
             func(sender_nick=sender_nick, args=args_list, msg=raw_cmd, raw_msg=raw_msg)
+        elif self.config['try_autocorrect']:
+            possible_cmd = self._get_best_command_match(cmd)
+            if possible_cmd:
+                self.say(f'no such command: {cmd}, did you meant {possible_cmd}?')
+            else:
+                self.say(f'no such command: {cmd}')
 
         for reg in self.msg_regexes:
             regex_search_result = reg.findall(full_msg)
@@ -228,6 +236,13 @@ class pybot(irc.bot.SingleServerIRCBot):
                 self.logger.info(f'identifying as {self.get_nickname()}...')
 
     # don't touch this
+
+    def _get_best_command_match(self, command):
+        choices = [c.replace('_', ' ') for c in self.commands]
+        command = command.replace('_', ' ')
+        result = process.extract(command, choices, scorer=fuzz.token_sort_ratio)
+        result = [(r[0].replace(' ', '_'), r[1]) for r in result]
+        return result[0][0] if result[0][1] > 65 else None
 
     def _call_plugins_methods(self, func_name, **kwargs):
         for p in self.get_plugins():

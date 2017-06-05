@@ -54,14 +54,16 @@ def ensure_config_is_ok(config):
         'max_autorejoin_attempts': config_key_info(True, int),
         'ops': config_key_info(True, list),
         'colors': config_key_info(True, bool),
+        'file_logging_level': config_key_info(True, str),
+        'stdout_logging_level': config_key_info(True, str),
+        'command_prefix': config_key_info(True, str),
+        'try_autocorrect': config_key_info(True, bool),
+
         'debug': config_key_info(False, bool),
         'password': config_key_info(False, list),
         'disabled_plugins': config_key_info(False, list),
         'enabled_plugins': config_key_info(False, list),
         'ignored_users': config_key_info(False, list),
-        'file_logging_level': config_key_info(True, str),
-        'stdout_logging_level': config_key_info(True, str),
-        'command_prefix': config_key_info(True, str)
     }
 
     for key, value in config.items():
