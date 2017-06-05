@@ -101,15 +101,15 @@ class pybot(irc.bot.SingleServerIRCBot):
         self.join_channel()
 
     def on_disconnect(self, connection, raw_msg):
-        """ called by super() when disconnected to server """
+        """ called by super() when disconnected from server """
+        self._joined_to_channel = False
         msg = f': {raw_msg.arguments[0]}' if raw_msg.arguments else ''
         self.logger.warning(f'disconnected from {self.config["server"]}{msg}')
         self._call_plugins_methods('on_disconnect', raw_msg=raw_msg, server=self.config['server'], port=self.config['port'])
 
     def on_join(self, connection, raw_msg):
         """ called by super() when somebody joins channel """
-        if raw_msg.source.nick == self.get_nickname():
-            self.logger.info(f'joined to {self.config["channel"]}')
+        if raw_msg.source.nick == self.get_nickname() and not self._joined_to_channel:
             self.whois(self.get_nickname())
         else:
             self._call_plugins_methods('on_join', raw_msg=raw_msg, source=raw_msg.source)
@@ -208,6 +208,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         """ called when bot joins channel """
         self._joined_to_channel = True
         self.channel = self.channels[self.config['channel']]
+        self.logger.info(f'joined to {self.config["channel"]}')
         self._call_plugins_methods('on_me_joined', raw_msg=raw_msg)
 
     def on_nick(self, connection, raw_msg):
