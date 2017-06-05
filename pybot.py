@@ -153,7 +153,7 @@ class pybot(irc.bot.SingleServerIRCBot):
             func = self.commands[cmd]
             self.logger.debug(f'calling command  {func.__qualname__}(sender_nick={sender_nick}, args={args_list}, msg=\'{raw_cmd}\', raw_msg=...)...')
             func(sender_nick=sender_nick, args=args_list, msg=raw_cmd, raw_msg=raw_msg)
-        elif self.config['try_autocorrect']:
+        elif self.config['try_autocorrect'] and cmd:
             possible_cmd = self._get_best_command_match(cmd)
             if possible_cmd:
                 self.say(f"no such command: {cmd}, did you meant '{possible_cmd}'?")
