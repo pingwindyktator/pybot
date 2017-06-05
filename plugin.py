@@ -202,4 +202,5 @@ def admin(function):
         else:
             self.logger.info(f'{sender_nick} is not op, skipping command')
 
+    admin_impl.__admin = True
     return admin_impl

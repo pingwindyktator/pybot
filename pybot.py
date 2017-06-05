@@ -154,7 +154,7 @@ class pybot(irc.bot.SingleServerIRCBot):
             self.logger.debug(f'calling command  {func.__qualname__}(sender_nick={sender_nick}, args={args_list}, msg=\'{raw_cmd}\', raw_msg=...)...')
             func(sender_nick=sender_nick, args=args_list, msg=raw_cmd, raw_msg=raw_msg)
         elif self.config['try_autocorrect'] and cmd:
-            possible_cmd = self._get_best_command_match(cmd)
+            possible_cmd = self._get_best_command_match(cmd, sender_nick)
             if possible_cmd:
                 self.say(f"no such command: {cmd}, did you meant '{possible_cmd}'?")
             else:
@@ -238,8 +238,8 @@ class pybot(irc.bot.SingleServerIRCBot):
 
     # don't touch this
 
-    def _get_best_command_match(self, command):
-        choices = [c.replace('_', ' ') for c in self.commands]
+    def _get_best_command_match(self, command, sender_nick):
+        choices = [c.replace('_', ' ') for c in self.commands if not (hasattr(self.commands[c], '__admin') and sender_nick not in self.config['ops'])]
         command = command.replace('_', ' ')
         result = process.extract(command, choices, scorer=fuzz.token_sort_ratio)
         result = [(r[0].replace(' ', '_'), r[1]) for r in result]
