@@ -12,10 +12,10 @@ stdout_logging_level: info
 # disabled_plugins: []
 command_prefix: '!'
 ignored_users: []
-colors: on
+colors: true
 debug: false
-flood_protection: on
-try_autocorrect: yes
+flood_protection: true
+try_autocorrect: true
 
 bot_remote_manager:
   disconnect_msg: '[disconnect]'
@@ -39,5 +39,5 @@ note:
 
 seen:
   db_location: ./db/seen.db
-  register_pubmsg_only: no
-  clear_db_at_startup: no
+  register_pubmsg_only: false
+  clear_db_at_startup: false
