@@ -1,4 +1,4 @@
-ruamel_yaml
+ruamel.yaml
 lxml
 requests
 irc>=15.0.4
