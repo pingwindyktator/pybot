@@ -89,14 +89,14 @@ class pybot(irc.bot.SingleServerIRCBot):
         self.logger.warning(f'nickname {nickname} is busy, using {new_nickname}')
         self._call_plugins_methods('nicknameinuse', raw_msg=raw_msg, busy_nickname=nickname)
         self.connection.nick(new_nickname)
-        self.login()
+        self._login()
 
     def on_welcome(self, connection, raw_msg):
         """ called by super() when connected to server """
         ssl_info = ' over SSL' if self.config['use_ssl'] else ''
         self.logger.info(f'connected to {self.config["server"]}:{self.config["port"]}{ssl_info} using nickname {self.get_nickname()}')
         self._call_plugins_methods('welcome', raw_msg=raw_msg, server=self.config['server'], port=self.config['port'], nickname=self.get_nickname())
-        self.login()
+        self._login()
         self.join_channel()
 
     def on_disconnect(self, connection, raw_msg):
@@ -226,7 +226,9 @@ class pybot(irc.bot.SingleServerIRCBot):
         """ called by super() when ctcp arrives (/me ...) """
         self._call_plugins_methods('ctcp', raw_msg=raw_msg, source=raw_msg.source, msg=raw_msg.arguments[1] if len(raw_msg.arguments) > 1 else '')
 
-    def login(self):
+    # don't touch this
+
+    def _login(self):
         # TODO add more login ways
         # TODO plugin
         # TODO if freenode...
@@ -236,9 +238,7 @@ class pybot(irc.bot.SingleServerIRCBot):
             if password is not None and password != '':
                 self.logger.info(f'identifying as {self.get_nickname()}...')
         else:
-            self.logger.debug(f'no password provided for {self.config["password"][self._nickname_id]}')
-
-    # don't touch this
+            self.logger.debug(f'no password provided for {self.config["nickname"][self._nickname_id]}')
 
     def _get_best_command_match(self, command, sender_nick):
         choices = [c.replace('_', ' ') for c in self.commands if not (hasattr(self.commands[c], '__admin') and sender_nick not in self.config['ops'])]
