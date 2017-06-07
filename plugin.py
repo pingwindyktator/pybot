@@ -4,12 +4,13 @@ import sys
 import utils
 
 from pybot import irc_nickname
+from pybot import pybot
 from color import color
 from functools import wraps
 
 
 class plugin:
-    def __init__(self, bot):
+    def __init__(self, bot: pybot):
         self.bot = bot
         self.logger = logging.getLogger(self._get_class_name())
         self.config = self.bot.config[self._get_class_name()] if self._get_class_name() in self.bot.config else None

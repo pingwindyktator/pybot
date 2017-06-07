@@ -39,7 +39,6 @@ class pybot(irc.bot.SingleServerIRCBot):
             self.logger.debug('colors loaded')
         else:
             color.disable_colors()
-            self.logger.debug('colors loaded')
 
         self.logger.debug('initiating irc.bot.SingleServerIRCBot...')
         connection_args = {}
@@ -230,11 +229,14 @@ class pybot(irc.bot.SingleServerIRCBot):
     def login(self):
         # TODO add more login ways
         # TODO plugin
+        # TODO if freenode...
         if 'password' in self.config and self._nickname_id < len(self.config['password']):
             password = self.config['password'][self._nickname_id]
             self.say('NickServ', f"identify {self.get_nickname()} {password}")
             if password is not None and password != '':
                 self.logger.info(f'identifying as {self.get_nickname()}...')
+        else:
+            self.logger.debug(f'no password provided for {self.config["password"][self._nickname_id]}')
 
     # don't touch this
 
