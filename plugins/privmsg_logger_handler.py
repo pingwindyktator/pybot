@@ -13,7 +13,7 @@ class irc_privmsg_logger_handler(logging.StreamHandler):
         try:
             msg = self.format(record)
             for target, level in self.plhs.items():
-                if record.levelno >= level and self.bot.connection.is_connected():
+                if record.levelno >= level and self.bot.is_connected():
                     self.bot.say(msg, target)
         except (KeyboardInterrupt, SystemExit):
             raise

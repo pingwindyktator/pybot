@@ -11,7 +11,7 @@ class words_blacklist(plugin):
     def on_pubmsg(self, source, msg, **kwargs):
         for word in self.blacklist:
             if re.findall(word, msg) and source.nick not in self.bot.config['ops']:
-                self.bot.connection.kick(self.bot.config['channel'], source.nick, 'watch your language!')
+                self.bot.kick(source.nick, 'watch your language!')
                 self.logger.info(f'{source.nick} kicked [{word}]')
 
     @command

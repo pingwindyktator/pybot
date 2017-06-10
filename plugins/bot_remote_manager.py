@@ -32,4 +32,4 @@ class bot_remote_manager(plugin):
     @doc('reconnect to server')
     def reconnect(self, sender_nick, **kwargs):
         self.logger.warning(f'reconnect by {sender_nick}')
-        self.bot.connection.reconnect()
+        self.bot.reconnect()
