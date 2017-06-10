@@ -20,6 +20,9 @@ class stalker(plugin):
         self.db_mutex = Lock()
         self.updating_thread = None
 
+    def on_welcome(self, **kwargs):
+        self.bot.names()
+
     def on_pubmsg(self, source, **kwargs):
         self.update_database(source.nick, source.host)
 
@@ -35,16 +38,15 @@ class stalker(plugin):
     def on_nick(self, source, new_nickname, **kwargs):
         self.update_database(new_nickname, source.host)
 
-    def on_me_joined(self, **kwargs):
+    def on_namreply(self, nicknames, **kwargs):
         if self.updating_thread is None or not self.updating_thread.is_alive():
-            self.updating_thread = Thread(target=self.update_all)
+            self.updating_thread = Thread(target=self.update_all, args=(nicknames,))
             self.updating_thread.start()
 
-    def update_all(self):
+    def update_all(self, nicknames):
         self.logger.info("updating whole stalker's database started...")
-        users = list(self.bot.channel.users())
-        for username in users:
-            self.bot.whois(username)
+        for nick in nicknames:
+            self.bot.whois(nick)
             time.sleep(1)  # to not get kicked because of Excess Flood
 
         self.logger.info("updating whole stalker's database finished")
