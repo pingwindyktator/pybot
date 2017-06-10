@@ -106,12 +106,23 @@ class pybot(irc.bot.SingleServerIRCBot):
         self.logger.warning(f'disconnected from {self.config["server"]}{msg}')
         self._call_plugins_methods('disconnect', raw_msg=raw_msg, server=self.config['server'], port=self.config['port'])
 
+    def on_quit(self, connection, raw_msg):
+        """ called by super() when somebody disconnects from IRC server """
+        self._call_plugins_methods('quit', raw_msg=raw_msg, source=raw_msg.source)
+
     def on_join(self, connection, raw_msg):
         """ called by super() when somebody joins channel """
         if raw_msg.source.nick == self.get_nickname() and not self._joined_to_channel:
             self.whois(self.get_nickname())
         else:
             self._call_plugins_methods('join', raw_msg=raw_msg, source=raw_msg.source)
+
+    def on_me_joined(self, connection, raw_msg):
+        """ called when bot joins channel """
+        self._joined_to_channel = True
+        self.channel = self.channels[self.config['channel']]
+        self.logger.info(f'joined to {self.config["channel"]}')
+        self._call_plugins_methods('me_joined', raw_msg=raw_msg)
 
     def on_privmsg(self, connection, raw_msg):
         """ called by super() when private msg received """
@@ -203,13 +214,6 @@ class pybot(irc.bot.SingleServerIRCBot):
 
         self._call_plugins_methods('whoisuser', raw_msg=raw_msg, nick=irc_nickname(raw_msg.arguments[0]), user=raw_msg.arguments[1], host=raw_msg.arguments[2])
 
-    def on_me_joined(self, connection, raw_msg):
-        """ called when bot joins channel """
-        self._joined_to_channel = True
-        self.channel = self.channels[self.config['channel']]
-        self.logger.info(f'joined to {self.config["channel"]}')
-        self._call_plugins_methods('me_joined', raw_msg=raw_msg)
-
     def on_nick(self, connection, raw_msg):
         """ called by super() when somebody changes nickname """
         self._call_plugins_methods('nick', raw_msg=raw_msg, source=raw_msg.source, old_nickname=irc_nickname(raw_msg.source.nick), new_nickname=irc_nickname(raw_msg.target))
@@ -217,10 +221,6 @@ class pybot(irc.bot.SingleServerIRCBot):
     def on_part(self, connection, raw_msg):
         """ called by super() when somebody lefts channel """
         self._call_plugins_methods('part', raw_msg=raw_msg, source=raw_msg.source)
-
-    def on_quit(self, connection, raw_msg):
-        """ called by super() when somebody disconnects from IRC server """
-        self._call_plugins_methods('quit', raw_msg=raw_msg, source=raw_msg.source)
 
     def on_ctcp(self, connection, raw_msg):
         """ called by super() when ctcp arrives (/me ...) """
