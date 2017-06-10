@@ -391,9 +391,23 @@ class pybot(irc.bot.SingleServerIRCBot):
         """
         return [type(p).__name__ for p in self.get_plugins()]
 
-    def whois(self, targets):
-        """ send a WHOIS command """
-        self.connection.whois(targets)
+    def is_user_ignored(self, nickname):
+        nickname = irc_nickname(nickname)
+        return ('ignored_users' in self.config and nickname in self.config['ignored_users']) and (nickname not in self.config['ops'])
+
+    @staticmethod
+    def is_msg_too_long(msg):
+        encoded_msg = msg.encode('utf-8')
+        return len(encoded_msg + b'\r\n') > 512  # max msg len defined by IRC protocol
+
+    def is_debug_mode_enabled(self):
+        return 'debug' in self.config and self.config['debug']
+
+    # connection API funcs
+
+    def join_channel(self):
+        self.logger.info(f'joining {self.config["channel"]}...')
+        self.connection.join(self.config['channel'])
 
     def say(self, msg, target=None):
         if not target: target = self.config['channel']
@@ -405,28 +419,49 @@ class pybot(irc.bot.SingleServerIRCBot):
         else:
             self._say_dispatcher(msg, target)
 
-    def notice(self, msg, target):
-        self.connection.notice(target, msg)
-
-    def is_user_ignored(self, nickname):
-        nickname = irc_nickname(nickname)
-        return ('ignored_users' in self.config and nickname in self.config['ignored_users']) and (nickname not in self.config['ops'])
-
-    @staticmethod
-    def is_msg_too_long(msg):
-        encoded_msg = msg.encode('utf-8')
-        return len(encoded_msg + b'\r\n') > 512  # max msg len defined by IRC protocol
-
-    def join_channel(self):
-        self.logger.info(f'joining {self.config["channel"]}...')
-        self.connection.join(self.config['channel'])
-
     def leave_channel(self):
         self.logger.info(f'leaving {self.config["channel"]}...')
         self.connection.part(self.config['channel'])
 
-    def is_debug_mode_enabled(self):
-        return 'debug' in self.config and self.config['debug']
-
     def get_nickname(self):
         return irc_nickname(self.connection.get_nickname())
+
+    def whois(self, targets):
+        return self.connection.whois(targets)
+
+    def whowas(self, nick, max=""):
+        return self.connection.whowas(nick, max, self.config['server'])
+
+    def userhost(self, nicks):
+        return self.connection.userhost(nicks)
+
+    def notice(self, msg, target=None):
+        if not target: target = self.config['channel']
+        return self.connection.notice(target, msg)
+
+    def invite(self, nick):
+        return self.connection.invite(nick, self.config['channel'])
+
+    def kick(self, nick, comment=''):
+        return self.connection.kick(self.config['channel'], nick, comment)
+
+    def list(self):
+        return self.connection.list([self.config['channel']], self.config['server'])
+
+    def names(self):
+        return self.connection.names([self.config['channel']])
+
+    def set_topic(self, channel, new_topic=None):
+        return self.connection.topic(self.config['channel'], new_topic)
+
+    def set_nick(self, newnick):
+        return self.connection.nick(newnick)
+
+    def mode(self, target, command):
+        return self.connection.mode(target, command)
+
+    def disconnect(self, message=''):
+        return self.connection.disconnect(message)
+
+    def is_connected(self):
+        return self.connection.is_connected()
