@@ -26,7 +26,6 @@ class plugin:
         port     - server's port
         nickname - bot's nickname
         """
-        pass
 
     def on_disconnect(self, **kwargs):
         """
@@ -35,7 +34,6 @@ class plugin:
         server  - server address
         port    - server's port
         """
-        pass
 
     def on_join(self, **kwargs):
         """
@@ -43,14 +41,12 @@ class plugin:
         raw_msg - raw IRC msg
         source  - source of joined user
         """
-        pass
 
     def on_me_joined(self, **kwargs):
         """
         called by bot when joined channel
         raw_msg - raw IRC msg
         """
-        pass
 
     def on_pubmsg(self, **kwargs):
         """
@@ -59,7 +55,6 @@ class plugin:
         source  - pubmsg source
         msg     - full message
         """
-        pass
 
     def on_kick(self, **kwargs):
         """
@@ -68,7 +63,6 @@ class plugin:
         who     - person who gets kicked
         source  - kicker's source
         """
-        pass
 
     def on_me_kicked(self, **kwargs):
         """
@@ -85,7 +79,6 @@ class plugin:
         msg     - full message
         source  - primsg source
         """
-        pass
 
     # see https://www.alien.net.au/irc/irc2numerics.html
     # for deep explanation
@@ -97,7 +90,6 @@ class plugin:
         user    - requested username
         host    - requested hostname
         """
-        pass
 
     def on_nicknameinuse(self, **kwargs):
         """
@@ -105,7 +97,6 @@ class plugin:
         raw_msg       - raw IRC msg
         busy_nickname - nickname bot was trying to use
         """
-        pass
 
     def on_nick(self, **kwargs):
         """
@@ -137,6 +128,14 @@ class plugin:
         source  - source of ctcped user
         msg     - ctcp message
         """
+
+    def on_namreply(self, **kwargs):
+        """
+        called by bot when names response arrives
+        raw_msg   - raw IRC msg
+        nicknames - nicknames in channel
+        """
+        pass
 
     def unload_plugin(self):
         """

@@ -226,6 +226,16 @@ class pybot(irc.bot.SingleServerIRCBot):
         """ called by super() when ctcp arrives (/me ...) """
         self._call_plugins_methods('ctcp', raw_msg=raw_msg, source=raw_msg.source, msg=raw_msg.arguments[1] if len(raw_msg.arguments) > 1 else '')
 
+    def on_namreply(self, connection, raw_msg):
+        """ called by super() when NAMES response arrives """
+        nickname_prefixes = '~&@%+'
+        nicks = raw_msg.arguments[2].split()
+        for i in range(0, len(nicks)):
+            for prefix in nickname_prefixes:
+                if nicks[i].startswith(prefix): nicks[i] = nicks[i][1:].strip()
+
+        self._call_plugins_methods('namreply', raw_msg=raw_msg, nicknames=nicks)
+
     # don't touch this
 
     def _login(self):
