@@ -276,7 +276,6 @@ class builtins(plugin):
         utils.ensure_config_is_ok(config)
 
         shutil.copyfile('./.pybot.yaml', './pybot.yaml')
-        self.bot.config = config
         self.logger.warning('config file updated')
         return True
 
@@ -383,7 +382,7 @@ class builtins(plugin):
         value = msg[len(msg.split()[0]):].strip()
         try:
             value = yaml.load(value, Loader=yaml.RoundTripLoader)
-        except ParserError as e:
+        except ParserError:
             self.bot.say(f'cannot parse value: {value}')
             return
 
