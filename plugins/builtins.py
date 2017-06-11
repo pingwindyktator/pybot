@@ -149,7 +149,7 @@ class builtins(plugin):
     def enable_colors(self, sender_nick, **kwargs):
         color.enable_colors()
         self.logger.info(f'{sender_nick} enables colors')
-        self.bot.say('ok!')
+        self.bot.say_ok()
 
     @command
     @admin
@@ -157,7 +157,7 @@ class builtins(plugin):
     def disable_colors(self, sender_nick, **kwargs):
         color.disable_colors()
         self.logger.info(f'{sender_nick} disables colors')
-        self.bot.say('ok!')
+        self.bot.say_ok()
 
     @command
     @admin
@@ -186,7 +186,7 @@ class builtins(plugin):
             return
 
         self.logger.warning(f'{sender_nick} changes {handler_name} logging level to {level_name}')
-        self.bot.say('ok!')
+        self.bot.say_ok()
 
     def is_restart_safe(self):
         """

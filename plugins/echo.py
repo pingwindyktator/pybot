@@ -15,6 +15,6 @@ class echo(plugin):
 
     @command
     def thx(self, sender_nick, **kwargs):
-        replies = ['spx', 'np', f'np, {sender_nick}', ':)']
+        replies = ['spx', 'np', f'np, {sender_nick}', ':)', 'any time', 'de nada', "you're welcome"]
         self.bot.say(random.choice(replies))
         self.logger.info(f"thx from {sender_nick}!")

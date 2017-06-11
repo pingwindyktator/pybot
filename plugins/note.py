@@ -52,7 +52,7 @@ class note(plugin):
                 self.db_cursor.execute(f"INSERT INTO '{self.db_name}' VALUES (?, ?)", (target.casefold(), json.dumps([new_note])))
                 self.db_connection.commit()
 
-        self.bot.say('ok!')
+        self.bot.say_ok()
 
     def get_notes_for_user(self, nickname):
         with self.db_mutex:

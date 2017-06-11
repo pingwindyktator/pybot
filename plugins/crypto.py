@@ -198,7 +198,7 @@ class crypto(plugin):
         wd = self.watch_desc(t, delta_time)
         self.watch_timers[curr_id.id] = wd
         t.start()
-        self.bot.say('ok!')
+        self.bot.say_ok()
         self.logger.info(f'{sender_nick} sets crypto watch: {curr_id.id}: {delta_time}s')
 
     @command
@@ -218,7 +218,7 @@ class crypto(plugin):
         self.watch_timers[curr_id.id].timer_object.cancel()
         del self.watch_timers[curr_id.id]
         self.logger.info(f'{sender_nick} removes crypto watch: {curr_id.id}')
-        self.bot.say('ok!')
+        self.bot.say_ok()
 
     def watch_say(self, curr):
         if curr not in self.watch_timers:

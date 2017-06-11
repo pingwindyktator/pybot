@@ -4,6 +4,8 @@ import ssl
 import time
 import textwrap
 import sys
+from random import random
+
 import plugin
 import msg_parser
 import irc.bot
@@ -403,6 +405,10 @@ class pybot(irc.bot.SingleServerIRCBot):
                 self._say_dispatcher(part, target)
         else:
             self._say_dispatcher(msg, target)
+
+    def say_ok(self, target=None):
+        okies = ['okay', 'okay then', ':)', 'okies!', 'fine', 'done', 'can do!', 'alright', 'sure', 'aight', 'lemme take care of that for you', 'k']
+        self.say(random.choice(okies))
 
     def leave_channel(self):
         self.logger.info(f'leaving {self.config["channel"]}...')
