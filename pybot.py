@@ -8,6 +8,7 @@ import plugin
 import msg_parser
 import irc.bot
 import irc.connection
+import irc.client
 
 from queue import Queue
 from threading import Thread
@@ -51,9 +52,7 @@ class pybot(irc.bot.SingleServerIRCBot):
 
         self._nickname_id = 0
         self.config = config
-        self._joined_to_channel = False
         self._autorejoin_attempts = 0
-        self.channel = None
 
         self.plugins = set()
         self.commands = {}  # command -> func
@@ -68,7 +67,6 @@ class pybot(irc.bot.SingleServerIRCBot):
             self.msg = msg
 
     def start(self):
-        self._joined_to_channel = False
         ssl_info = ' over SSL' if self.config['use_ssl'] else ''
         self.logger.info(f'connecting to {self.config["server"]}:{self.config["port"]}{ssl_info}...')
         self.connection.buffer_class.errors = 'replace'
@@ -101,7 +99,6 @@ class pybot(irc.bot.SingleServerIRCBot):
 
     def on_disconnect(self, connection, raw_msg):
         """ called by super() when disconnected from server """
-        self._joined_to_channel = False
         msg = f': {raw_msg.arguments[0]}' if raw_msg.arguments else ''
         self.logger.warning(f'disconnected from {self.config["server"]}{msg}')
         self._call_plugins_methods('disconnect', raw_msg=raw_msg, server=self.config['server'], port=self.config['port'])
@@ -112,17 +109,12 @@ class pybot(irc.bot.SingleServerIRCBot):
 
     def on_join(self, connection, raw_msg):
         """ called by super() when somebody joins channel """
-        if raw_msg.source.nick == self.get_nickname() and not self._joined_to_channel:
-            self.whois(self.get_nickname())
+        self.names()  # to immediately updated channel's user list
+        if raw_msg.source.nick == self.get_nickname() and not self.joined_to_channel():
+                self.logger.info(f'joined to {self.config["channel"]}')
+                self._call_plugins_methods('me_joined', raw_msg=raw_msg)
         else:
             self._call_plugins_methods('join', raw_msg=raw_msg, source=raw_msg.source)
-
-    def on_me_joined(self, connection, raw_msg):
-        """ called when bot joins channel """
-        self._joined_to_channel = True
-        self.channel = self.channels[self.config['channel']]
-        self.logger.info(f'joined to {self.config["channel"]}')
-        self._call_plugins_methods('me_joined', raw_msg=raw_msg)
 
     def on_privmsg(self, connection, raw_msg):
         """ called by super() when private msg received """
@@ -188,7 +180,6 @@ class pybot(irc.bot.SingleServerIRCBot):
         """ called when bot gets kicked """
         self.logger.warning(f'kicked by {raw_msg.source.nick}')
         self._call_plugins_methods('me_kicked', raw_msg=raw_msg, source=raw_msg.source)
-        self._joined_to_channel = False
 
         if self._autorejoin_attempts >= self.config['max_autorejoin_attempts']:
             self.logger.warning('autorejoin attempts limit reached, waiting for user interact now')
@@ -207,12 +198,7 @@ class pybot(irc.bot.SingleServerIRCBot):
 
     def on_whoisuser(self, connection, raw_msg):
         """ called by super() when WHOIS response arrives """
-        # workaround here:
-        # /whois me triggers on_me_joined call because when first time on self.on_join (== when bot joins channel) users-list is not updated yet
-        if raw_msg.arguments[0] == self.get_nickname() and not self._joined_to_channel:
-            self.on_me_joined(connection, raw_msg)
-
-        self._call_plugins_methods('whoisuser', raw_msg=raw_msg, nick=irc_nickname(raw_msg.arguments[0]), user=raw_msg.arguments[1], host=raw_msg.arguments[2])
+        self._call_plugins_methods('whoisuser', raw_msg=raw_msg, nick=irc_nickname(raw_msg.arguments[0]), user=irc_nickname(raw_msg.arguments[1]), host=irc_nickname(raw_msg.arguments[2]))
 
     def on_nick(self, connection, raw_msg):
         """ called by super() when somebody changes nickname """
@@ -402,6 +388,13 @@ class pybot(irc.bot.SingleServerIRCBot):
 
     def is_debug_mode_enabled(self):
         return 'debug' in self.config and self.config['debug']
+
+    def joined_to_channel(self):
+        return self.connection.is_connected() and self.channel
+
+    @property
+    def channel(self):
+        return self.channels[self.config['channel']] if self.config['channel'] in self.channels else None
 
     # connection API funcs
 

@@ -368,7 +368,7 @@ class builtins(plugin):
 
         # now we don't know ho to set raw_msg fields (user and host)
         # that's why we are queuing this call, then calling /whois hacked_user
-        # when /whois response received, we've got needed user and host and we can do appropriate call
+        # when /whois response received, we've got needed user and host so we can do appropriate call
         self.clean_commands_as_other_user_to_send()
         self.bot.whois(hacked_nick)
 
