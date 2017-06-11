@@ -16,6 +16,7 @@ colors: true
 debug: false
 flood_protection: true
 try_autocorrect: true
+wrap_too_long_msgs: true
 
 bot_remote_manager:
   disconnect_msg: '[disconnect]'

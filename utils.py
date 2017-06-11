@@ -73,6 +73,7 @@ def ensure_config_is_ok(config, assert_unknown_keys=False):
         'stdout_logging_level': config_key_info(True, str),
         'command_prefix': config_key_info(True, str),
         'try_autocorrect': config_key_info(True, bool),
+        'wrap_too_long_msgs': config_key_info(True, bool),
 
         'debug': config_key_info(False, bool),
         'password': config_key_info(False, list),

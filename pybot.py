@@ -14,8 +14,8 @@ from queue import Queue
 from threading import Thread
 from color import color
 from utils import irc_nickname
-from fuzzywuzzy import process
-from fuzzywuzzy import fuzz
+from fuzzywuzzy import process, fuzz
+from irc.client import MessageTooLong
 
 
 # noinspection PyUnusedLocal
@@ -394,6 +394,10 @@ class pybot(irc.bot.SingleServerIRCBot):
         if not target: target = self.config['channel']
 
         if self.is_msg_too_long(msg):
+            if not self.config['wrap_too_long_msgs']:
+                self.logger.debug('privmsg too long, discarding...')
+                raise MessageTooLong(msg)
+
             self.logger.debug('privmsg too long, wrapping...')
             for part in textwrap.wrap(msg, 450):
                 self._say_dispatcher(part, target)
