@@ -261,6 +261,8 @@ class builtins(plugin):
                 if line.strip() and line.startswith(' ') and i + 1 < len(lines) and lines[i + 1] and lines[i + 1][0].isalpha():
                     outfile.write('\n')
 
+            outfile.write('\n')
+
     def update_config(self):
         config = yaml.load(open('./pybot.yaml'), Loader=yaml.RoundTripLoader)
         if not config: config = {}
