@@ -371,8 +371,8 @@ class pybot(irc.bot.SingleServerIRCBot):
         nickname = irc_nickname(nickname)
         return ('ignored_users' in self.config and nickname in self.config['ignored_users']) and (nickname not in self.config['ops'])
 
-    @staticmethod
-    def is_msg_too_long(msg):
+    def is_msg_too_long(self, msg):
+        msg = f"PRIVMSG {self.config['channel']} :{msg}"
         encoded_msg = msg.encode('utf-8')
         return len(encoded_msg + b'\r\n') > 512  # max msg len defined by IRC protocol
 
