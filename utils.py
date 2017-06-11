@@ -1,5 +1,6 @@
 import sys
 import logging
+from functools import total_ordering
 
 from ruamel.yaml.comments import CommentedMap
 
@@ -27,6 +28,21 @@ int_to_logging_level_str = {
     logging.DEBUG: 'debug',
     logging.NOTSET: 'all',
 }
+
+
+@total_ordering
+class irc_nickname(str):
+    """
+    case-insensitive string
+    """
+    def __eq__(self, other):
+        return self.casefold() == other.casefold()
+
+    def __lt__(self, other):
+        return self.casefold() < other.casefold()
+
+    def __hash__(self):
+        return hash(self.casefold())
 
 
 class config_error(Exception):

@@ -12,22 +12,10 @@ import irc.client
 
 from queue import Queue
 from threading import Thread
-from functools import total_ordering
 from color import color
+from utils import irc_nickname
 from fuzzywuzzy import process
 from fuzzywuzzy import fuzz
-
-
-@total_ordering
-class irc_nickname(str):
-    def __eq__(self, other):
-        return self.casefold() == other.casefold()
-
-    def __lt__(self, other):
-        return self.casefold() < other.casefold()
-
-    def __hash__(self):
-        return hash(self.casefold())
 
 
 # noinspection PyUnusedLocal

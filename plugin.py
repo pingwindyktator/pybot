@@ -3,7 +3,7 @@ import re
 import sys
 import utils
 
-from pybot import irc_nickname
+from utils import irc_nickname
 from pybot import pybot
 from color import color
 from functools import wraps
