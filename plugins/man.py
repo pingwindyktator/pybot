@@ -19,7 +19,7 @@ class man(plugin):
         start = content.find(b'DESCRIPTION\n')
         end = content.find(b'\n\n', start)
         if start == -1 or end == -1:
-            self.bot.say(f'no manual entry for {ask}')
+            self.bot.say_err(ask)
             return
 
         result = content[start + 19:end].replace(b'       ', b'').replace(b'-\n', b'').replace(b'\n', b' ').replace(b'  ', b' ').decode('utf-8').strip()

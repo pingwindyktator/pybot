@@ -138,4 +138,4 @@ class seen(plugin):
         if result:
             self.bot.say(result.to_response(nickname))
         else:
-            self.bot.say(f'I know nothing about {nickname}')
+            self.bot.say_err(nickname)

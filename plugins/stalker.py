@@ -109,11 +109,10 @@ class stalker(plugin):
         result = set([host for host in all_hosts if nick in self.get_nicknames_from_database(host)])
 
         if result:
-            response = f'known hosts of {nick}: {result} '
+            self.bot.say(f'known hosts of {nick}: {result}')
         else:
-            response = f'I know nothing about {nick}'
+            self.bot.say_err(nick)
 
-        self.bot.say(response)
         self.logger.info(f'{sender_nick} asks about hosts of {nick}: {result}')
 
     @command
@@ -127,10 +126,10 @@ class stalker(plugin):
             if nick in x: result.update(x)
 
         if result:
-            response = f'other nicks of {nick}: {result}'
+            self.bot.say(f'other nicks of {nick}: {result}')
         else:
-            response = f"I know nothing about {nick}"
-        self.bot.say(response)
+            self.bot.say_err(nick)
+
         self.logger.info(f'{sender_nick} stalks {nick}: {result}')
 
     @command
@@ -140,8 +139,8 @@ class stalker(plugin):
         host = args[0]
         nicks = self.get_nicknames_from_database(host)
         if nicks:
-            response = f'known nicks from {host}: {nicks}'
+            self.bot.say(f'known nicks from {host}: {nicks}')
         else:
-            response = f"I know nothing about {host}"
-        self.bot.say(response)
+            self.bot.say_err(host)
+
         self.logger.info(f'{sender_nick} asks about nicks from {host}: {nicks}')

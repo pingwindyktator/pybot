@@ -106,7 +106,7 @@ class crypto(plugin):
         curr_info = self.get_crypto_curr_info(curr)
 
         if not curr_info:
-            self.bot.say(f'no such crypto currency: {curr}')
+            self.bot.say_err(curr)
             return
 
         price_usd = f' ${curr_info.price_usd} (US dollars) ' if curr_info.price_usd else ' unknown price '
@@ -156,13 +156,13 @@ class crypto(plugin):
             raw_result = json.loads(content)
             if 'error' in raw_result:
                 if raw_result['error'] == 'Invalid base':
-                    self.bot.say(f"fixer.io knows nothing about {from_curr}")
+                    self.bot.say_err(from_curr)
                 else:
                     self.bot.say(f"fixer.io can't convert {from_curr} to {to_curr}")
                     self.logger.warning(f'fixer.io error: {raw_result["error"]}')
                 return
             elif to_curr.upper() not in raw_result['rates']:
-                self.bot.say(f"fixer.io knows nothing about {to_curr}")
+                self.bot.say_err(to_curr)
                 return
             else:
                 result = amount * raw_result['rates'][to_curr.upper()]
@@ -186,7 +186,7 @@ class crypto(plugin):
         if hours == 0 and minutes == 0: return
 
         if not curr_id:
-            self.bot.say(f'no such crypto currency: {curr}')
+            self.bot.say_err(curr)
             return
 
         if curr_id.id in self.watch_timers:
@@ -208,7 +208,7 @@ class crypto(plugin):
         curr = args[0]
         curr_id = self.get_crypto_currency_id(curr)
         if not curr_id:
-            self.bot.say(f'no such crypto currency: {curr}')
+            self.bot.say_err(curr)
             return
 
         if curr_id.id not in self.watch_timers:
