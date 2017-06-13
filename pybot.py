@@ -410,9 +410,10 @@ class pybot(irc.bot.SingleServerIRCBot):
         okies = ['okay', 'okay then', ':)', 'okies!', 'fine', 'done', 'can do!', 'alright', 'sure', 'aight', 'lemme take care of that for you', 'k', 'np']
         self.say(random.choice(okies))
 
-    def say_err(self, target=None):
+    def say_err(self, ctx=None, target=None):
         errs = ["you best check yo'self!", "I can't do that Dave", 'who knows?', "don't ask me", '*shrug*', '...eh?', 'no idea', 'no clue', 'beats me', 'dunno']
-        self.say(random.choice(errs))
+        errs_ctx = ['I know nothing about %s', "I can't help you with %s", 'I never heard of %s :(', "%s? what's that then?"]
+        self.say(random.choice(errs_ctx) % ctx) if ctx else self.say(random.choice(errs))
 
     def leave_channel(self):
         self.logger.info(f'leaving {self.config["channel"]}...')
