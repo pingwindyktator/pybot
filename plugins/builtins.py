@@ -213,7 +213,7 @@ class builtins(plugin):
             self.bot.say(f'{reason}, aborting restart, use \'{self.bot.config["command_prefix"]}restart force\' to ignore it')
             return
 
-        self.bot.say("I'l be back soon...")
+        self.bot.say("I'll be back soon...")
         self.restart_impl(sender_nick)
 
     def restart_impl(self, sender_nick=None):
