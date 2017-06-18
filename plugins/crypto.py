@@ -65,7 +65,7 @@ class crypto(plugin):
         curr_id = self.get_crypto_currency_id(curr)
         if not curr_id: return None
 
-        content = requests.get(self.coinmarketcap_url % curr_id.id, timeout=5).content.decode('utf-8')
+        content = requests.get(self.coinmarketcap_url % curr_id.id, timeout=10).content.decode('utf-8')
         raw_result = json.loads(content)[0]
         return self.currency_info(curr_id, raw_result)
 
