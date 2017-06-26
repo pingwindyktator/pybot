@@ -92,6 +92,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         msg = f': {raw_msg.arguments[0]}' if raw_msg.arguments else ''
         self.logger.warning(f'disconnected from {self.config["server"]}{msg}')
         self._call_plugins_methods('disconnect', raw_msg=raw_msg, server=self.config['server'], port=self.config['port'])
+        self.start()
 
     def on_quit(self, connection, raw_msg):
         """ called by super() when somebody disconnects from IRC server """
@@ -256,6 +257,7 @@ class pybot(irc.bot.SingleServerIRCBot):
                 plugin_instance = plugin_class(self)
             except Exception as e:
                 self.logger.warning(f'- unable to load plugin {plugin_class.__name__}: {e}')
+                if self.is_debug_mode_enabled(): raise
                 continue
 
             self.register_plugin(plugin_instance)
@@ -385,6 +387,11 @@ class pybot(irc.bot.SingleServerIRCBot):
     @property
     def channel(self):
         return self.channels[self.config['channel']] if self.config['channel'] in self.channels else None
+
+    def die(self, *args, **kwargs):
+        self.connection.remove_global_handler('disconnect')  # to not call on_disconnect since it tries to reconnect
+        self.logger.warning(f'dying...')
+        super().die(*args, **kwargs)
 
     # connection API funcs
 
