@@ -77,9 +77,9 @@ class builtins(plugin):
     @admin
     @doc('rm_op <nickname>...: remove bot operator')
     def rm_op(self, sender_nick, args, **kwargs):
-        if not args: return
         to_remove = [irc_nickname(arg) for arg in args]
         to_remove = [arg for arg in to_remove if arg in self.bot.config['ops']]
+        if not to_remove: return
         for arg in to_remove:
             self.bot.config['ops'].remove(arg)
 
@@ -118,10 +118,10 @@ class builtins(plugin):
     @admin
     @doc("unignore_user <username>...: unignore user messages")
     def unignore_user(self, sender_nick, args, **kwargs):
-        if not args: return
         if 'ignored_users' not in self.bot.config: return
         to_unignore = [irc_nickname(arg) for arg in args]
         to_unignore = [arg for arg in to_unignore if arg in self.bot.config['ignored_users']]
+        if not to_unignore: return
         for arg in to_unignore:
             self.bot.config['ignored_users'].remove(arg)
 
