@@ -42,3 +42,6 @@ seen:
   db_location: ./db/seen.db
   register_pubmsg_only: false
   clear_db_at_startup: false
+
+privmsg_logger_handler:
+  db_location: ./db/plh.db
