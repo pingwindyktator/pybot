@@ -24,6 +24,7 @@ from irc.client import MessageTooLong
 class pybot(irc.bot.SingleServerIRCBot):
     def __init__(self, config):
         self.logger = logging.getLogger(__name__)
+        self.logger.info('starting pybot...')
 
         if config['colors']:
             color.enable_colors()
@@ -49,6 +50,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         self.msg_regexes = {}  # regex -> [funcs]
         self._say_queue = Queue()
         self._say_thread = None
+        self._dying = False
         self._load_plugins()
 
     class _say_info:
@@ -91,8 +93,10 @@ class pybot(irc.bot.SingleServerIRCBot):
         """ called by super() when disconnected from server """
         msg = f': {raw_msg.arguments[0]}' if raw_msg.arguments else ''
         self.logger.warning(f'disconnected from {self.config["server"]}{msg}')
-        self._call_plugins_methods('disconnect', raw_msg=raw_msg, server=self.config['server'], port=self.config['port'])
-        self.start()
+
+        if not self._dying:
+            self._call_plugins_methods('disconnect', raw_msg=raw_msg, server=self.config['server'], port=self.config['port'])
+            self.start()
 
     def on_quit(self, connection, raw_msg):
         """ called by super() when somebody disconnects from IRC server """
@@ -389,8 +393,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         return self.channels[self.config['channel']] if self.config['channel'] in self.channels else None
 
     def die(self, *args, **kwargs):
-        self.connection.remove_global_handler('disconnect')  # to not call on_disconnect since it tries to reconnect
-        self.logger.warning(f'dying...')
+        self._dying = True
         super().die(*args, **kwargs)
 
     # connection API funcs
