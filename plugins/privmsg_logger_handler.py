@@ -57,7 +57,12 @@ class privmsg_logger_handler(plugin):
     def add_plh(self, sender_nick, args, **kwargs):
         if not args: return
         level = args[0].strip().lower()
-        if level not in utils.logging_level_str_to_int: return
+        sender_nick = sender_nick.lower()
+
+        if level not in utils.logging_level_str_to_int:
+            self.bot.say(f'unknown level: {level}')
+            return
+
         self.logger.warning(f'plh added: {sender_nick} at {level}')
         level = utils.logging_level_str_to_int[level]
 
@@ -72,6 +77,7 @@ class privmsg_logger_handler(plugin):
     @doc('remove saved privmsg logger handler')
     def rm_plh(self, sender_nick, **kwargs):
         if sender_nick not in self.get_plhs_impl(): return
+        sender_nick = sender_nick.lower()
 
         with self.db_mutex:
             self.db_cursor.execute(f"DELETE FROM '{self.db_name}' WHERE nickname = ? COLLATE NOCASE", (sender_nick,))
