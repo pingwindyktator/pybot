@@ -24,15 +24,42 @@ class wolfram_alpha(plugin):
                         r'&excludepodid=NumberName' \
                         r'&excludepodid=Input' \
                         r'&excludepodid=Sequence'
-        self.url = 'https://www.wolframalpha.com/input/?i=%s'
+
+        self.weather_req = r'http://api.wolframalpha.com/v2/query?' \
+                           r'input=%s' \
+                           r'&appid=%s' \
+                           r'&format=plaintext' \
+                           r'&scantimeout=3.0' \
+                           r'&podtimeout=4.0' \
+                           r'&formattimeout=8.0' \
+                           r'&parsetimeout=5.0' \
+                           r'&excludepodid=SeriesRepresentations:*' \
+                           r'&excludepodid=Illustration' \
+                           r'&excludepodid=TypicalHumanComputationTimes' \
+                           r'&excludepodid=NumberLine' \
+                           r'&excludepodid=NumberName' \
+                           r'&excludepodid=Input' \
+                           r'&excludepodid=Sequence' \
+                           r'&excludepodid=WeatherForecast:WeatherData'
 
     @doc('wa <ask>: ask Wolfram|Alpha about <ask>')
     @command
     def wa(self, msg, sender_nick, **kwargs):
         self.logger.info(f'{sender_nick} asked wolfram alpha "{msg}"')
-
         ask = urllib.parse.quote(msg)
         raw_response = requests.get(self.full_req % (ask, self.config['api_key'])).content.decode('utf-8')
+        self.manage_api_response(raw_response, msg)
+
+    @doc('weather <location>: ask Wolfram|Alpha current weather conditions in <location>')
+    @command
+    def weather(self, msg, sender_nick, **kwargs):
+        self.logger.info(f'{sender_nick} asked wolfram alpha about weather in "{msg}"')
+        msg = f'weather {msg}'
+        ask = urllib.parse.quote(msg)
+        raw_response = requests.get(self.weather_req % (ask, self.config['api_key'])).content.decode('utf-8')
+        self.manage_api_response(raw_response, msg)
+
+    def manage_api_response(self, raw_response, ask):
         xml_root = xml.etree.ElementTree.fromstring(raw_response)
         answers = []
 
@@ -46,7 +73,7 @@ class wolfram_alpha(plugin):
             self.logger.debug('******* NO DATA PARSED FROM WA RESPONSE *******')
             self.logger.debug(raw_response)
             self.logger.debug('***********************************************')
-            self.bot.say(f'no data available for "{msg}"')
+            self.bot.say(f'no data available for "{ask}"')
             return
 
         for pod in xml_root.findall('pod'):
@@ -65,7 +92,7 @@ class wolfram_alpha(plugin):
             if subpods: answers.append(self.wa_pod(title, position, subpods, primary))
 
         if not answers:
-            self.bot.say(f'no data available for "{msg}"')
+            self.bot.say(f'no data available for "{ask}"')
             return
 
         answers = sorted(answers)
