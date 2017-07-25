@@ -56,4 +56,4 @@ class movie(plugin):
     def build_prefix(self, movie_info):
         year = f' ({movie_info["Year"]})' if 'Year' in movie_info else ''
         director = f' by {movie_info["Director"]}' if 'Director' in movie_info else ''
-        return f'[{movie_info["Title"]}{year}{director}]'
+        return color.orange(f'[{movie_info["Title"]}{year}{director}]')
