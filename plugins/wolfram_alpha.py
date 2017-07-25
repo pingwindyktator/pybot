@@ -73,7 +73,7 @@ class wolfram_alpha(plugin):
             self.logger.debug('******* NO DATA PARSED FROM WA RESPONSE *******')
             self.logger.debug(raw_response)
             self.logger.debug('***********************************************')
-            self.bot.say(f'no data available for "{ask}"')
+            self.bot.say_err(ask)
             return
 
         for pod in xml_root.findall('pod'):
@@ -92,7 +92,7 @@ class wolfram_alpha(plugin):
             if subpods: answers.append(self.wa_pod(title, position, subpods, primary))
 
         if not answers:
-            self.bot.say(f'no data available for "{ask}"')
+            self.bot.say_err(ask)
             return
 
         answers = sorted(answers)
