@@ -45,3 +45,6 @@ seen:
 
 privmsg_logger_handler:
   db_location: ./db/plh.db
+  
+movie:
+  api_key: 946f500a
