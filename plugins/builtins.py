@@ -285,12 +285,14 @@ class builtins(plugin):
 
     @command
     @admin
-    @doc('updates config file with config template defaults')
+    @doc('updates and reloads config file with config template defaults')
     def update_config(self, sender_nick, **kwargs):
         self.logger.warning(f'updating config for {sender_nick}')
 
         try:
-            if self.update_config_impl(): self.bot.say('updated!')
+            if self.update_config_impl():
+                self.bot.say('updated!')
+                self.bot.config = yaml.load(open('pybot.yaml'), Loader=yaml.RoundTripLoader)
             else: self.bot.say('config already up-to-date')
         except Exception as e:
             self.logger.error(f'exception caught while updating config file: {e}')
