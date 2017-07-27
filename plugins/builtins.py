@@ -196,7 +196,7 @@ class builtins(plugin):
         """
         try:
             # TODO pip requirements!
-            config = yaml.load(open('./pybot.yaml'), Loader=yaml.Loader)
+            config = yaml.load(open('pybot.yaml'), Loader=yaml.Loader)
             utils.ensure_config_is_ok(config)
         except utils.config_error as e:
             return f'invalid config value: {e}'
@@ -266,20 +266,20 @@ class builtins(plugin):
             outfile.write('\n')
 
     def update_config(self):
-        config = yaml.load(open('./pybot.yaml'), Loader=yaml.RoundTripLoader)
+        config = yaml.load(open('pybot.yaml'), Loader=yaml.RoundTripLoader)
         if not config: config = {}
-        for key, value in yaml.load(open("./pybot.template.yaml"), Loader=yaml.Loader).items():
+        for key, value in yaml.load(open("pybot.template.yaml"), Loader=yaml.Loader).items():
             self.update_config_impl(key, value, config)
 
         if config == self.bot.config: return False
 
         # seems to be more safe to first save config, then load it and check consistency
-        self.write_config_file(config, './.pybot.yaml')
+        self.write_config_file(config, '.pybot.yaml')
 
-        config = yaml.load(open('./.pybot.yaml'), Loader=yaml.Loader)
+        config = yaml.load(open('.pybot.yaml'), Loader=yaml.Loader)
         utils.ensure_config_is_ok(config)
 
-        shutil.copyfile('./.pybot.yaml', './pybot.yaml')
+        shutil.copyfile('.pybot.yaml', 'pybot.yaml')
         self.logger.warning('config file updated')
         return True
 
@@ -390,7 +390,7 @@ class builtins(plugin):
             self.bot.say(f'cannot parse value: {value}')
             return
 
-        config = yaml.load(open('./pybot.yaml'), Loader=yaml.RoundTripLoader)
+        config = yaml.load(open('pybot.yaml'), Loader=yaml.RoundTripLoader)
         config_entry = config
 
         for key_it, key in enumerate(keys):
@@ -404,9 +404,9 @@ class builtins(plugin):
                 config_entry = config_entry[key]
 
         # seems to be more safe to first save config, then load it and check consistency
-        self.write_config_file(config, './.pybot.yaml')
+        self.write_config_file(config, '.pybot.yaml')
 
-        config = yaml.load(open('./.pybot.yaml'), Loader=yaml.Loader)
+        config = yaml.load(open('.pybot.yaml'), Loader=yaml.Loader)
 
         try:
             utils.ensure_config_is_ok(config)
@@ -414,7 +414,7 @@ class builtins(plugin):
             self.bot.say(f'invalid value: {e}')
             return
 
-        shutil.copyfile('./.pybot.yaml', './pybot.yaml')
+        shutil.copyfile('.pybot.yaml', 'pybot.yaml')
         self.logger.warning(f'{sender_nick} changed config entry {keys} = {value}')
         self.bot.say('config entry applied, restarting...')
         self.restart_impl(sender_nick)

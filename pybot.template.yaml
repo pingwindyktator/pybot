@@ -26,25 +26,25 @@ builtins:
   source: https://github.com/pingwindyktator/pybot/tree/develop
 
 stalker:
-  db_location: ./db/stalker.db
+  db_location: db/stalker.db
 
 wolfram_alpha:
   api_key: 4EU37Y-TX9WJG3JH3
 
 get:
-  db_location: ./db/get.db
+  db_location: db/get.db
   case_sensitive: false
 
 note:
-  db_location: ./db/note.db
+  db_location: db/note.db
 
 seen:
-  db_location: ./db/seen.db
+  db_location: db/seen.db
   register_pubmsg_only: false
   clear_db_at_startup: false
 
 privmsg_logger_handler:
-  db_location: ./db/plh.db
+  db_location: db/plh.db
   
 movie:
   api_key: 946f500a

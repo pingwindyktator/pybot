@@ -18,7 +18,7 @@ if __name__ == "__main__":
     except (ImportError, ModuleNotFoundError) as e:
         name = e.name
         path = ' located at %s' % e.path if e.path else ''
-        print("No module named %s%s. Please try 'pip install -r ./requirements.txt'" % (name, path))
+        print("No module named %s%s. Please try 'pip install -r requirements.txt'" % (name, path))
     except Exception as e:
         print('Internal error occurred: %s. Please contact  ja222ja@gmail.com  with  pybot.error  file (file paths will be compromised).' % e)
         open('pybot.error', 'w').close()
