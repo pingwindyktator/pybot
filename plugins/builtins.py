@@ -190,7 +190,7 @@ class builtins(plugin):
         self.logger.warning(f'{sender_nick} changes {handler_name} logging level to {level_name}')
         self.bot.say_ok()
 
-    def is_restart_safe(self):
+    def is_restart_unsafe(self):
         """
         :returns: reason why restart is not safe or None if it is
         """
@@ -198,6 +198,7 @@ class builtins(plugin):
             # TODO pip requirements!
             config = yaml.load(open('pybot.yaml'), Loader=yaml.Loader)
             utils.ensure_config_is_ok(config)
+            # more asserts should be placed here
         except utils.config_error as e:
             return f'invalid config value: {e}'
         except Exception as e:
@@ -210,7 +211,7 @@ class builtins(plugin):
     @admin
     @doc('restart [<force>]: restart pybot app, use force to disable consistency checks')
     def restart(self, sender_nick, args, **kwargs):
-        reason = self.is_restart_safe()
+        reason = self.is_restart_unsafe()
         if reason and not (args and args[0].strip().lower() == 'force'):
             self.bot.say(f'{reason}, aborting restart, use \'{self.bot.config["command_prefix"]}restart force\' to ignore it')
             return
@@ -435,6 +436,11 @@ class builtins(plugin):
             utils.ensure_config_is_ok(config)
         except utils.config_error as e:
             self.bot.say(f'invalid value: {e}')
+            return
+
+        reason = self.is_restart_unsafe()
+        if reason:
+            self.bot.say(f'restart is unsafe: {reason}, aborting process...')
             return
 
         shutil.copyfile('.pybot.yaml', 'pybot.yaml')
