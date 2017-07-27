@@ -237,7 +237,7 @@ class builtins(plugin):
             for v_key, v_value in value.items():
                 self.update_config_impl(v_key, v_value, config[key])
 
-    def format_and_save_config(self, config, outfilename):
+    def write_config_file(self, config, outfilename):
         config = copy.deepcopy(config)
         global_config = CommentedMap()
         plugins_config = CommentedMap()
@@ -274,7 +274,7 @@ class builtins(plugin):
         if config == self.bot.config: return False
 
         # seems to be more safe to first save config, then load it and check consistency
-        self.format_and_save_config(config, './.pybot.yaml')
+        self.write_config_file(config, './.pybot.yaml')
 
         config = yaml.load(open('./.pybot.yaml'), Loader=yaml.Loader)
         utils.ensure_config_is_ok(config)
@@ -404,7 +404,7 @@ class builtins(plugin):
                 config_entry = config_entry[key]
 
         # seems to be more safe to first save config, then load it and check consistency
-        self.format_and_save_config(config, './.pybot.yaml')
+        self.write_config_file(config, './.pybot.yaml')
 
         config = yaml.load(open('./.pybot.yaml'), Loader=yaml.Loader)
 
