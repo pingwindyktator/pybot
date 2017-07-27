@@ -238,6 +238,9 @@ class builtins(plugin):
                 self.update_config_key(v_key, v_value, config[key])
 
     def write_config_file(self, config, outfilename):
+        """
+        tries to write formatted :param config to :param outfilename
+        """
         config = copy.deepcopy(config)
         global_config = CommentedMap()
         plugins_config = CommentedMap()
@@ -265,7 +268,12 @@ class builtins(plugin):
 
             outfile.write('\n')
 
-    def update_config_impl(self):
+    def update_config_file(self):
+        """
+        updates and writes to disk pybot.yaml config file with pybot.template.yaml defaults
+        :return: True if config was updated, False otherwise
+        """
+
         config = yaml.load(open('pybot.yaml'), Loader=yaml.RoundTripLoader)
         if not config: config = {}
         for key, value in yaml.load(open("pybot.template.yaml"), Loader=yaml.Loader).items():
@@ -285,18 +293,17 @@ class builtins(plugin):
 
     @command
     @admin
-    @doc('updates and reloads config file with config template defaults')
-    def update_config(self, sender_nick, **kwargs):
-        self.logger.warning(f'updating config for {sender_nick}')
+    @doc('reloads config with config template defaults, should be used with caution!')
+    def reload_config(self, sender_nick, **kwargs):
+        self.logger.warning(f'reloading config for {sender_nick}')
 
         try:
-            if self.update_config_impl():
-                self.bot.say('updated!')
-                self.bot.config = yaml.load(open('pybot.yaml'), Loader=yaml.RoundTripLoader)
+            if self.update_config_file(): self.bot.say('updated and reloaded!')
             else: self.bot.say('config already up-to-date')
+            self.bot.config = yaml.load(open('pybot.yaml'), Loader=yaml.RoundTripLoader)
         except Exception as e:
-            self.logger.error(f'exception caught while updating config file: {e}')
-            self.bot.say('cannot update config file, exception caught')
+            self.logger.error(f'exception caught while reloading config file: {e}')
+            self.bot.say('cannot reload config, exception caught')
             if self.bot.is_debug_mode_enabled(): raise
 
     @command
@@ -336,7 +343,7 @@ class builtins(plugin):
         diff_str = f', diffs in {", ".join([x.a_path for x in repo.head.commit.diff(repo.head.orig_head().commit)])}'
 
         try:
-            if self.update_config_impl(): config_updated_str = ', config file updated'
+            if self.update_config_file(): config_updated_str = ', config file updated'
             else: config_updated_str = ''
 
         except Exception as e:
