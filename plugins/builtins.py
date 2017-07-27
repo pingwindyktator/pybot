@@ -229,13 +229,13 @@ class builtins(plugin):
         os.chdir(os.getcwd())
         os.execv(sys.executable, args)
 
-    def update_config_impl(self, key, value, config):
+    def update_config_key(self, key, value, config):
         if key not in config:
             config[key] = value
             self.logger.info(f'inserting {key}: {value} to config file')
         elif type(value) is dict:  # do not override non-dict values
             for v_key, v_value in value.items():
-                self.update_config_impl(v_key, v_value, config[key])
+                self.update_config_key(v_key, v_value, config[key])
 
     def write_config_file(self, config, outfilename):
         config = copy.deepcopy(config)
@@ -265,11 +265,11 @@ class builtins(plugin):
 
             outfile.write('\n')
 
-    def update_config(self):
+    def update_config_impl(self):
         config = yaml.load(open('pybot.yaml'), Loader=yaml.RoundTripLoader)
         if not config: config = {}
         for key, value in yaml.load(open("pybot.template.yaml"), Loader=yaml.Loader).items():
-            self.update_config_impl(key, value, config)
+            self.update_config_key(key, value, config)
 
         if config == self.bot.config: return False
 
@@ -282,6 +282,20 @@ class builtins(plugin):
         shutil.copyfile('.pybot.yaml', 'pybot.yaml')
         self.logger.warning('config file updated')
         return True
+
+    @command
+    @admin
+    @doc('updates config file with config template defaults')
+    def update_config(self, sender_nick, **kwargs):
+        self.logger.warning(f'updating config for {sender_nick}')
+
+        try:
+            if self.update_config_impl(): self.bot.say('updated!')
+            else: self.bot.say('config already up-to-date')
+        except Exception as e:
+            self.logger.error(f'exception caught while updating config file: {e}')
+            self.bot.say('cannot update config file, exception caught')
+            if self.bot.is_debug_mode_enabled(): raise
 
     @command
     @admin
@@ -320,7 +334,7 @@ class builtins(plugin):
         diff_str = f', diffs in {", ".join([x.a_path for x in repo.head.commit.diff(repo.head.orig_head().commit)])}'
 
         try:
-            if self.update_config(): config_updated_str = ', config file updated'
+            if self.update_config_impl(): config_updated_str = ', config file updated'
             else: config_updated_str = ''
 
         except Exception as e:
