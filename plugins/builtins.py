@@ -294,21 +294,6 @@ class builtins(plugin):
 
     @command
     @admin
-    @doc('reloads config with config template defaults, should be used with caution!')
-    def reload_config(self, sender_nick, **kwargs):
-        self.logger.warning(f'reloading config for {sender_nick}')
-
-        try:
-            if self.update_config_file(): self.bot.say('updated and reloaded!')
-            else: self.bot.say('config already up-to-date')
-            self.bot.config = yaml.load(open('pybot.yaml'), Loader=yaml.RoundTripLoader)
-        except Exception as e:
-            self.logger.error(f'exception caught while reloading config file: {e}')
-            self.bot.say('cannot reload config, exception caught')
-            if self.bot.is_debug_mode_enabled(): raise
-
-    @command
-    @admin
     @doc('self_update [<force>]: pull changes from git remote ref and update config file, use [<force>] to discard local changes')
     def self_update(self, sender_nick, args, **kwargs):
         # TODO pip requirements update
