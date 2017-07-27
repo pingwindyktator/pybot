@@ -1,8 +1,10 @@
+import json
 import os
 import sys
 import shutil
 import git
 import copy
+import requests
 
 from ruamel import yaml
 from irc.client import NickMask
@@ -416,3 +418,22 @@ class builtins(plugin):
         self.logger.warning(f'{sender_nick} changed config entry {keys} = {value}')
         self.bot.say('config entry applied, restarting...')
         self.restart_impl(sender_nick)
+
+    @command
+    @admin
+    @doc('uploads error logs to file.io')
+    def upload_errors(self, sender_nick, **kwargs):
+        if not os.path.isfile(r'pybot.error'):
+            self.bot.say('no pybot.error file found')
+            return
+
+        with open(r'pybot.error') as error_file:
+            raw_response = requests.post(r'http://file.io/?expires=1w', files={r'file': error_file}).content.decode('utf-8')
+            response = json.loads(raw_response)
+            if not response['success'] or 'link' not in response:
+                self.bot.say('file.io error')
+                self.logger.info(f'file.io returned error for {sender_nick}: {response}')
+            else:
+                self.bot.say(f'{sender_nick}: check your privmsg!')
+                self.bot.say(response['link'], sender_nick)
+                self.logger.info(f'pybot.error uploaded to file.io for {sender_nick}: {response["link"]}')
