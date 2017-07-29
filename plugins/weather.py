@@ -16,28 +16,28 @@ class weather(plugin):
     @command
     def weather(self, sender_nick, msg, **kwargs):
         if not msg: return
-        self.logger.info(f'getting weather in {msg} for {sender_nick}')
+        # self.logger.info(f'getting weather in {msg} for {sender_nick}')
         weather_info = self.get_weather_info(msg)
         if not weather_info:
             self.bot.say(f'cannot obtain weather in {msg}')
             return
 
         prefix = color.orange(f'[Latest recorded weather for {weather_info["name"]}, {weather_info["sys"]["country"]}]')
-        result = ''
+        results = []
 
         if 'main' in weather_info and 'temp' in weather_info['main']:
-            result = f'temperature: {self.colorize_temp(weather_info["main"]["temp"])} °C :: '
+            results.append(f'temperature: {self.colorize_temp(weather_info["main"]["temp"])} °C')
 
         if 'weather' in weather_info and len(weather_info['weather']) > 1 and 'description' in weather_info['weather'][0]:
-            result = f'{result}conditions: {weather_info["weather"][0]["description"]} :: '
+            results.append(f'conditions: {weather_info["weather"][0]["description"]}')
 
         if 'main' in weather_info and 'humidity' in weather_info['main']:
-            result = f'{result}relative humidity: {weather_info["main"]["humidity"]}% :: '
+            results.append(f'relative humidity: {weather_info["main"]["humidity"]}%')
 
-        if 'wind' in weather_info and 'temp' in weather_info['wind'] and 'deg' in weather_info['wind']:
-            result = f'{result}wind speed: {weather_info["wind"]["speed"]}mph {self.wind_degree_to_direction(weather_info["wind"]["deg"])}'
+        if 'wind' in weather_info and 'speed' in weather_info['wind'] and 'deg' in weather_info['wind']:
+            results.append(f'wind speed: {weather_info["wind"]["speed"]}mph {self.wind_degree_to_direction(weather_info["wind"]["deg"])}')
 
-        self.bot.say(f'{prefix} {result}')
+        self.bot.say(f'{prefix} {" :: ".join(results)}')
 
     def get_weather_info(self, city_name, national_chars=False):
         ask = urllib.parse.quote(city_name)
