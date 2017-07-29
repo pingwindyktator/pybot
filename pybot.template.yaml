@@ -48,3 +48,6 @@ privmsg_logger_handler:
   
 movie:
   api_key: 946f500a
+
+weather:
+  api_key: 17c41a5e14162a5eb520ec751719fc89

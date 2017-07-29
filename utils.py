@@ -1,7 +1,8 @@
 import sys
 import logging
-from functools import total_ordering
+import unicodedata
 
+from functools import total_ordering
 from ruamel.yaml.comments import CommentedMap
 
 logging_level_str_to_int = {
@@ -115,10 +116,5 @@ def ensure_config_is_ok(config, assert_unknown_keys=False):
                     c_assert_error(key in config_keys, f'unknown config file key: {key}')
 
 
-class yaml_config(dict):
-    def __getattr__(self, attr):
-        res = super().__getitem__(attr)
-        if type(res) is dict: return yaml_config(res)
-        if type(res) is CommentedMap: return yaml_config(res)
-        if type(res) is yaml_config: return res
-        else: return res
+def remove_national_chars(s):
+    return ''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn')
