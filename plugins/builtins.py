@@ -272,6 +272,8 @@ class builtins(plugin):
     def update_config_file(self):
         """
         updates and writes to disk pybot.yaml config file with pybot.template.yaml defaults
+        throws exception if config is incorrect
+        this function is safe, it writes config only if it is correct
         :return: True if config was updated, False otherwise
         """
 
@@ -291,6 +293,30 @@ class builtins(plugin):
         shutil.copyfile('.pybot.yaml', 'pybot.yaml')
         self.logger.warning('config file updated')
         return True
+
+    @command
+    @admin
+    @doc('updated config with config template defaults and ** restarts **, should be used with caution!')
+    def update_config(self, sender_nick, **kwargs):
+        shutil.copyfile('pybot.yaml', '..pybot.yaml')
+
+        try:
+            self.update_config_file()
+            reason = self.is_restart_unsafe()
+            if reason:
+                self.bot.say(f'restart is unsafe: {reason}, aborting process...')
+                shutil.copyfile('..pybot.yaml', 'pybot.yaml')
+                return
+
+            self.bot.say('config updated, restarting...')
+            self.restart_impl(sender_nick)
+        except utils.config_error as e:
+            self.bot.say(f'invalid config value: {e}, aborting...')
+            shutil.copyfile('..pybot.yaml', 'pybot.yaml')
+        except Exception as e:
+            self.bot.say('cannot update config file, aborting...')
+            shutil.copyfile('..pybot.yaml', 'pybot.yaml')
+            if self.bot.is_debug_mode_enabled(): raise
 
     @command
     @admin
@@ -420,12 +446,12 @@ class builtins(plugin):
         try:
             utils.ensure_config_is_ok(config)
         except utils.config_error as e:
-            self.bot.say(f'invalid value: {e}')
+            self.bot.say(f'invalid value: {e}, aborting...')
             return
 
         reason = self.is_restart_unsafe()
         if reason:
-            self.bot.say(f'restart is unsafe: {reason}, aborting process...')
+            self.bot.say(f'restart is unsafe: {reason}, aborting...')
             return
 
         shutil.copyfile('.pybot.yaml', 'pybot.yaml')
