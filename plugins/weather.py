@@ -23,7 +23,7 @@ class weather(plugin):
             return
 
         prefix = color.orange(f'[Latest recorded weather for {weather_info["name"]}, {weather_info["sys"]["country"]}]')
-        result = f'temperature: {weather_info["main"]["temp"]} °C ::'
+        result = f'temperature: {self.colorize_temp(weather_info["main"]["temp"])} °C ::'
         result = f'{result} conditions: {weather_info["weather"][0]["description"]} :: '
         result = f'{result} relative humidity: {weather_info["main"]["humidity"]}% :: '
         result = f'{result} wind speed: {weather_info["wind"]["speed"]}mph {self.wind_degree_to_direction(weather_info["wind"]["deg"])}'
@@ -50,3 +50,12 @@ class weather(plugin):
                       '←', '↖', '↖', '↖']
 
         return directions[(deg % 16)]
+
+    def colorize_temp(self, temp):
+        temp = float(temp)
+        if temp < 0:  return color.blue(temp)
+        if temp < 10: return color.light_blue(temp)
+        if temp < 15: return color.cyan(temp)
+        if temp < 25: return color.yellow(temp)
+        if temp < 30: return color.light_red(temp)
+        return color.red(temp)
