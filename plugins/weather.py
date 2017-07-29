@@ -23,10 +23,20 @@ class weather(plugin):
             return
 
         prefix = color.orange(f'[Latest recorded weather for {weather_info["name"]}, {weather_info["sys"]["country"]}]')
-        result = f'temperature: {self.colorize_temp(weather_info["main"]["temp"])} °C ::'
-        result = f'{result} conditions: {weather_info["weather"][0]["description"]} :: '
-        result = f'{result} relative humidity: {weather_info["main"]["humidity"]}% :: '
-        result = f'{result} wind speed: {weather_info["wind"]["speed"]}mph {self.wind_degree_to_direction(weather_info["wind"]["deg"])}'
+        result = ''
+
+        if 'main' in weather_info and 'temp' in weather_info['main']:
+            result = f'temperature: {self.colorize_temp(weather_info["main"]["temp"])} °C :: '
+
+        if 'weather' in weather_info and len(weather_info['weather']) > 1 and 'description' in weather_info['weather'][0]:
+            result = f'{result}conditions: {weather_info["weather"][0]["description"]} :: '
+
+        if 'main' in weather_info and 'humidity' in weather_info['main']:
+            result = f'{result}relative humidity: {weather_info["main"]["humidity"]}% :: '
+
+        if 'wind' in weather_info and 'temp' in weather_info['wind'] and 'deg' in weather_info['wind']:
+            result = f'{result}wind speed: {weather_info["wind"]["speed"]}mph {self.wind_degree_to_direction(weather_info["wind"]["deg"])}'
+
         self.bot.say(f'{prefix} {result}')
 
     def get_weather_info(self, city_name, national_chars=False):
@@ -56,6 +66,6 @@ class weather(plugin):
         if temp < 0:  return color.blue(temp)
         if temp < 10: return color.light_blue(temp)
         if temp < 15: return color.cyan(temp)
-        if temp < 25: return color.yellow(temp)
+        if temp < 26: return color.yellow(temp)
         if temp < 30: return color.light_red(temp)
         return color.red(temp)
