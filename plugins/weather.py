@@ -26,7 +26,7 @@ class weather(plugin):
         result = f'temperature: {weather_info["main"]["temp"]} °C ::'
         result = f'{result} conditions: {weather_info["weather"][0]["description"]} :: '
         result = f'{result} relative humidity: {weather_info["main"]["humidity"]}% :: '
-        result = f'{result} wind speed: {weather_info["wind"]["speed"]}mph at {self.wind_degree_to_direction(weather_info["wind"]["deg"])}'
+        result = f'{result} wind speed: {weather_info["wind"]["speed"]}mph {self.wind_degree_to_direction(weather_info["wind"]["deg"])}'
         self.bot.say(f'{prefix} {result}')
 
     def get_weather_info(self, city_name, national_chars=False):
@@ -44,5 +44,9 @@ class weather(plugin):
 
     def wind_degree_to_direction(self, deg):
         deg = int((deg / 22.5) + .5)
-        directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']
+        directions = ['↑', '↗', '↗', '↗',
+                      '→', '↘', '↘', '↘',
+                      '↓', '↙', '↙', '↙',
+                      '←', '↖', '↖', '↖']
+
         return directions[(deg % 16)]
