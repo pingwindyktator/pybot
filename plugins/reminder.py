@@ -2,9 +2,9 @@ import re
 import uuid
 
 from threading import Timer
-from plugin import *
 from datetime import datetime
 from datetime import timedelta
+from plugin import *
 
 
 class reminder(plugin):
