@@ -481,7 +481,6 @@ class builtins(plugin):
     def upload_errors(self, sender_nick, **kwargs):
         self.upload_file_impl(sender_nick, r'pybot.error')
 
-
     @command
     @admin
     @doc('uploads log file to file.io')
