@@ -18,7 +18,7 @@ class movie(plugin):
         self.logger.info(f'{sender_nick} asked omdbapi about {msg}')
         response = self.get_movie_info(msg)
         if not response:
-            self.bot.say_err(msg)
+            self.bot.say('omdbapi error')
             return
 
         prefix = self.build_prefix(response)
@@ -41,7 +41,7 @@ class movie(plugin):
         self.logger.info(f'{sender_nick} asked omdbapi about imdb of {msg}')
         response = self.get_movie_info(msg)
         if not response or 'imdbID' not in response:
-            self.bot.say_err(msg)
+            self.bot.say('omdbapi error')
             return
 
         rating = f' ({response["imdbRating"]} out of {response["imdbVotes"]} voters)' if 'imdbRating' in response and 'imdbVotes' in response else ''
@@ -51,7 +51,10 @@ class movie(plugin):
         ask = urllib.parse.quote(movie)
         raw_response = requests.get(self.omdbapi_url % (ask, self.config['api_key'])).content.decode('utf-8')
         response = json.loads(raw_response)
-        return response if response['Response'] == 'True' and 'Title' in response else None
+        if response['Response'] == 'True' and 'Title' in response: return response
+        else:
+            self.logger.warning(f'omdbapi returned error: {response}')
+            return None
 
     def build_prefix(self, movie_info):
         year = f' ({movie_info["Year"]})' if 'Year' in movie_info else ''

@@ -41,7 +41,7 @@ class weather(plugin):
         if 'main' in weather_info and 'temp' in weather_info['main']:
             results.append(f'{self.colorize_temp(weather_info["main"]["temp"])} °C')
 
-        if 'weather' in weather_info and len(weather_info['weather']) > 1:
+        if 'weather' in weather_info and len(weather_info['weather']) > 0:
             results.append(f'{weather_info["weather"][0]["description"]}')
 
         if 'main' in weather_info and 'humidity' in weather_info['main']:
