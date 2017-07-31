@@ -70,12 +70,15 @@ class weather(plugin):
         }
 
         for _time, forec in forecasts.items():
+            if not forec: continue
             prefix = color.orange(f'[Weather forecast for {weather_info["city"]["name"]}, {weather_info["city"]["country"]} for {_time}]')
             responses = []
+
             responses.append(f'{self.colorize_temp(forec.min_temp)} °C to {self.colorize_temp(forec.max_temp)} °C')
             responses.append(f'{forec.conditions}')
-            responses.append(f'average relative humidity: {forec.avg_humidity}%')
-            responses.append(f'average wind speed: {forec.avg_wind_speed}mps')
+            if forec.avg_humidity: responses.append(f'average relative humidity: {forec.avg_humidity}%')
+            if forec.avg_wind_speed: responses.append(f'average wind speed: {forec.avg_wind_speed}mps')
+
             self.bot.say(f'{prefix} {" :: ".join(responses)}')
 
     # openweathermap API is really fucked up, I know there's ugly code duplication here...
@@ -137,9 +140,14 @@ class weather(plugin):
                 if cond['id'] == 800: continue  # clear sky
                 conditions.append(cond['description'])
 
+        if min_temp == 99999: return None  # no data found
         conditions = list(set(conditions))
-        if not conditions: conditions = ['clear sky']  # clear sky every time
-        return self.forecast_info(int(max_temp), int(min_temp), int(avg_wind_speed / wind_speeds), int(avg_humidity / humidities), ', '.join(conditions))
+
+        return self.forecast_info(int(max_temp),
+                                  int(min_temp),
+                                  int(avg_wind_speed / wind_speeds) if wind_speeds != 0 else None,
+                                  int(avg_humidity / humidities) if humidities != 0 else None,
+                                  ', '.join(conditions if conditions else ['clear sky']))
 
     def wind_degree_to_direction(self, deg):
         deg = int((deg / 22.5) + .5)
