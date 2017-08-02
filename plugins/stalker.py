@@ -109,7 +109,12 @@ class stalker(plugin):
         result = set([host for host in all_hosts if nick in self.get_nicknames_from_database(host)])
 
         if result:
-            self.bot.say(f'known hosts of {nick}: {result}')
+            response = f'known hosts of {nick}: {result}'
+            if self.bot.is_msg_too_long(response):
+                self.bot.say(f'{sender_nick}: too much data, check your privmsg')
+                self.bot.say(response, sender_nick)
+            else:
+                self.bot.say(response)
         else:
             self.bot.say_err(nick)
 
@@ -139,7 +144,12 @@ class stalker(plugin):
         host = args[0]
         nicks = self.get_nicknames_from_database(host)
         if nicks:
-            self.bot.say(f'known nicks from {host}: {nicks}')
+            response = f'known nicks from {host}: {nicks}'
+            if self.bot.is_msg_too_long(response):
+                self.bot.say(f'{sender_nick}: too much data, check your privmsg')
+                self.bot.say(response, sender_nick)
+            else:
+                self.bot.say(response)
         else:
             self.bot.say_err(host)
 
