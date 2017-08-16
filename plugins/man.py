@@ -11,7 +11,12 @@ class man(plugin):
     @doc('man <command>: get unix manual entry for <command> from man.he.net')
     def man(self, sender_nick, args, **kwargs):
         if not args: return
-        ask = args[0].strip()
+        ask = args[0].strip().casefold()
+        if ask == 'df':
+            self.man_df()
+            self.logger.info(f'df easter egg given to {sender_nick}')
+            return
+
         url = self.man_url % ask
         self.logger.info(f'{sender_nick} asked for man of {ask}')
 
@@ -30,3 +35,8 @@ class man(plugin):
             self.bot.say(color.orange(f'[{ask}] ') + result)
 
         self.bot.say(color.orange(f'[{ask}] ') + url)
+
+    def man_df(self):
+        answer = 'Dwarf Fortress is a part construction and management simulation, part roguelike, indie video game created by Tarn and Zach Adams. The primary game mode is set in a procedurally generated fantasy world in which the player indirectly controls a group of dwarves, and attempts to construct a successful and wealthy underground fortress.'
+        self.bot.say(color.orange(f'[df] ') + answer)
+        self.bot.say(color.orange(f'[df] ') + r'http://askubuntu.com/questions/938606/dwarf-fortress-starting-during-apt-get-upgrade')
