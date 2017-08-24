@@ -5,6 +5,7 @@ import shutil
 import git
 import copy
 import requests
+import collections
 
 from ruamel import yaml
 from irc.client import NickMask
@@ -39,6 +40,7 @@ class builtins(plugin):
 
     def help_impl(self):
         commands = self.bot.get_commands_by_plugin()
+        commands = collections.OrderedDict(sorted(commands.items()))
         for reply in [cmd for cmd in commands if commands[cmd]]:
             self.bot.say(f'available commands for {reply}: {", ".join(commands[reply])}')
 
