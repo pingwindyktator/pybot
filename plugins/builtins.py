@@ -35,14 +35,15 @@ class builtins(plugin):
             self.help_entry_impl(args[0].strip())
             self.logger.info(f'help of {args[0]} given for {sender_nick}')
         else:
-            self.help_impl()
+            self.help_impl(sender_nick)
             self.logger.info(f'help given for {sender_nick}')
 
-    def help_impl(self):
+    def help_impl(self, sender_nick):
         commands = self.bot.get_commands_by_plugin()
         commands = collections.OrderedDict(sorted(commands.items()))
+        self.bot.say(f'{sender_nick}: check your privmsg!')
         for reply in [cmd for cmd in commands if commands[cmd]]:
-            self.bot.say(f'available commands for {reply}: {", ".join(commands[reply])}')
+            self.bot.say(f'available commands for {reply}: {", ".join(commands[reply])}', sender_nick)
 
     def help_entry_impl(self, entry):
         if entry not in self.bot.commands:
