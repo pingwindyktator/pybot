@@ -5,3 +5,4 @@ irc>=15.0.4
 GitPython
 python-Levenshtein
 fuzzywuzzy
+bs4
