@@ -1,4 +1,6 @@
 import requests
+
+from bs4 import BeautifulSoup
 from plugin import *
 
 
@@ -21,6 +23,7 @@ class man(plugin):
         self.logger.info(f'{sender_nick} asked for man of {ask}')
 
         content = requests.get(url, timeout=5).content
+        content = BeautifulSoup(content, 'lxml').text.encode('utf-8')
         start = content.find(b'DESCRIPTION\n')
         end = content.find(b'\n\n', start)
         if start == -1 or end == -1:
