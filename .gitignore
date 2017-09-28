@@ -1,5 +1,7 @@
 .idea/*
 *.db
+pybot.yaml
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -89,3 +91,7 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+pybot\.error
+
+\.pybot\.yaml

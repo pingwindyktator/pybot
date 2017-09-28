@@ -1,50 +1,31 @@
-import logging
-from plugins import *
 import sys
-from pybot import pybot
-
-
-def configure_logger():
-    logging_format = '%(levelname)-10s%(asctime)s %(filename)s:%(funcName)-16s: %(message)s'
-    logging.basicConfig(format=logging_format, level=logging.INFO, stream=sys.stdout)
+import traceback
 
 
 def main():
-    configure_logger()
-    logger = logging.getLogger(__name__)
-
-    if len(sys.argv) != 4:
-        logger.critical('not enough args given (%s)' % (len(sys.argv) - 1))
-        print("Usage: pybot <server[:port]> <channel> <nickname[:password]>")
-        sys.exit(1)
-
-    s = sys.argv[1].split(":", 1)
-    server = s[0]
-    if len(s) == 2:
-        try:
-            port = int(s[1])
-        except ValueError:
-            print("Error: Erroneous port.")
-            logger.critical('erroneous port given')
-            sys.exit(1)
-    else:
-        port = 6667
-
-    channel = sys.argv[2] if sys.argv[2].startswith('#') else '#' + sys.argv[2]
-
-    n = sys.argv[3].split(':')
-    nickname = n[0]
-    password = n[1] if len(n) > 1 else ''
-
-    logger.debug('channel: %s' % server)
-    logger.debug('port: %d' % port)
-    logger.debug('server: %s' % channel)
-    logger.debug('nickname: %s' % nickname)
-    logger.debug('password: %s' % ''.join(['*' for _ in range(0, len(password))]))
-
-    bot = pybot(channel, nickname, server, port, password)
-    bot.start()
+    import _main
+    _main.main()
 
 
 if __name__ == "__main__":
-    main()
+    if sys.version_info < (3, 6, 0):
+        print("Python 3.6.0 required to run pybot")
+        sys.exit(4)
+
+    try:
+        main()
+        open('pybot.error', 'w').close()
+    except (ImportError, ModuleNotFoundError) as e:
+        name = e.name
+        path = ' located at %s' % e.path if e.path else ''
+        print("No module named %s%s. Please try 'pip install -r requirements.txt'" % (name, path))
+    except Exception as e:
+        print('Internal error occurred: %s. Please contact  ja222ja@gmail.com  with  pybot.error  file (file paths will be compromised).' % e)
+        open('pybot.error', 'w').close()
+        with open('pybot.error', 'a') as error_file:
+            with open('pybot.log') as log_file:
+                error_file.writelines(log_file.readlines()[-300:])
+
+            error_file.write('\n')
+            error_file.write(traceback.format_exc())
+            error_file.write('**********************************************************************************************\n\n')

@@ -1,0 +1,57 @@
+server: irc.freenode.net
+port: 6697
+channel: '#pybot'
+nickname: [pybot, pybot_, pybot__]
+password: []
+use_ssl: true
+max_autorejoin_attempts: 5
+ops: []
+file_logging_level: info
+stdout_logging_level: info
+# enabled_plugins: []
+# disabled_plugins: []
+command_prefix: '!'
+ignored_users: []
+colors: true
+debug: false
+flood_protection: true
+try_autocorrect: true
+wrap_too_long_msgs: true
+
+bot_remote_manager:
+  disconnect_msg: '[disconnect]'
+  die_msg: '[die]'
+
+builtins:
+  source: https://github.com/pingwindyktator/pybot/tree/develop
+
+stalker:
+  db_location: db/stalker.db
+
+wolfram_alpha:
+  api_key: 4EU37Y-TX9WJG3JH3
+
+get:
+  db_location: db/get.db
+  case_sensitive: false
+
+note:
+  db_location: db/note.db
+
+seen:
+  db_location: db/seen.db
+  register_pubmsg_only: false
+  clear_db_at_startup: false
+
+privmsg_logger_handler:
+  db_location: db/plh.db
+  
+movie:
+  api_key: 270b7488
+
+weather:
+  api_key: 42477cb64dced06bef9e59df50c48ca8
+
+youtube:
+  api_key: AIzaSyCoO8Jm9Cc3L-O_y-QH0VZRG5LifKmq4io
+  results: 2

@@ -1,112 +1,156 @@
+import os
 import time
-from threading import Thread
 import json
 import sqlite3
 
+from threading import Thread, Lock
 from plugin import *
 
 
+@doc('track users to detect multiple nicknames used')
 class stalker(plugin):
     def __init__(self, bot):
         super().__init__(bot)
-        self.logger = logging.getLogger(__name__)
+        self.db_name = self.bot.config['server']
+        os.makedirs(os.path.dirname(os.path.realpath(self.config['db_location'])), exist_ok=True)
 
-        self.db_name = 'stalker'
-        self.db_connection = sqlite3.connect(self.db_name + '.db')
+        self.db_connection = sqlite3.connect(self.config['db_location'], check_same_thread=False)
         self.db_cursor = self.db_connection.cursor()
-        self.db_cursor.execute("CREATE TABLE IF NOT EXISTS '%s' (host TEXT primary key not null, nicks TEXT)" % self.db_name)  # host -> {nicknames}
-        self.get_all_hosts_from_database()
-        self.updating_thread = Thread(target=self.update_all)
+        self.db_cursor.execute(f"CREATE TABLE IF NOT EXISTS '{self.db_name}' (host TEXT primary key not null, nicks TEXT)")  # host -> {nicknames}
+        self.db_mutex = Lock()
+        self.updating_thread = None
 
-    def on_pubmsg(self, connection, raw_msg):
-        self.update_database(raw_msg.source.nick, raw_msg.source.host)
+    def on_welcome(self, **kwargs):
+        self.bot.names()
 
-    def on_whoisuser(self, connection, raw_msg):
-        self.update_database(raw_msg.arguments[0], raw_msg.arguments[2])
+    def on_pubmsg(self, source, **kwargs):
+        self.update_database(source.nick, source.host)
 
-    def on_join(self, connection, raw_msg):
-        self.update_database(raw_msg.source.nick, raw_msg.source.host)
+    def on_ctcp(self, source, **kwargs):
+        self.update_database(source.nick, source.host)
 
-    def on_me_joined(self, connection, raw_msg):
-        if not self.updating_thread.is_alive():
+    def on_whoisuser(self, nick, host, **kwargs):
+        self.update_database(nick, host)
+
+    def on_join(self, source, **kwargs):
+        self.update_database(source.nick, source.host)
+
+    def on_nick(self, source, new_nickname, **kwargs):
+        self.update_database(new_nickname, source.host)
+
+    def on_namreply(self, nicknames, **kwargs):
+        if self.updating_thread is None or not self.updating_thread.is_alive():
+            self.updating_thread = Thread(target=self.update_all, args=(nicknames,))
             self.updating_thread.start()
 
-    def update_all(self):
+    def update_all(self, nicknames):
         self.logger.info("updating whole stalker's database started...")
-        for channel in self.bot.channels:
-            for username in self.bot.channels[channel].users():
-                self.bot.whois(username)
-                time.sleep(1)  # to not get kicked because of Excess Flood
+        for nick in nicknames:
+            self.bot.whois(nick)
+            time.sleep(1)  # to not get kicked because of Excess Flood
 
         self.logger.info("updating whole stalker's database finished")
 
     def update_database(self, nick, host):
         result = self.get_nicknames_from_database(host)
-        if result is not None:
+        if result:
             if nick not in result:
                 result.extend([nick])
-                self.db_cursor.execute("UPDATE '%s' SET nicks = ? WHERE host = '%s'" % (self.db_name, host), [json.dumps(result)])
-                self.db_connection.commit()
-                self.logger.info('new database entry: %s -> %s' % (host, nick))
+                with self.db_mutex:
+                    self.db_cursor.execute(f"UPDATE '{self.db_name}' SET nicks = ? WHERE host = ?", (json.dumps(result), host))
+                    self.db_connection.commit()
+
+                self.logger.info(f'new database entry: {host} -> {nick}')
         else:
-            self.db_cursor.execute("INSERT INTO '%s' VALUES (?, ?)" % self.db_name, (host, json.dumps([nick])))
-            self.db_connection.commit()
-            self.logger.info('new database entry: %s -> %s' % (host, nick))
+            with self.db_mutex:
+                self.db_cursor.execute(f"INSERT INTO '{self.db_name}' VALUES (?, ?)", (host, json.dumps([nick])))
+                self.db_connection.commit()
+
+            self.logger.info(f'new database entry: {host} -> {nick}')
 
     def get_nicknames_from_database(self, host):
-        self.db_cursor.execute("SELECT nicks FROM '%s' WHERE host = '%s'" % (self.db_name, host))
-        result = self.db_cursor.fetchone()
-        if result is not None:
+        with self.db_mutex:
+            self.db_cursor.execute(f"SELECT nicks FROM '{self.db_name}' WHERE host = ?", (host,))
+            result = self.db_cursor.fetchone()
+
+        if result:
             result = json.loads(result[0])
+            result = [irc_nickname(x) for x in result]
 
         return result
 
     def get_all_nicknames_from_database(self):
-        self.db_cursor.execute("SELECT nicks FROM '%s'" % self.db_name)
-        result_ = self.db_cursor.fetchall()
-        return [json.loads(x[0]) for x in result_]
-
-    def get_all_hosts_from_database(self):
-        self.db_cursor.execute("SELECT host FROM '%s'" % self.db_name)
-        result_ = self.db_cursor.fetchall()
-        return [x[0] for x in result_]
-
-    @command
-    def stalk_nick(self, sender_nick, args):
-        if not args: return
-        nick = args[0]
-        result = [host for host in self.get_all_hosts_from_database() if nick in self.get_nicknames_from_database(host)]
+        with self.db_mutex:
+            self.db_cursor.execute(f"SELECT nicks FROM '{self.db_name}'")
+            result = self.db_cursor.fetchall()
 
         if result:
-            response = 'known hosts of %s: %s ' % (nick, result)
-        else:
-            response = "I know nothing about %s" % nick
-        self.bot.send_response_to_channel(response)
-        self.logger.info('%s asks about hosts of %s: %s' % (sender_nick, nick, result))
+            result = [json.loads(x[0]) for x in result]
+            result = [[irc_nickname(y) for y in x] for x in result]
+
+        return result
+
+    def get_all_hosts_from_database(self):
+        with self.db_mutex:
+            self.db_cursor.execute(f"SELECT host FROM '{self.db_name}'")
+            result = self.db_cursor.fetchall()
+
+        if result:
+            result = [x[0] for x in result]
+
+        return result
 
     @command
-    def stalk(self, sender_nick, args):
+    @doc('stalk_nick <nickname>: get all known hosts of <nickname> user')
+    def stalk_nick(self, sender_nick, args, **kwargs):
         if not args: return
-        nick = args[0]
+        nick = irc_nickname(args[0])
+        all_hosts = self.get_all_hosts_from_database()
+        result = set([host for host in all_hosts if nick in self.get_nicknames_from_database(host)])
+
+        if result:
+            response = f'known hosts of {nick}: {result}'
+            if self.bot.is_msg_too_long(response):
+                self.bot.say(f'{sender_nick}: too much data, check your privmsg')
+                self.bot.say(response, sender_nick)
+            else:
+                self.bot.say(response)
+        else:
+            self.bot.say_err(nick)
+
+        self.logger.info(f'{sender_nick} asks about hosts of {nick}: {result}')
+
+    @command
+    @doc("stalk <nickname>: get other <nickname> user's nicknames")
+    def stalk(self, sender_nick, args, **kwargs):
+        if not args: return
+        nick = irc_nickname(args[0])
         result = set()
-        for x in self.get_all_nicknames_from_database():
+        all_nicknames = self.get_all_nicknames_from_database()
+        for x in all_nicknames:
             if nick in x: result.update(x)
 
         if result:
-            response = 'other nicks of %s: %s' % (nick, result)
+            self.bot.say(f'other nicks of {nick}: {result}')
         else:
-            response = "I know nothing about %s" % nick
-        self.bot.send_response_to_channel(response)
-        self.logger.info('%s stalks %s: %s' % (sender_nick, nick, result))
+            self.bot.say_err(nick)
+
+        self.logger.info(f'{sender_nick} stalks {nick}: {result}')
 
     @command
-    def stalk_host(self, sender_nick, args):
+    @doc('stalk_host <host>: get all nicknames from <host>')
+    def stalk_host(self, sender_nick, args, **kwargs):
         if not args: return
         host = args[0]
         nicks = self.get_nicknames_from_database(host)
         if nicks:
-            response = 'known nicks from %s: %s' % (host, nicks)
+            response = f'known nicks from {host}: {nicks}'
+            if self.bot.is_msg_too_long(response):
+                self.bot.say(f'{sender_nick}: too much data, check your privmsg')
+                self.bot.say(response, sender_nick)
+            else:
+                self.bot.say(response)
         else:
-            response = "I know nothing about %s" % host
-        self.bot.send_response_to_channel(response)
-        self.logger.info('%s asks about nicks from %s: %s' % (sender_nick, host, nicks))
+            self.bot.say_err(host)
+
+        self.logger.info(f'{sender_nick} asks about nicks from {host}: {nicks}')
