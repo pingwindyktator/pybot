@@ -15,6 +15,7 @@ class wolfram_alpha(plugin):
                         r'&format=plaintext' \
                         r'&scantimeout=3.0' \
                         r'&podtimeout=4.0' \
+                        r'&units=metric' \
                         r'&formattimeout=8.0' \
                         r'&parsetimeout=5.0' \
                         r'&excludepodid=SeriesRepresentations:*' \
