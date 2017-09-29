@@ -210,6 +210,7 @@ def admin(function):
             function(self, sender_nick=sender_nick, **kwargs)
         else:
             self.logger.info(f'{sender_nick} is not op, skipping command')
+            self.bot.say(f"{sender_nick}: you're not bot operator, sorry!")
 
     admin_impl.__admin = True
     return admin_impl
