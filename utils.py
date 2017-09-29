@@ -36,6 +36,7 @@ class irc_nickname(str):
     """
     case-insensitive string
     """
+
     def __eq__(self, other):
         return self.casefold() == other.casefold()
 
@@ -56,10 +57,15 @@ class config_key_info:
         self.type = type
 
 
-def ensure_config_is_ok(config, assert_unknown_keys=False):
-    def c_assert_error(expr, text):
-        if not expr: raise config_error(text)
+def c_assert_error(expr, text):
+    if not expr: raise config_error(text)
 
+
+def remove_national_chars(s):
+    return ''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn')
+
+
+def ensure_config_is_ok(config, assert_unknown_keys=False):
     config_keys = {
         'server': config_key_info(True, str),
         'port': config_key_info(True, int),
@@ -114,7 +120,3 @@ def ensure_config_is_ok(config, assert_unknown_keys=False):
             if type(value) is not dict:  # dict is config for plugin
                 if type(value) is not CommentedMap:  # CommentedMap is special order-aware dict from ruamel.yaml
                     c_assert_error(key in config_keys, f'unknown config file key: {key}')
-
-
-def remove_national_chars(s):
-    return ''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn')

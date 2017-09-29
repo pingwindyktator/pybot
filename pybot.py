@@ -5,12 +5,12 @@ import time
 import textwrap
 import sys
 import random
-
 import plugin
 import msg_parser
 import irc.bot
 import irc.connection
 import irc.client
+import utils
 
 from queue import Queue
 from threading import Thread
@@ -259,6 +259,10 @@ class pybot(irc.bot.SingleServerIRCBot):
 
             try:
                 plugin_instance = plugin_class(self)
+            except utils.config_error as e:
+                self.logger.warning(f'- invalid {plugin_class.__name__} plugin config: {e}')
+                if self.is_debug_mode_enabled(): raise
+                continue
             except Exception as e:
                 self.logger.warning(f'- unable to load plugin {plugin_class.__name__}: {e}')
                 if self.is_debug_mode_enabled(): raise

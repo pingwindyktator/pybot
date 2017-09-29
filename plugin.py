@@ -14,6 +14,7 @@ class plugin:
         self.bot = bot
         self.logger = logging.getLogger(self._get_class_name())
         self.config = self.bot.config[self._get_class_name()] if self._get_class_name() in self.bot.config else None
+        self.assert_config()
 
     def _get_class_name(self):
         return self.__class__.__name__
@@ -140,6 +141,14 @@ class plugin:
     def unload_plugin(self):
         """
         called when plugin needs to be disabled / reloaded 
+        """
+        pass
+
+    def assert_config(self):
+        """
+        called by plugin superclass to assert config values
+        should throw utils.config_error if config is invalid (see utils.c_assert_error)
+        in such case, plugin won't be loaded
         """
         pass
 
