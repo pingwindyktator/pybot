@@ -9,15 +9,16 @@ class wolfram_alpha(plugin):
     def __init__(self, bot):
         super().__init__(bot)
         self.logger = logging.getLogger(__name__)
+        units = 'nonmetric' if self.config['nonmetric_units'] else 'metric'
         self.full_req = r'http://api.wolframalpha.com/v2/query?' \
                         r'input=%s' \
                         r'&appid=%s' \
                         r'&format=plaintext' \
                         r'&scantimeout=3.0' \
                         r'&podtimeout=4.0' \
-                        r'&units=metric' \
                         r'&formattimeout=8.0' \
                         r'&parsetimeout=5.0' \
+                        r'&units=' + units + \
                         r'&excludepodid=SeriesRepresentations:*' \
                         r'&excludepodid=Illustration' \
                         r'&excludepodid=TypicalHumanComputationTimes' \
