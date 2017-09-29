@@ -5,8 +5,7 @@ from plugin import *
 # - IRC nickname is case-insensitive. Usually you should'nt worry about it, since pybot API uses irc_nickname class
 #     to represent it, but - for example - if you wan't to use database, use .casefold()
 # - All exceptions from commands and from on_* methods will be caught by bot - nothing bad will happen
-# - If you'r __init__ throws, plugin won't be loaded by bot. You can use it to assert environment compatibility,
-#     such as appropriate entries in config etc
+# - If your __init__ throws, plugin won't be loaded by bot. You can use it to assert environment compatibility
 # - Plugin class name should be equal to module name
 # - Message you'd get ('msg', 'args' arguments) might be empty
 # - Help docs should follow docopt standard (see http://docopt.org)
@@ -20,6 +19,14 @@ class example_plugin(plugin):
     def unload_plugin(self):
         # you should unload your plugin in this method
         # usually you don't need to implement this
+        pass
+
+    def assert_config(self):
+        # assert config compatibility here
+        # should throw utils.config_error if config is invalid (see utils.c_assert_error)
+        # in such case, plugin won't be loaded
+        #
+        # ex: utils.c_assert_error(config['port'] >= 1024, 'port should be >= 1024')
         pass
 
     @command
