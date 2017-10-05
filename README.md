@@ -1,5 +1,3 @@
-Yet another dumb IRC bot
-
 Requires Python 3.6.0
 
 See `example_plugin.py` for basic plugin example
