@@ -1,6 +1,8 @@
 import logging
+import shutil
 import sys
 import utils
+import os.path
 
 from ruamel import yaml
 from plugins import *
@@ -27,6 +29,15 @@ def configure_logger(config):
 
 
 def main():
+    try:
+        if not os.path.exists("pybot.yaml"):
+            shutil.copyfile('pybot.template.yaml', 'pybot.yaml')
+            print("pybot.yaml config file not found. Its template was created but you probably want to edit it before next run.")
+            sys.exit(0)
+    except Exception as e:
+        print(f'Cannot create config file: {e}')
+        sys.exit(1)
+
     try:
         config = yaml.load(open("pybot.yaml"), Loader=yaml.Loader)
     except Exception as e:

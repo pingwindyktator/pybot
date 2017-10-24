@@ -89,6 +89,8 @@ def ensure_config_is_ok(config, assert_unknown_keys=False):
         'ignored_users': config_key_info(False, list),
     }
 
+    c_assert_error(config, 'config seems to be empty')
+
     for key, key_info in config_keys.items():
         if key_info.required:
             c_assert_error(key in config, f'you have to specify {key} field')
@@ -97,8 +99,8 @@ def ensure_config_is_ok(config, assert_unknown_keys=False):
             c_assert_error(type(config[key]) is key_info.type, f'{key} field type should be {key_info.type.__name__}')
 
     c_assert_error(config['server'].strip(), 'you have to specify server address')
-    c_assert_error(config['port'] >= 1024, 'port should be >= 1024')
-    c_assert_error(config['port'] <= 49151, 'port should be <= 49151')
+    c_assert_error(config['port'] > 0, 'port should be > 0')
+    c_assert_error(config['port'] <= 65535, 'port should be <= 65535')
     c_assert_error(config['channel'].startswith('#'), 'channel should start with #')
     c_assert_error(config['nickname'], 'you have to specify at least one nickname to use')
     c_assert_error(config['max_autorejoin_attempts'] >= 0, 'max_autorejoin_attempts should be >= 0')
