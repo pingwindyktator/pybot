@@ -1,3 +1,4 @@
+import json
 import requests
 import urllib.parse
 import xml.etree.ElementTree
@@ -5,10 +6,52 @@ import xml.etree.ElementTree
 from plugin import *
 
 
+class crypto_wa_warner:
+    def __init__(self, bot):
+        self.bot = bot
+        self.known_crypto_currencies = self.get_crypto_currencies()
+        self.convert_regex = re.compile(r'^([0-9]*\.?[0-9]*)\W*([A-Za-z]+)\W+(to|in)\W+([A-Za-z]+)$')
+
+    def handle_msg(self, msg):
+        msg = msg.strip()
+        if self.convert_regex.findall(msg) or self.get_crypto_currency_id(msg):
+            prefix = color.orange("[WARNING] ")
+            suffix = f', you may try {self.bot.config["command_prefix"]}crypto {msg}' if 'crypto' in self.bot.get_plugins_names() else ''
+            self.bot.say(f'{prefix}Wolfram-Alpha seems not to handle cryptocurrencies properly{suffix}')
+            return True
+
+        return False
+
+    def get_crypto_currencies(self):
+        url = r'https://api.coinmarketcap.com/v1/ticker/'
+        content = requests.get(url, timeout=10).content.decode('utf-8')
+        raw_result = json.loads(content)
+        result = []
+        for entry in raw_result:
+            result.append(self.currency_id(entry['id'], entry['name'], entry['symbol']))
+
+        return result
+
+    def get_crypto_currency_id(self, alias):
+        alias = alias.lower()
+        for entry in self.known_crypto_currencies:
+            if entry.id.lower() == alias or entry.name.lower() == alias or entry.symbol.lower() == alias:
+                return entry
+
+        return None
+
+    class currency_id:
+        def __init__(self, id, name, symbol):
+            self.id = id
+            self.name = name
+            self.symbol = symbol
+
+
 class wolfram_alpha(plugin):
     def __init__(self, bot):
         super().__init__(bot)
         self.logger = logging.getLogger(__name__)
+        self.crypto_warner = crypto_wa_warner(bot)
         units = 'nonmetric' if self.config['nonmetric_units'] else 'metric'
         self.full_req = r'http://api.wolframalpha.com/v2/query?' \
                         r'input=%s' \
@@ -31,6 +74,7 @@ class wolfram_alpha(plugin):
     @command
     def wa(self, msg, sender_nick, **kwargs):
         self.logger.info(f'{sender_nick} asked wolfram alpha "{msg}"')
+        if self.config['warn_crypto_asks']: self.crypto_warner.handle_msg(msg)
         ask = urllib.parse.quote(msg)
         raw_response = requests.get(self.full_req % (ask, self.config['api_key'])).content.decode('utf-8')
         self.manage_api_response(raw_response, msg)
