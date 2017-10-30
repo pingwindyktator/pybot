@@ -54,9 +54,9 @@ class crypto(plugin):
         return result
 
     def get_crypto_currency_id(self, alias):
-        alias = alias.lower()
+        alias = alias.casefold()
         for entry in self.known_crypto_currencies:
-            if entry.id.lower() == alias or entry.name.lower() == alias or entry.symbol.lower() == alias:
+            if entry.id.casefold() == alias or entry.name.casefold() == alias or entry.symbol.casefold() == alias:
                 return entry
 
         return None

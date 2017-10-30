@@ -14,7 +14,7 @@ class notify(plugin):
     def find_word(self, sender_nick, full_msg):
         for register_nickname in self.database:
             for alias in self.database[register_nickname]:
-                if re.findall(alias.lower(), full_msg) and sender_nick != register_nickname:
+                if re.findall(alias.casefold(), full_msg) and sender_nick != register_nickname:
                     self.bot.say(register_nickname)
                     self.logger.info(f"found notify set for '{register_nickname}': {alias}")
                     break

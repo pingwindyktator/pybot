@@ -169,10 +169,10 @@ class builtins(plugin):
     @doc('change_log_level <file|stdout> <level>: change logging level')
     def change_log_level(self, sender_nick, args, **kwargs):
         if len(args) < 2: return
-        handler_name = args[0].lower()
-        level_name = args[1].lower()
+        handler_name = args[0].casefold()
+        level_name = args[1].casefold()
 
-        if level_name.lower() not in utils.logging_level_str_to_int:
+        if level_name not in utils.logging_level_str_to_int:
             self.bot.say(f'unknown level: {level_name}, supported levels: {", ".join(utils.logging_level_str_to_int.keys())}')
             return
 
@@ -215,7 +215,7 @@ class builtins(plugin):
     @doc('restart [<force>]: restart pybot app, use force to disable consistency checks')
     def restart(self, sender_nick, args, **kwargs):
         reason = self.is_restart_unsafe()
-        if reason and not (args and args[0].strip().lower() == 'force'):
+        if reason and not (args and args[0].strip().casefold() == 'force'):
             self.bot.say(f'{reason}, aborting restart, use \'{self.bot.config["command_prefix"]}restart force\' to ignore it')
             return
 
@@ -333,7 +333,7 @@ class builtins(plugin):
         force_str = ''
 
         if repo.head.commit.diff(None):  # will not count files added to working tree
-            if args and args[0].strip().lower() == 'force':
+            if args and args[0].strip().casefold() == 'force':
                 self.logger.warning(f'discarding local changes: {[x.a_path for x in repo.head.commit.diff(None)]}')
                 repo.head.reset(commit=repo.head.commit, index=True, working_tree=True)
                 force_str = ', local changes discarded'
