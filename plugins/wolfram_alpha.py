@@ -14,7 +14,11 @@ class crypto_wa_warner:
 
     def handle_msg(self, msg):
         msg = msg.strip()
-        if self.convert_regex.findall(msg) or self.get_crypto_currency_id(msg):
+        c = self.convert_regex.findall(msg)
+        c = c[0] if c else []
+        _from = c[1] if len(c) > 1 else ''
+        to = c[3] if len(c) > 3 else ''
+        if self.is_any_currency_known([_from, to, msg]):
             prefix = color.orange("[WARNING] ")
             suffix = f', you may try {self.bot.config["command_prefix"]}crypto {msg}' if 'crypto' in self.bot.get_plugins_names() else ''
             self.bot.say(f'{prefix}Wolfram-Alpha seems not to handle cryptocurrencies properly{suffix}')
@@ -32,13 +36,15 @@ class crypto_wa_warner:
 
         return result
 
-    def get_crypto_currency_id(self, alias):
-        alias = alias.lower()
-        for entry in self.known_crypto_currencies:
-            if entry.id.lower() == alias or entry.name.lower() == alias or entry.symbol.lower() == alias:
-                return entry
+    def is_any_currency_known(self, aliases):
+        aliases = [a.casefold() for a in aliases]
 
-        return None
+        for alias in aliases:
+            for entry in self.known_crypto_currencies:
+                if entry.id.casefold() == alias or entry.name.casefold() == alias or entry.symbol.casefold() == alias:
+                    return True
+
+        return False
 
     class currency_id:
         def __init__(self, id, name, symbol):
