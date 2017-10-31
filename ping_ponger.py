@@ -1,6 +1,7 @@
 import time
 
 from threading import Thread, Timer, Lock
+from contextlib import suppress
 from irc.client import ServerNotConnectedError
 
 
@@ -29,7 +30,8 @@ class ping_ponger:
             if self.timer.is_alive(): self.timer.cancel()
 
     def _on_pong(self, _, raw_msg):
-        if raw_msg.source == self.connection.server and self.timer.is_alive(): self.timer.cancel()
+        if raw_msg.source == self.connection.server and self.timer.is_alive():
+            self.timer.cancel()
 
     def _on_disconnected(self):
         self.stop()
@@ -40,6 +42,7 @@ class ping_ponger:
             time.sleep(self.interval)
             self.timer = Timer(10, self._on_disconnected)
             self.timer.start()
-            try: self.connection.ping(self.connection.server)
-            except ServerNotConnectedError: pass
+            with suppress(ServerNotConnectedError):
+                self.connection.ping(self.connection.server)
+
             self.timer.join()
