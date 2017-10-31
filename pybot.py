@@ -39,7 +39,7 @@ class pybot(irc.bot.SingleServerIRCBot):
             connection_args['connect_factory'] = ssl_factory
 
         super(pybot, self).__init__([(config['server'], config['port'])], config['nickname'][0], config['nickname'][0], **connection_args)
-        self.ping_ponger = ping_ponger(self.connection, config['health_check_interval_s'], self.on_not_healthy)
+        self.ping_ponger = ping_ponger(self.connection, config['health_check_interval_s'], self.on_not_healthy) if config['health_check'] else utils.null_object()
         self.logger.debug('irc.bot.SingleServerIRCBot initiated')
 
         self._nickname_id = 0

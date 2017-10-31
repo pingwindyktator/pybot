@@ -17,6 +17,7 @@ debug: false
 flood_protection: true
 try_autocorrect: true
 wrap_too_long_msgs: true
+health_check: false
 health_check_interval_s: 100
 
 bot_remote_manager:
