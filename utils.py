@@ -108,7 +108,7 @@ def ensure_config_is_ok(config, assert_unknown_keys=False):
     c_assert_error(config['file_logging_level'] in logging_level_str_to_int, f'file_logging_level can be one of: {", ".join((logging_level_str_to_int.keys()))}')
     c_assert_error(config['stdout_logging_level'] in logging_level_str_to_int, f'stdout_logging_level can be one of: {", ".join((logging_level_str_to_int.keys()))}')
     c_assert_error(config['command_prefix'].strip(), 'you have to specify command prefix')
-    c_assert_error(config['health_check_interval_s'] > 0, 'health_check_interval_s should be > 0')
+    c_assert_error(config['health_check_interval_s'] > 15, 'health_check_interval_s should be > 15')
 
     if 'disabled_plugins' in config:
         c_assert_error('enabled_plugins' not in config, 'you cannot have both enabled_plugins and disabled_plugins specified')

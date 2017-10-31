@@ -13,11 +13,39 @@ import irc.client
 import utils
 
 from queue import Queue
-from threading import Thread
+from threading import Thread, Timer
 from color import color
 from utils import irc_nickname
 from fuzzywuzzy import process, fuzz
 from irc.client import MessageTooLong
+
+
+class ping_ponger:
+    def __init__(self, connection, interval, on_disconnected_callback):
+        self.connection = connection
+        self.interval = interval
+        self.on_disconnected_callback = on_disconnected_callback
+        self.connection.add_global_handler('pong', self.on_pong)
+        self.timer = None
+        self.thread = Thread(target=self.ping_pong)
+        self.work = True
+
+    def start(self):
+        self.thread.start()
+
+    def on_pong(self, _, raw_msg):
+        if raw_msg.source == self.connection.server: self.timer.cancel()
+
+    def on_disconnected(self):
+        self.work = False
+        self.on_disconnected_callback()
+
+    def ping_pong(self):
+        while self.work:
+            self.timer = Timer(10, self.on_disconnected)
+            self.timer.start()
+            self.connection.ping(self.connection.server)
+            time.sleep(self.interval)
 
 
 # noinspection PyUnusedLocal
@@ -38,6 +66,7 @@ class pybot(irc.bot.SingleServerIRCBot):
             connection_args['connect_factory'] = ssl_factory
 
         super(pybot, self).__init__([(config['server'], config['port'])], config['nickname'][0], config['nickname'][0], **connection_args)
+        self.ping_ponger = ping_ponger(self.connection, config['health_check_interval_s'], self.on_not_healthy)
         self.logger.debug('irc.bot.SingleServerIRCBot initiated')
 
         self._nickname_id = 0
@@ -63,6 +92,10 @@ class pybot(irc.bot.SingleServerIRCBot):
         self.connection.buffer_class.errors = 'replace'
         super(pybot, self).start()
 
+    def on_not_healthy(self):
+        self.logger.warning(f'unexpectedly disconnected from {self.config["server"]}, trying to reconnect...')
+        self.start()
+
     # callbacks
 
     def on_nicknameinuse(self, _, raw_msg):
@@ -82,6 +115,7 @@ class pybot(irc.bot.SingleServerIRCBot):
 
     def on_welcome(self, _, raw_msg):
         """ called by super() when connected to server """
+        self.ping_ponger.start()
         ssl_info = ' over SSL' if self.config['use_ssl'] else ''
         self.logger.info(f'connected to {self.config["server"]}:{self.config["port"]}{ssl_info} using nickname {self.get_nickname()}')
         self._call_plugins_methods('welcome', raw_msg=raw_msg, server=self.config['server'], port=self.config['port'], nickname=self.get_nickname())
