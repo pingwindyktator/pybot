@@ -1,4 +1,3 @@
-import re
 import uuid
 
 from threading import Timer
