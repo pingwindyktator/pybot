@@ -13,42 +13,12 @@ import irc.client
 import utils
 
 from queue import Queue
-from threading import Thread, Timer
+from threading import Thread
 from color import color
 from utils import irc_nickname
 from fuzzywuzzy import process, fuzz
 from irc.client import MessageTooLong
-
-
-class ping_ponger:
-    def __init__(self, connection, interval, on_disconnected_callback):
-        self.connection = connection
-        self.interval = interval
-        self.on_disconnected_callback = on_disconnected_callback
-        self.connection.add_global_handler('pong', self.on_pong)
-        self.timer = None
-        self.thread = Thread(target=self.ping_pong)
-        self.work = True
-
-    def start(self):
-        if self.work: return
-        self.work = True
-        self.thread.start()
-
-    def on_pong(self, _, raw_msg):
-        if raw_msg.source == self.connection.server: self.timer.cancel()
-
-    def on_disconnected(self):
-        self.work = False
-        self.timer.cancel()
-        self.on_disconnected_callback()
-
-    def ping_pong(self):
-        while self.work:
-            self.timer = Timer(10, self.on_disconnected)
-            self.timer.start()
-            self.connection.ping(self.connection.server)
-            time.sleep(self.interval)
+from ping_ponger import ping_ponger
 
 
 # noinspection PyUnusedLocal
