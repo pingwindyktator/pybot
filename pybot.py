@@ -230,11 +230,12 @@ class pybot(irc.bot.SingleServerIRCBot):
         # TODO add more login ways
         # TODO plugin
         # TODO if freenode...
+
         if 'password' in self.config and self._nickname_id < len(self.config['password']):
             password = self.config['password'][self._nickname_id]
-            self.say('NickServ', f"identify {self.get_nickname()} {password}")
             if password is not None and password != '':
                 self.logger.info(f'identifying as {self.get_nickname()}...')
+                self.say('NickServ', f"identify {self.get_nickname()} {password}")
         else:
             self.logger.debug(f'no password provided for {self.config["nickname"][self._nickname_id]}')
 
