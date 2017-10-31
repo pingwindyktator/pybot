@@ -20,17 +20,20 @@ class whois(plugin):
         except WhoisException:
             self.bot.say(f'no match for {domain}')
             return
+        except Exception:
+            self.bot.say(f'no info for {domain}')
+            return
 
         result = []
 
         with suppress(KeyError):
-            result.append(['Registrar', format(data["registrar"][0])])
+            result.append(['Registrar', format(data['registrar'][0])])
 
         with suppress(KeyError):
             result.append(['Registered', format(data['creation_date'][0].strftime('%d-%m-%Y'))])
 
         with suppress(KeyError):
-            result.append(['Expires', format(data["expiration_date"][0].strftime('%d-%m-%Y'))])
+            result.append(['Expires', format(data['expiration_date'][0].strftime('%d-%m-%Y'))])
 
         if data['contacts']['registrant']:
             result.append(['Registrant', self.build_contact_str(data, 'registrant')])
