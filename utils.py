@@ -31,6 +31,22 @@ int_to_logging_level_str = {
 }
 
 
+class null_object:
+    def __init__(self, *args, **kwargs): pass
+
+    def __call__(self, *args, **kwargs): return self
+
+    def __repr__(self): return "null_object"
+
+    def __nonzero__(self): return 0
+
+    def __getattr__(self, name): return self
+
+    def __setattr__(self, name, value): return self
+
+    def __delattr__(self, name): return self
+
+
 @total_ordering
 class irc_nickname(str):
     """
@@ -81,6 +97,7 @@ def ensure_config_is_ok(config, assert_unknown_keys=False):
         'command_prefix': config_key_info(True, str),
         'try_autocorrect': config_key_info(True, bool),
         'wrap_too_long_msgs': config_key_info(True, bool),
+        'health_check': config_key_info(True, bool),
         'health_check_interval_s': config_key_info(True, int),
 
         'debug': config_key_info(False, bool),
