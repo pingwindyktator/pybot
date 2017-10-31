@@ -29,8 +29,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         if config['colors']:
             color.enable_colors()
             self.logger.debug('colors loaded')
-        else:
-            color.disable_colors()
+        else: color.disable_colors()
 
         self.logger.debug('initiating irc.bot.SingleServerIRCBot...')
         connection_args = {}
@@ -66,7 +65,7 @@ class pybot(irc.bot.SingleServerIRCBot):
 
     # callbacks
 
-    def on_nicknameinuse(self, connection, raw_msg):
+    def on_nicknameinuse(self, _, raw_msg):
         """ called by super() when given nickname is reserved """
         nickname = irc_nickname(self.config['nickname'][self._nickname_id])
         self._nickname_id += 1
@@ -81,7 +80,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         self.connection.nick(new_nickname)
         self._login()
 
-    def on_welcome(self, connection, raw_msg):
+    def on_welcome(self, _, raw_msg):
         """ called by super() when connected to server """
         ssl_info = ' over SSL' if self.config['use_ssl'] else ''
         self.logger.info(f'connected to {self.config["server"]}:{self.config["port"]}{ssl_info} using nickname {self.get_nickname()}')
@@ -89,7 +88,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         self._login()
         self.join_channel()
 
-    def on_disconnect(self, connection, raw_msg):
+    def on_disconnect(self, _, raw_msg):
         """ called by super() when disconnected from server """
         msg = f': {raw_msg.arguments[0]}' if raw_msg.arguments else ''
         self.logger.warning(f'disconnected from {self.config["server"]}{msg}')
@@ -98,11 +97,11 @@ class pybot(irc.bot.SingleServerIRCBot):
             self._call_plugins_methods('disconnect', raw_msg=raw_msg, server=self.config['server'], port=self.config['port'])
             self.start()
 
-    def on_quit(self, connection, raw_msg):
+    def on_quit(self, _, raw_msg):
         """ called by super() when somebody disconnects from IRC server """
         self._call_plugins_methods('quit', raw_msg=raw_msg, source=raw_msg.source)
 
-    def on_join(self, connection, raw_msg):
+    def on_join(self, _, raw_msg):
         """ called by super() when somebody joins channel """
         self.names()  # to immediately updated channel's user list
         if raw_msg.source.nick == self.get_nickname() and not self.joined_to_channel():
@@ -111,7 +110,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         else:
             self._call_plugins_methods('join', raw_msg=raw_msg, source=raw_msg.source)
 
-    def on_privmsg(self, connection, raw_msg):
+    def on_privmsg(self, _, raw_msg):
         """ called by super() when private msg received """
         full_msg = raw_msg.arguments[0]
         sender_nick = irc_nickname(raw_msg.source.nick)
@@ -123,7 +122,7 @@ class pybot(irc.bot.SingleServerIRCBot):
 
         self._call_plugins_methods('privmsg', raw_msg=raw_msg, source=raw_msg.source, msg=full_msg)
 
-    def on_pubmsg(self, connection, raw_msg):
+    def on_pubmsg(self, _, raw_msg):
         """ called by super() when msg received """
         full_msg = raw_msg.arguments[0].strip()
         sender_nick = irc_nickname(raw_msg.source.nick)
@@ -164,14 +163,14 @@ class pybot(irc.bot.SingleServerIRCBot):
                     self.logger.debug(f'calling message regex handler  {func.__qualname__}(sender_nick={sender_nick}, msg=\'{full_msg}\', reg_res={regex_search_result}, raw_msg=...)...')
                     func(sender_nick=sender_nick, msg=full_msg, reg_res=regex_search_result, raw_msg=raw_msg)
 
-    def on_kick(self, connection, raw_msg):
+    def on_kick(self, _, raw_msg):
         """ called by super() when somebody gets kicked """
         if raw_msg.arguments[0] == self.get_nickname():
             self.on_me_kicked(self.connection, raw_msg)
         else:
             self._call_plugins_methods('kick', raw_msg=raw_msg, who=raw_msg.arguments[0], source=raw_msg.source)
 
-    def on_me_kicked(self, connection, raw_msg):
+    def on_me_kicked(self, _, raw_msg):
         """ called when bot gets kicked """
         self.logger.warning(f'kicked by {raw_msg.source.nick}')
         self._call_plugins_methods('me_kicked', raw_msg=raw_msg, source=raw_msg.source)
@@ -191,23 +190,23 @@ class pybot(irc.bot.SingleServerIRCBot):
             self._autorejoin_attempts += 1
             self.join_channel()
 
-    def on_whoisuser(self, connection, raw_msg):
+    def on_whoisuser(self, _, raw_msg):
         """ called by super() when WHOIS response arrives """
         self._call_plugins_methods('whoisuser', raw_msg=raw_msg, nick=irc_nickname(raw_msg.arguments[0]), user=irc_nickname(raw_msg.arguments[1]), host=irc_nickname(raw_msg.arguments[2]))
 
-    def on_nick(self, connection, raw_msg):
+    def on_nick(self, _, raw_msg):
         """ called by super() when somebody changes nickname """
         self._call_plugins_methods('nick', raw_msg=raw_msg, source=raw_msg.source, old_nickname=irc_nickname(raw_msg.source.nick), new_nickname=irc_nickname(raw_msg.target))
 
-    def on_part(self, connection, raw_msg):
+    def on_part(self, _, raw_msg):
         """ called by super() when somebody lefts channel """
         self._call_plugins_methods('part', raw_msg=raw_msg, source=raw_msg.source)
 
-    def on_ctcp(self, connection, raw_msg):
+    def on_ctcp(self, _, raw_msg):
         """ called by super() when ctcp arrives (/me ...) """
         self._call_plugins_methods('ctcp', raw_msg=raw_msg, source=raw_msg.source, msg=raw_msg.arguments[1] if len(raw_msg.arguments) > 1 else '')
 
-    def on_namreply(self, connection, raw_msg):
+    def on_namreply(self, _, raw_msg):
         """ called by super() when NAMES response arrives """
         nickname_prefixes = '~&@%+'
         nicks = raw_msg.arguments[2].split()
