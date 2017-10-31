@@ -20,7 +20,7 @@ class whois(plugin):
         except WhoisException:
             self.bot.say(f'no match for {domain}')
             return
-        except Exception:
+        except:
             self.bot.say(f'no info for {domain}')
             return
 

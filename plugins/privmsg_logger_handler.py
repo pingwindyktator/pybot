@@ -46,7 +46,7 @@ class privmsg_logger_handler(plugin):
 
     def get_plhs_impl(self):
         with self.db_mutex:
-            self.db_cursor.execute(f"SELECT * FROM '{self.db_name}'")
+            self.db_cursor.execute(f"SELECT nickname, logging_level FROM '{self.db_name}'")
             result = self.db_cursor.fetchall()
             result = {irc_nickname(r[0]): int(r[1]) for r in result}
             return result
