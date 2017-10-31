@@ -31,6 +31,8 @@ class ping_ponger:
         self.work = True
 
     def start(self):
+        if self.work: return
+        self.work = True
         self.thread.start()
 
     def on_pong(self, _, raw_msg):
@@ -38,6 +40,7 @@ class ping_ponger:
 
     def on_disconnected(self):
         self.work = False
+        self.timer.cancel()
         self.on_disconnected_callback()
 
     def ping_pong(self):
