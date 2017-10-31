@@ -74,18 +74,17 @@ class pybot(irc.bot.SingleServerIRCBot):
 
     def on_nicknameinuse(self, _, raw_msg):
         """ called by super() when given nickname is reserved """
-        nickname = irc_nickname(self.config['nickname'][self._nickname_id])
+        old_nickname = self.config['nickname'][self._nickname_id]
         self._nickname_id += 1
 
         if self._nickname_id >= len(self.config['nickname']):
-            self.logger.critical(f'nickname {nickname} is busy, no more nicknames to use')
+            self.logger.critical(f'nickname {old_nickname} is busy, no more nicknames to use')
             sys.exit(2)
 
         new_nickname = irc_nickname(self.config['nickname'][self._nickname_id])
-        self.logger.warning(f'nickname {nickname} is busy, using {new_nickname}')
-        self._call_plugins_methods('nicknameinuse', raw_msg=raw_msg, busy_nickname=nickname)
+        self.logger.warning(f'nickname {old_nickname} is busy, trying {new_nickname}')
+        self._call_plugins_methods('nicknameinuse', raw_msg=raw_msg, busy_nickname=old_nickname)
         self.connection.nick(new_nickname)
-        self._login()
 
     def on_welcome(self, _, raw_msg):
         """ called by super() when connected to server """
