@@ -1,8 +1,8 @@
-ruamel.yaml
-lxml
-requests
-irc>=15.0.4
-GitPython
-python-Levenshtein
-fuzzywuzzy
-bs4
+ruamel.yaml==0.15.34
+lxml==3.7.3
+requests==2.18.4
+irc==16.1
+GitPython==2.1.7
+fuzzywuzzy==0.15.1
+beautifulsoup4==4.6.0
+urllib3==1.22
