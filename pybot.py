@@ -66,7 +66,8 @@ class pybot(irc.bot.SingleServerIRCBot):
         super(pybot, self).start()
 
     def on_not_healthy(self):
-        self.logger.warning(f'unexpectedly disconnected from {self.config["server"]}, trying to reconnect...')
+        self.logger.warning(f'unexpectedly disconnected from {self.config["server"]}')
+        self.ping_ponger.stop()
         self.start()
 
     # callbacks
@@ -97,6 +98,7 @@ class pybot(irc.bot.SingleServerIRCBot):
 
     def on_disconnect(self, _, raw_msg):
         """ called by super() when disconnected from server """
+        self.ping_ponger.stop()
         msg = f': {raw_msg.arguments[0]}' if raw_msg.arguments else ''
         self.logger.warning(f'disconnected from {self.config["server"]}{msg}')
 
