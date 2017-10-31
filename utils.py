@@ -81,6 +81,7 @@ def ensure_config_is_ok(config, assert_unknown_keys=False):
         'command_prefix': config_key_info(True, str),
         'try_autocorrect': config_key_info(True, bool),
         'wrap_too_long_msgs': config_key_info(True, bool),
+        'health_check_interval_s': config_key_info(True, int),
 
         'debug': config_key_info(False, bool),
         'password': config_key_info(False, list),
@@ -107,6 +108,7 @@ def ensure_config_is_ok(config, assert_unknown_keys=False):
     c_assert_error(config['file_logging_level'] in logging_level_str_to_int, f'file_logging_level can be one of: {", ".join((logging_level_str_to_int.keys()))}')
     c_assert_error(config['stdout_logging_level'] in logging_level_str_to_int, f'stdout_logging_level can be one of: {", ".join((logging_level_str_to_int.keys()))}')
     c_assert_error(config['command_prefix'].strip(), 'you have to specify command prefix')
+    c_assert_error(config['health_check_interval_s'] > 0, 'health_check_interval_s should be > 0')
 
     if 'disabled_plugins' in config:
         c_assert_error('enabled_plugins' not in config, 'you cannot have both enabled_plugins and disabled_plugins specified')
