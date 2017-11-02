@@ -35,6 +35,10 @@ class note(plugin):
     def note(self, sender_nick, msg, **kwargs):
         if not msg: return
         target = msg.split()[0]
+        if target == self.bot.get_nickname():
+            self.bot.say("you won't trick me")
+            return
+        
         new_note = msg[len(target):].strip()
         self.logger.info(f'{sender_nick} notes "{new_note}" for {target}')
         if not new_note: return
