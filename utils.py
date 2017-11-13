@@ -1,6 +1,6 @@
 import sys
 import logging
-import unicodedata
+import unidecode
 
 from functools import total_ordering
 from ruamel.yaml.comments import CommentedMap
@@ -78,7 +78,7 @@ def c_assert_error(expr, text):
 
 
 def remove_national_chars(s):
-    return ''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn')
+    return unidecode.unidecode(s)
 
 
 def ensure_config_is_ok(config, assert_unknown_keys=False):
