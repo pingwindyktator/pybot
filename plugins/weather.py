@@ -85,7 +85,9 @@ class weather(plugin):
         result = self.get_weather_info_impl(city_name)
         if not result:
             # openweathermap behaves strange, sometimes it requires national characters and sometimes not
-            result = self.get_weather_info_impl(utils.remove_national_chars(city_name))
+            city_name = utils.remove_national_chars(city_name)
+            self.logger.info(f'getting weather in {city_name}')
+            result = self.get_weather_info_impl(city_name)
 
         return result
 
@@ -103,7 +105,9 @@ class weather(plugin):
         result = self.get_forecast_info_impl(city_name)
         if not result:
             # openweathermap behaves strange, sometimes it requires national characters and sometimes not
-            result = self.get_forecast_info_impl(utils.remove_national_chars(city_name))
+            city_name = utils.remove_national_chars(city_name)
+            self.logger.info(f'getting weather forecast in {city_name}')
+            result = self.get_forecast_info_impl(city_name)
 
         return result
 
