@@ -96,7 +96,9 @@ class weather(plugin):
         raw_response = requests.get(self.weather_url % (ask, self.config['api_key'])).content.decode('utf-8')
         response = json.loads(raw_response)
         if 'cod' not in response or response['cod'] != 200:
-            self.logger.warning(f'openweathermap error: {raw_response}')
+            if 'cod' not in response or response['cod'] != '404':
+                self.logger.warning(f'openweathermap error: {raw_response}')
+                
             return None
 
         return response
@@ -117,7 +119,9 @@ class weather(plugin):
         raw_response = requests.get(self.forecast_url % (ask, self.config['api_key'])).content.decode('utf-8')
         response = json.loads(raw_response)
         if 'cod' not in response or response['cod'] != '200':
-            self.logger.warning(f'openweathermap error: {raw_response}')
+            if 'cod' not in response or response['cod'] != '404':
+                self.logger.warning(f'openweathermap error: {raw_response}')
+                
             return None
 
         return response
