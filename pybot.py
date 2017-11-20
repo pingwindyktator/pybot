@@ -280,8 +280,8 @@ class pybot(irc.bot.SingleServerIRCBot):
 
         self.logger.debug('plugins loaded')
 
-    def _say_dispatcher(self, msg, target):
-        if self.config['flood_protection']:
+    def _say_dispatcher(self, msg, target, force=False):
+        if self.config['flood_protection'] and not force:
             self._say_queue.put(self._say_info(target, msg))
 
             if self._say_thread is None or not self._say_thread.is_alive():
@@ -414,7 +414,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         self.logger.info(f'joining {self.config["channel"]}...')
         self.connection.join(self.config['channel'])
 
-    def say(self, msg, target=None):
+    def say(self, msg, target=None, force=False):
         if not target: target = self.config['channel']
         if type(msg) is bytes: msg = msg.decode('utf-8')
 
@@ -425,9 +425,9 @@ class pybot(irc.bot.SingleServerIRCBot):
 
             self.logger.debug('privmsg too long, wrapping...')
             for part in textwrap.wrap(msg, 450):
-                self._say_dispatcher(part, target)
+                self._say_dispatcher(part, target, force)
         else:
-            self._say_dispatcher(msg, target)
+            self._say_dispatcher(msg, target, force)
 
     def say_ok(self, target=None):
         okies = ['okay', 'okay then', ':)', 'okies!', 'fine', 'done', 'can do!', 'alright', 'sure', 'aight', 'lemme take care of that for you', 'k', 'np']

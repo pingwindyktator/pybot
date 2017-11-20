@@ -219,7 +219,7 @@ class builtins(plugin):
             self.bot.say(f'{reason}, aborting restart, use \'{self.bot.config["command_prefix"]}restart force\' to ignore it')
             return
 
-        self.bot.say("I'll be back soon...")
+        self.bot.say("I'll be back soon...", force=True)
         self.restart_impl(sender_nick)
 
     def restart_impl(self, sender_nick=None):
@@ -311,12 +311,13 @@ class builtins(plugin):
                 shutil.copyfile('..pybot.yaml', 'pybot.yaml')
                 return
 
-            self.bot.say('config updated, restarting...')
+            self.bot.say('config updated, restarting...', force=True)
             self.restart_impl(sender_nick)
         except utils.config_error as e:
             self.bot.say(f'invalid config value: {e}, aborting...')
             shutil.copyfile('..pybot.yaml', 'pybot.yaml')
         except Exception as e:
+            self.logger.error(f'exception caught while updating config file: {e}')
             self.bot.say('cannot update config file, aborting...')
             shutil.copyfile('..pybot.yaml', 'pybot.yaml')
             if self.bot.is_debug_mode_enabled(): raise
@@ -459,7 +460,7 @@ class builtins(plugin):
 
         shutil.copyfile('.pybot.yaml', 'pybot.yaml')
         self.logger.warning(f'{sender_nick} changed config entry {keys} = {value}')
-        self.bot.say('config entry applied, restarting...')
+        self.bot.say('config entry applied, restarting...', force=True)
         self.restart_impl(sender_nick)
 
     def upload_file_impl(self, sender_nick, filename):
