@@ -44,7 +44,7 @@ class crypto(plugin):
             t.timer_object.cancel()
 
     def get_crypto_currencies(self):
-        url = r'https://api.coinmarketcap.com/v1/ticker/'
+        url = r'https://api.coinmarketcap.com/v1/ticker/?limit=0'
         content = requests.get(url, timeout=10).content.decode('utf-8')
         raw_result = json.loads(content)
         result = []
