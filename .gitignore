@@ -92,6 +92,7 @@ ENV/
 # Rope project settings
 .ropeproject
 
-pybot\.error
-
-\.pybot\.yaml
+pybot.error
+.pybot.yaml
+..pybot.yaml
+pybot.log
