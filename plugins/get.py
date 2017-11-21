@@ -29,14 +29,26 @@ class get(plugin):
         if result: self.bot.say(result)
 
     @command
+    @doc("get all saved messages")
+    def get_list(self, sender_nick, **kwargs):
+        with self.db_mutex:
+            self.db_cursor.execute(f"SELECT entry FROM '{self.db_name}'")
+            result = self.db_cursor.fetchall()
+
+        result = [t[0] for t in result]
+        response = f'saved entries: {", ".join(result)}' if result else 'no saved entries'
+        self.bot.say(response)
+
+    @command
     @admin
     @doc('rm_set <entry>: remove <entry> entry')
-    def rm_set(self, sender_nick, msg, **kwargs):
+    def unset(self, sender_nick, msg, **kwargs):
         entry = self.prepare_entry(msg)
         with self.db_mutex:
             self.db_cursor.execute(f"DELETE FROM '{self.db_name}' WHERE entry = ? {self.case_insensitive_text}", (entry,))
             self.db_connection.commit()
 
+        self.bot.say_ok()
         self.logger.info(f'{sender_nick} removes {entry}')
 
     @command
