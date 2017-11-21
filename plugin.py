@@ -1,10 +1,12 @@
 import logging
 import re
 import sys
+# noinspection PyUnresolvedReferences
 import utils
 
 from utils import irc_nickname
 from pybot import pybot
+# noinspection PyUnresolvedReferences
 from color import color
 from functools import wraps
 
