@@ -102,14 +102,14 @@ class plugin_manager(plugin):
         commands_copy = self.bot.commands.copy()
         for cmd in cmds: del commands_copy[cmd]
 
-        msg_regexes_copy = self.bot.msg_regexes.copy()
+        msg_regexps_copy = self.bot.msg_regexps.copy()
         for f in inspect.getmembers(plugin_instance, predicate=inspect.ismethod):
             func = f[1]
             __regex = getattr(func, '__regex') if hasattr(func, '__regex') else None
-            if (__regex) and (__regex in msg_regexes_copy) and (func in msg_regexes_copy[__regex]): msg_regexes_copy[__regex].remove(func)
+            if (__regex) and (__regex in msg_regexps_copy) and (func in msg_regexps_copy[__regex]): msg_regexps_copy[__regex].remove(func)
 
         self.bot.commands = commands_copy
-        self.bot.msg_regexes = msg_regexes_copy
+        self.bot.msg_regexps = msg_regexps_copy
         self.logger.warning(f'plugin {name} disabled with commands {cmds}')
 
     @command

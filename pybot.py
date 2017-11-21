@@ -48,7 +48,7 @@ class pybot(irc.bot.SingleServerIRCBot):
 
         self.plugins = set()
         self.commands = {}  # command -> func
-        self.msg_regexes = {}  # regex -> [funcs]
+        self.msg_regexps = {}  # regex -> [funcs]
         self._say_queue = Queue()
         self._say_thread = None
         self._dying = False
@@ -141,22 +141,29 @@ class pybot(irc.bot.SingleServerIRCBot):
 
         self._call_plugins_methods('pubmsg', raw_msg=raw_msg, source=raw_msg.source, msg=full_msg)
 
-        raw_cmd = msg_parser.trim_msg(self.config['command_prefix'], full_msg)
-        if not raw_cmd:
-            raw_cmd = msg_parser.trim_msg(self.get_nickname() + ':', full_msg)
-        if not raw_cmd:
-            raw_cmd = msg_parser.trim_msg(self.get_nickname() + ',', full_msg)
+        args = msg_parser.trim_msg(self.config['command_prefix'], full_msg)
+        if not args:
+            args = msg_parser.trim_msg(self.get_nickname() + ':', full_msg)
+        if not args:
+            args = msg_parser.trim_msg(self.get_nickname() + ',', full_msg)
 
-        args_list = raw_cmd.split()
+        args_list = args.split()
         cmd = args_list[0].strip() if len(args_list) > 0 else ''
         args_list = args_list[1:]
-        assert raw_cmd.startswith(cmd)
-        raw_cmd = raw_cmd[len(cmd):].strip()
+        assert args.startswith(cmd)
+        args = args[len(cmd):].strip()
+
+        # .set entry some msg
+        # cmd       == "set"
+        # full_msg  == ".set entry some msg"
+        # args      == "entry some msg"
+        # args_list == ["some", "msg"]
+        # raw_msg   == IRC Event class
 
         if cmd in self.commands:
             func = self.commands[cmd]
-            self.logger.debug(f'calling command  {func.__qualname__}(sender_nick={sender_nick}, args={args_list}, msg=\'{raw_cmd}\', raw_msg=...)...')
-            func(sender_nick=sender_nick, args=args_list, msg=raw_cmd, raw_msg=raw_msg)
+            self.logger.debug(f'calling command  {func.__qualname__}(sender_nick={sender_nick}, args={args_list}, msg=\'{args}\', raw_msg=...)...')
+            func(sender_nick=sender_nick, args=args_list, msg=args, raw_msg=raw_msg)
         elif self.config['try_autocorrect'] and cmd and len(cmd) > 0 and cmd[0].isalpha():
             possible_cmd = self._get_best_command_match(cmd, sender_nick)
             if possible_cmd:
@@ -164,10 +171,10 @@ class pybot(irc.bot.SingleServerIRCBot):
             else:
                 self.say(f'no such command: {cmd}')
 
-        for reg in self.msg_regexes:
+        for reg in self.msg_regexps:
             regex_search_result = reg.findall(full_msg)
             if regex_search_result:
-                for func in self.msg_regexes[reg]:
+                for func in self.msg_regexps[reg]:
                     self.logger.debug(f'calling message regex handler  {func.__qualname__}(sender_nick={sender_nick}, msg=\'{full_msg}\', reg_res={regex_search_result}, raw_msg=...)...')
                     func(sender_nick=sender_nick, msg=full_msg, reg_res=regex_search_result, raw_msg=raw_msg)
 
@@ -335,11 +342,11 @@ class pybot(irc.bot.SingleServerIRCBot):
 
             if hasattr(func, '__regex'):
                 __regex = getattr(func, '__regex')
-                if __regex not in self.msg_regexes:
-                    self.msg_regexes[__regex] = []
+                if __regex not in self.msg_regexps:
+                    self.msg_regexps[__regex] = []
 
-                self.msg_regexes[__regex].append(func)
-                self.msg_regexes[__regex] = list(set(self.msg_regexes[__regex]))
+                self.msg_regexps[__regex].append(func)
+                self.msg_regexps[__regex] = list(set(self.msg_regexps[__regex]))
                 self.logger.debug(f'regex for {func.__qualname__} registered: \'{getattr(func, "__regex").pattern}\'')
 
     # API funcs
