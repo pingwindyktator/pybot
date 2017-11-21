@@ -20,6 +20,7 @@ class get(plugin):
     @command
     @doc('get <entry>: get saved message for <entry>')
     def get(self, sender_nick, msg, **kwargs):
+        if not msg: return
         entry = self.prepare_entry(msg)
         with self.db_mutex:
             self.db_cursor.execute(f"SELECT val FROM '{self.db_name}' WHERE entry = ? {self.case_insensitive_text}", (entry,))
@@ -46,6 +47,7 @@ class get(plugin):
     @admin
     @doc('rm_set <entry>: remove <entry> entry')
     def unset(self, sender_nick, msg, **kwargs):
+        if not msg: return
         entry = self.prepare_entry(msg)
         with self.db_mutex:
             self.db_cursor.execute(f"DELETE FROM '{self.db_name}' WHERE entry = ? {self.case_insensitive_text}", (entry,))
@@ -58,8 +60,10 @@ class get(plugin):
     @admin
     @doc('set <entry> <message>: save <message> for <entry>')
     def set(self, sender_nick, msg, **kwargs):
+        if not msg: return
         entry = msg.split()[0]
         val = msg[len(entry):].strip()
+        if not val: return
         entry = self.prepare_entry(entry)
         try:
             with self.db_mutex:
@@ -79,7 +83,7 @@ class get(plugin):
         return [t[0] for t in result]
 
     def prepare_entry(self, entry):
-        result = entry.strip()
+        result = entry.split()[0].strip()
         return result
 
     def get_best_entry_match(self, entry):
