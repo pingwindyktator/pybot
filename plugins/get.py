@@ -2,6 +2,7 @@ import os
 import sqlite3
 
 from threading import Lock
+from fuzzywuzzy import process, fuzz
 from plugin import *
 
 
@@ -27,15 +28,17 @@ class get(plugin):
         result = result[0] if result else None
         self.logger.info(f'{sender_nick} gets {entry}: {result}')
         if result: self.bot.say(result)
+        else:
+            response = 'no such entry'
+            possible_entry = self.get_best_entry_match(entry) if self.config['try_autocorrect'] else None
+            if possible_entry: response = f'{response}, did you mean {possible_entry}?'
+            self.bot.say(response)
 
     @command
     @doc("get all saved messages")
     def get_list(self, sender_nick, **kwargs):
-        with self.db_mutex:
-            self.db_cursor.execute(f"SELECT entry FROM '{self.db_name}'")
-            result = self.db_cursor.fetchall()
-
-        result = [t[0] for t in result]
+        self.logger.info(f'{sender_nick} gets entry list')
+        result = self.get_list_impl()
         response = f'saved entries: {", ".join(result)}' if result else 'no saved entries'
         self.bot.say(response)
 
@@ -68,6 +71,20 @@ class get(plugin):
         except sqlite3.IntegrityError:
             self.bot.say(f'"{entry}" entry already exists')
 
+    def get_list_impl(self):
+        with self.db_mutex:
+            self.db_cursor.execute(f"SELECT entry FROM '{self.db_name}'")
+            result = self.db_cursor.fetchall()
+
+        return [t[0] for t in result]
+
     def prepare_entry(self, entry):
         result = entry.strip()
         return result
+
+    def get_best_entry_match(self, entry):
+        choices = [c.replace('_', ' ') for c in self.get_list_impl()]
+        entry = entry.replace('_', ' ')
+        result = process.extract(entry, choices, scorer=fuzz.token_sort_ratio)
+        result = [(r[0].replace(' ', '_'), r[1]) for r in result]
+        return result[0][0] if result[0][1] > 65 else None
