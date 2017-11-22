@@ -11,6 +11,7 @@ class qrcode(plugin):
     @command
     @doc('qrcode <text>: get qrcode of <text>')
     def qrcode(self, sender_nick, msg, **kwargs):
+        if not msg: return
         self.logger.info(f'{sender_nick} want a qrcode of {msg}')
         msg = urllib.parse.quote(msg)
         link = r'http://chart.googleapis.com/chart?cht=qr&chs=400x400&chl=%s' % msg

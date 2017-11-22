@@ -152,7 +152,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         # fix should not affect msg regexps
         reg_raw_msg = raw_msg
         reg_full_msg = full_msg
-        if args.startswith('fix'):
+        if args and args.split()[0].strip() == 'fix':
             fixed_command = self._get_fixed_command()
             if 'builtins' not in self.get_plugins_names() or 'fix' not in self.get_plugin_commands('builtins'):
                 pass
@@ -169,7 +169,7 @@ class pybot(irc.bot.SingleServerIRCBot):
                 full_msg = None
 
         args_list = args.split()
-        cmd = args_list[0].strip() if len(args_list) > 0 else ''
+        cmd = args_list[0].strip() if args_list else ''
         args_list = args_list[1:]
         assert args.startswith(cmd)
         args = args[len(cmd):].strip()
