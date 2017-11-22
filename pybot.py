@@ -162,6 +162,7 @@ class pybot(irc.bot.SingleServerIRCBot):
                 self.say('no fix available')
                 args = ''  # to disable further cmd executing
             else:
+                self.logger.info(f'fixing command for {sender_nick}: {fixed_command}')
                 args = fixed_command
                 self.register_fixed_command(None)
                 raw_msg = None
@@ -438,6 +439,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         register command to be executed after 'fix' command came
         fixed_command should not start with bot command prefix
         """
+        self.logger.info(f'saving fixed command: {fixed_command}')
         with self._fixed_command_lock:
             self._fixed_command = fixed_command
 
