@@ -37,10 +37,14 @@ class plugin_manager(plugin):
                 self.bot.say(f'plugin {arg} enabled')
             except self.NoPluginsModuleFound as e:
                 self.logger.info(e)
-                self.bot.say(f'no such plugin: {arg}, use \'{self.bot.config["command_prefix"]}load_plugin {arg}\' to load new plugin')
+                fixed_command = f'load_plugin {arg}'
+                self.bot.say(f'no such plugin: {arg}, use \'{self.bot.config["command_prefix"]}{fixed_command}\' to load new plugin')
+                self.bot.register_fixed_command(fixed_command)
             except self.PluginAlreadyEnabled as e:
                 self.logger.info(e)
-                self.bot.say(f'plugin already enabled, use \'{self.bot.config["command_prefix"]}load_plugin {arg}\' to reload it')
+                fixed_command = f'load_plugin {arg}'
+                self.bot.say(f'plugin already enabled, use \'{self.bot.config["command_prefix"]}{fixed_command}\' to reload it')
+                self.bot.register_fixed_command(fixed_command)
             except Exception as e:
                 self.logger.error(f'exception caught while trying to enable plugin {arg}: {e}')
                 self.bot.say(f'cannot enable {arg}: unexpected exception thrown')

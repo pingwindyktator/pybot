@@ -490,3 +490,10 @@ class builtins(plugin):
     @doc('uploads log file to file.io')
     def upload_logs(self, sender_nick, **kwargs):
         self.upload_file_impl(sender_nick, r'pybot.log')
+
+    @command
+    @doc("fix your previous command")
+    def fix(self, **kwargs):
+        """
+        just a placeholder for fix functionality. Its implementation has to be placed in pybot.on_pubmsg
+        """

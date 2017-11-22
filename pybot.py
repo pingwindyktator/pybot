@@ -13,7 +13,7 @@ import irc.client
 import utils
 
 from queue import Queue
-from threading import Thread
+from threading import Thread, Lock
 from color import color
 from utils import irc_nickname
 from fuzzywuzzy import process, fuzz
@@ -53,6 +53,8 @@ class pybot(irc.bot.SingleServerIRCBot):
         self._say_thread = None
         self._dying = False
         self._load_plugins()
+        self._fixed_command = None
+        self._fixed_command_lock = Lock()
 
     class _say_info:
         def __init__(self, target, msg):
@@ -147,6 +149,24 @@ class pybot(irc.bot.SingleServerIRCBot):
         if not args:
             args = msg_parser.trim_msg(self.get_nickname() + ',', full_msg)
 
+        # fix should not affect msg regexps
+        reg_raw_msg = raw_msg
+        reg_full_msg = full_msg
+        if args.startswith('fix'):
+            fixed_command = self._get_fixed_command()
+            if 'builtins' not in self.get_plugins_names() or 'fix' not in self.get_plugin_commands('builtins'):
+                pass
+            elif hasattr(self.commands['fix'], '__admin') and sender_nick not in self.config['ops']:
+                pass
+            elif not fixed_command:
+                self.say('no fix available')
+                args = ''  # to disable further cmd executing
+            else:
+                args = fixed_command
+                self.register_fixed_command(None)
+                raw_msg = None
+                full_msg = None
+
         args_list = args.split()
         cmd = args_list[0].strip() if len(args_list) > 0 else ''
         args_list = args_list[1:]
@@ -168,15 +188,16 @@ class pybot(irc.bot.SingleServerIRCBot):
             possible_cmd = self._get_best_command_match(cmd, sender_nick)
             if possible_cmd:
                 self.say(f"no such command: {cmd}, did you mean '{possible_cmd}'?")
+                self.register_fixed_command(f'{possible_cmd} {args}')
             else:
                 self.say(f'no such command: {cmd}')
 
         for reg in self.msg_regexps:
-            regex_search_result = reg.findall(full_msg)
+            regex_search_result = reg.findall(reg_full_msg)
             if regex_search_result:
                 for func in self.msg_regexps[reg]:
-                    self.logger.debug(f'calling message regex handler  {func.__qualname__}(sender_nick={sender_nick}, msg=\'{full_msg}\', reg_res={regex_search_result}, raw_msg=...)...')
-                    func(sender_nick=sender_nick, msg=full_msg, reg_res=regex_search_result, raw_msg=raw_msg)
+                    self.logger.debug(f'calling message regex handler  {func.__qualname__}(sender_nick={sender_nick}, msg=\'{reg_full_msg}\', reg_res={regex_search_result}, raw_msg=...)...')
+                    func(sender_nick=sender_nick, msg=reg_full_msg, reg_res=regex_search_result, raw_msg=reg_raw_msg)
 
     def on_kick(self, _, raw_msg):
         """ called by super() when somebody gets kicked """
@@ -349,6 +370,10 @@ class pybot(irc.bot.SingleServerIRCBot):
                 self.msg_regexps[__regex] = list(set(self.msg_regexps[__regex]))
                 self.logger.debug(f'regex for {func.__qualname__} registered: \'{getattr(func, "__regex").pattern}\'')
 
+    def _get_fixed_command(self):
+        with self._fixed_command_lock:
+            return self._fixed_command
+
     # API funcs
 
     def register_plugin(self, plugin_instance):
@@ -406,6 +431,14 @@ class pybot(irc.bot.SingleServerIRCBot):
 
     def joined_to_channel(self):
         return self.connection.is_connected() and self.channel
+
+    def register_fixed_command(self, fixed_command):
+        """
+        register command to be executed after 'fix' command came
+        fixed_command should not start with bot command prefix
+        """
+        with self._fixed_command_lock:
+            self._fixed_command = fixed_command
 
     @property
     def channel(self):

@@ -32,7 +32,10 @@ class get(plugin):
         else:
             response = 'no such entry'
             possible_entry = self.get_best_entry_match(entry) if self.config['try_autocorrect'] else None
-            if possible_entry: response = f'{response}, did you mean {possible_entry}?'
+            if possible_entry:
+                fixed_command = f'get {possible_entry}'
+                response = f'{response}, did you mean {possible_entry}?'
+                self.bot.register_fixed_command(fixed_command)
             self.bot.say(response)
 
     @command

@@ -20,7 +20,13 @@ class crypto_wa_warner:
         to = c[3] if len(c) > 3 else ''
         if self.is_any_currency_known([_from, to, msg]):
             prefix = color.orange("[WARNING] ")
-            suffix = f', you may try {self.bot.config["command_prefix"]}crypto {msg}' if 'crypto' in self.bot.get_plugins_names() else ''
+            suffix = ''
+
+            if 'crypto' in self.bot.get_plugins_names() and 'crypto' in self.bot.get_plugin_commands('crypto'):
+                fixed_command = f'crypto {msg}'
+                suffix = f', you may try {self.bot.config["command_prefix"]}{fixed_command}'
+                self.bot.register_fixed_command(fixed_command)
+
             self.bot.say(f'{prefix}Wolfram-Alpha seems not to handle cryptocurrencies properly{suffix}')
             return True
 
