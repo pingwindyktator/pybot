@@ -43,7 +43,7 @@ class note(plugin):
     def note_impl(self, sender_nick, msg, anon):
         if not msg: return
         target = msg.split()[0]
-        if sender_nick == target or sender_nick == self.bot.get_nickname():
+        if sender_nick == target or target == self.bot.get_nickname():
             self.bot.say('orly?')
             return
 

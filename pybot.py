@@ -188,7 +188,8 @@ class pybot(irc.bot.SingleServerIRCBot):
             possible_cmd = self._get_best_command_match(cmd, sender_nick)
             if possible_cmd:
                 self.say(f"no such command: {cmd}, did you mean '{possible_cmd}'?")
-                self.register_fixed_command(f'{possible_cmd} {args}')
+                if possible_cmd != 'fix':
+                    self.register_fixed_command(f'{possible_cmd} {args}')
             else:
                 self.say(f'no such command: {cmd}')
 
