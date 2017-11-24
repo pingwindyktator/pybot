@@ -1,22 +1,43 @@
 import json
-import re
-from datetime import timedelta
-from threading import Timer
-
 import requests
 
+from datetime import timedelta
+from threading import Timer, Lock
 from plugin import *
 
 
 class crypto(plugin):
     def __init__(self, bot):
         super().__init__(bot)
-        self.known_crypto_currencies = self.get_crypto_currencies()
+        self.known_crypto_currencies = None
+        self.update_delta_time = timedelta(hours=1).total_seconds()
+        self.crypto_currencies_lock = Lock()
+        self.update_timer = None
         self.convert_regex = re.compile(r'^([0-9]*\.?[0-9]*)\W*([A-Za-z]+)\W+(to|in)\W+([A-Za-z]+)$')
         self.time_delta_regex = re.compile(r'([0-9]+[Hh])?\W*([0-9]+[Mm])?(.*)')
         self.coinmarketcap_url = r'https://api.coinmarketcap.com/v1/ticker/%s'
         self.fixer_url = r'http://api.fixer.io/latest?base=%s'
         self.watch_timers = {}  # {curr -> watch_desc}
+        self.update_known_crypto_currencies()
+
+    def get_known_crypto_currencies(self):
+        url = r'https://api.coinmarketcap.com/v1/ticker/?limit=0'
+        content = requests.get(url, timeout=10).content.decode('utf-8')
+        raw_result = json.loads(content)
+        result = []
+        for entry in raw_result:
+            result.append(self.currency_id(entry['id'], entry['name'], entry['symbol']))
+
+        return result
+
+    def update_known_crypto_currencies(self):
+        self.logger.info('updating known crypto currencies...')
+        res = self.get_known_crypto_currencies()
+        with self.crypto_currencies_lock:
+            self.known_crypto_currencies = res
+
+        self.update_timer = Timer(self.update_delta_time, self.update_known_crypto_currencies)
+        self.update_timer.start()
 
     class watch_desc:
         def __init__(self, timer_object, timedelta):
@@ -40,24 +61,17 @@ class crypto(plugin):
             self.marker_cap_usd = float(raw_result['market_cap_usd']) if raw_result['market_cap_usd'] else None
 
     def unload_plugin(self):
+        if self.update_timer: self.update_timer.cancel()
+
         for t in self.watch_timers.values():
             t.timer_object.cancel()
 
-    def get_crypto_currencies(self):
-        url = r'https://api.coinmarketcap.com/v1/ticker/?limit=0'
-        content = requests.get(url, timeout=10).content.decode('utf-8')
-        raw_result = json.loads(content)
-        result = []
-        for entry in raw_result:
-            result.append(self.currency_id(entry['id'], entry['name'], entry['symbol']))
-
-        return result
-
     def get_crypto_currency_id(self, alias):
         alias = alias.casefold()
-        for entry in self.known_crypto_currencies:
-            if entry.id.casefold() == alias or entry.name.casefold() == alias or entry.symbol.casefold() == alias:
-                return entry
+        with self.crypto_currencies_lock:
+            for entry in self.known_crypto_currencies:
+                if entry.id.casefold() == alias or entry.name.casefold() == alias or entry.symbol.casefold() == alias:
+                    return entry
 
         return None
 
