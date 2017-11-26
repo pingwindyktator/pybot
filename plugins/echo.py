@@ -18,3 +18,8 @@ class echo(plugin):
         replies = ['spx', 'np', f'np, {sender_nick}', ':)', 'any time', 'de nada', "you're welcome"]
         self.bot.say(random.choice(replies))
         self.logger.info(f"thx from {sender_nick}!")
+
+    @command
+    def next(self, sender_nick, msg, **kwargs):
+        self.bot.say('another satisfied customer, next one please!)
+                     
