@@ -21,5 +21,5 @@ class echo(plugin):
 
     @command
     def next(self, sender_nick, msg, **kwargs):
-        self.bot.say('another satisfied customer, next one please!)
-                     
+        self.bot.say('another satisfied customer, next one please!')
+
