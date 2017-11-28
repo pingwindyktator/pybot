@@ -1,5 +1,6 @@
 import random
 
+from datetime import timedelta
 from plugin import *
 
 
@@ -22,4 +23,11 @@ class echo(plugin):
     @command
     def next(self, sender_nick, msg, **kwargs):
         self.bot.say('another satisfied customer, next please!')
+    
+    @command
+    def server_uptime(self, sender_nick, **kwargs):
+        with open('/proc/uptime', 'r') as f:
+            uptime_seconds = float(f.readline().split()[0])
+            uptime_string = str(timedelta(seconds=uptime_seconds))
 
+        self.bot.say(uptime_string)
