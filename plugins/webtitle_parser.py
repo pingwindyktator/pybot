@@ -25,7 +25,7 @@ class webtitle_parser(plugin):
         try:
             if self.regex.findall(url):
                 req = requests.get(url, timeout=5)
-                tree = fromstring(req.content)
+                tree = fromstring(req.content.decode())
                 title = tree.findtext('.//title').strip()
                 if title is not None and title != '':
                     self.bot.say(color.light_green(title))
