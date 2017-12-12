@@ -21,10 +21,15 @@ class echo(plugin):
         self.logger.info(f"thx from {sender_nick}!")
 
     @command
-    def next(self, sender_nick, msg, **kwargs):
+    def next(self, **kwargs):
         self.bot.say('another satisfied customer, next please!')
-    
+
     @command
+    def gimmegimmegimme(self, **kwargs):
+        self.bot.say('a man after midnight!')
+   
+    @command
+    @admin
     def server_uptime(self, sender_nick, **kwargs):
         with open('/proc/uptime', 'r') as f:
             uptime_seconds = float(f.readline().split()[0])
