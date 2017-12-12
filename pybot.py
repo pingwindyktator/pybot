@@ -460,6 +460,7 @@ class pybot(irc.bot.SingleServerIRCBot):
     def say(self, msg, target=None, force=False):
         if not target: target = self.config['channel']
         if type(msg) is bytes: msg = msg.decode('utf-8')
+        if not isinstance(msg, str): msg = str(msg)
 
         if self.is_msg_too_long(msg):
             if not self.config['wrap_too_long_msgs']:
