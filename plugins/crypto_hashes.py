@@ -134,3 +134,8 @@ class crypto_hashes(plugin):
         h = hashlib.new('dsaWithSHA')
         h.update(msg.encode())
         self.bot.say(h.hexdigest())
+
+    @doc('computes double-sha256 ot utf-8 encoded msg')
+    @command
+    def double_sha256(self, msg, **kwargs):
+        self.bot.say(hashlib.sha256(hashlib.sha256(msg.encode()).digest()).hexdigest())
