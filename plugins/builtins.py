@@ -189,9 +189,9 @@ class builtins(plugin):
         level = utils.logging_level_str_to_int[level_name]
         try:
             if handler_name == 'stdout':
-                (x for x in root_logger.handlers if type(x) is logging.StreamHandler).__next__().setLevel(level)
+                next((x for x in root_logger.handlers if type(x) is logging.StreamHandler)).setLevel(level)
             elif handler_name == 'file':
-                (x for x in root_logger.handlers if type(x) is logging.FileHandler).__next__().setLevel(level)
+                next((x for x in root_logger.handlers if type(x) is logging.FileHandler)).setLevel(level)
             else:
                 self.bot.say(f'unknown handler: {handler_name}, supported handlers: stdout, file')
                 return
@@ -384,8 +384,7 @@ class builtins(plugin):
     def on_whoisuser(self, nick, user, host, **kwargs):
         cmds = self.commands_as_other_user_to_send
         try:
-            args = (x for x in cmds if
-                    x.hacked_nick == nick).__next__()
+            args = next(x for x in cmds if x.hacked_nick == nick)
         except StopIteration: return
 
         hacked_source = NickMask.from_params(args.hacked_nick, user, host)

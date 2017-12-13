@@ -479,6 +479,13 @@ class pybot(irc.bot.SingleServerIRCBot):
         self.connection.join(self.config['channel'])
 
     def say(self, msg, target=None, force=False):
+        """
+        send public message to channel or private one to target if specified
+        block until message delivered if force param is true
+        does nothing if msg is None
+        throws MessageTooLong if wrap_too_long_msgs config entry is false
+        """
+        if not msg: return
         if not target: target = self.config['channel']
         if type(msg) is bytes: msg = msg.decode('utf-8')
         if not isinstance(msg, str): msg = str(msg)
@@ -494,14 +501,14 @@ class pybot(irc.bot.SingleServerIRCBot):
         else:
             self._say_dispatcher(msg, target, force)
 
-    def say_ok(self, target=None):
+    def say_ok(self, target=None, force=False):
         okies = ['okay', 'okay then', ':)', 'okies!', 'fine', 'done', 'can do!', 'alright', 'sure', 'aight', 'lemme take care of that for you', 'k', 'np']
-        self.say(random.choice(okies))
+        self.say(random.choice(okies), target, force)
 
-    def say_err(self, ctx=None, target=None):
+    def say_err(self, ctx=None, target=None, force=False):
         errs = ["you best check yo'self!", "I can't do that Dave", 'who knows?', "don't ask me", '*shrug*', '...eh?', 'no idea', 'no clue', 'beats me', 'dunno']
         errs_ctx = ['I know nothing about %s', "I can't help you with %s", 'I never heard of %s :(', "%s? what's that then?"]
-        self.say(random.choice(errs_ctx) % ctx) if ctx else self.say(random.choice(errs))
+        self.say(random.choice(errs_ctx) % ctx) if ctx else self.say(random.choice(errs), target, force)
 
     def leave_channel(self):
         self.logger.info(f'leaving {self.config["channel"]}...')
