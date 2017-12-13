@@ -379,6 +379,11 @@ class pybot(irc.bot.SingleServerIRCBot):
     # API funcs
 
     def register_plugin(self, plugin_instance):
+        """
+        register plugin_instance as bot's plugin
+        handles multiple plugin_instance registered
+        throws RuntimeError if plugin_instance does not inherit from plugin base class
+        """
         if not issubclass(type(plugin_instance), plugin.plugin):
             self.logger.error(f'trying to register no-plugin class {type(plugin_instance).__name__} as plugin, aborting...')
             raise RuntimeError(f'class {type(plugin_instance).__name__} does not inherit from plugin!')
@@ -410,7 +415,19 @@ class pybot(irc.bot.SingleServerIRCBot):
         else:
             return None
 
+    def get_plugin(self, plugin_name):
+        """
+        :return: registered plugin instance with name plugin_name or None
+        """
+        try:
+            return next(x for x in self.get_plugins() if x.__class__.__name__ == plugin_name)
+        except StopIteration:
+            return None
+
     def get_plugins(self):
+        """
+        :return: registered plugins
+        """
         return self.plugins
 
     def get_plugins_names(self):
@@ -424,6 +441,10 @@ class pybot(irc.bot.SingleServerIRCBot):
         return ('ignored_users' in self.config and nickname in self.config['ignored_users']) and (nickname not in self.config['ops'])
 
     def is_msg_too_long(self, msg):
+        """
+        IRC protocol defines 512 as max length of message
+        handles utf-8 encoding and additional information required
+        """
         msg = f"PRIVMSG {self.config['channel']} :{msg}"
         encoded_msg = msg.encode('utf-8')
         return len(encoded_msg + b'\r\n') > 512  # max msg len defined by IRC protocol
@@ -437,7 +458,7 @@ class pybot(irc.bot.SingleServerIRCBot):
     def register_fixed_command(self, fixed_command):
         """
         register command to be executed after 'fix' command came
-        fixed_command should not start with bot command prefix
+        fixed_command SHOULD NOT start with bot command prefix
         """
         self.logger.info(f'saving fixed command: {fixed_command}')
         with self._fixed_command_lock:
