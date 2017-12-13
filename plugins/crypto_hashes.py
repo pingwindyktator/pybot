@@ -7,13 +7,27 @@ from plugin import *
 
 class crypto_hashes(plugin):
     def __init__(self, bot):
-        if 'dsaWithSHA' not in hashlib.algorithms_available: del crypto_hashes.dsaWithSHA
-        if 'blake2s' not in hashlib.algorithms_available: del crypto_hashes.blake2s
-        if 'md4' not in hashlib.algorithms_available: del crypto_hashes.md4
-        if 'ecdsa-with-SHA1' not in hashlib.algorithms_available: del crypto_hashes.ecdsa_with_SHA1
-        if 'dsaEncryption' not in hashlib.algorithms_available: del crypto_hashes.dsaEncryption
-        if 'whirlpool' not in hashlib.algorithms_available: del crypto_hashes.whirlpool
-        if 'ripemd160' not in hashlib.algorithms_available: del crypto_hashes.ripemd160
+        if 'dsaWithSHA' not in hashlib.algorithms_available:
+            del crypto_hashes.dsaWithSHA
+            del crypto_hashes.hmac_dsaWithSHA
+        if 'blake2s' not in hashlib.algorithms_available:
+            del crypto_hashes.blake2s
+            del crypto_hashes.hmac_blake2s
+        if 'md4' not in hashlib.algorithms_available:
+            del crypto_hashes.md4
+            del crypto_hashes.hmac_md4
+        if 'ecdsa-with-SHA1' not in hashlib.algorithms_available:
+            del crypto_hashes.ecdsa_with_SHA1
+            del crypto_hashes.hmac_ecdsa_with_SHA1
+        if 'dsaEncryption' not in hashlib.algorithms_available:
+            del crypto_hashes.dsaEncryption
+            del crypto_hashes.hmac_dsaEncryption
+        if 'whirlpool' not in hashlib.algorithms_available:
+            del crypto_hashes.whirlpool
+            del crypto_hashes.hmac_whirlpool
+        if 'ripemd160' not in hashlib.algorithms_available:
+            del crypto_hashes.ripemd160
+            del crypto_hashes.hmac_ripemd160
 
         super().__init__(bot)
 
