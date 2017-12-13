@@ -7,6 +7,8 @@ import copy
 import requests
 import collections
 
+from datetime import timedelta
+from threading import Timer
 from ruamel import yaml
 from irc.client import NickMask
 from ruamel.yaml.comments import CommentedMap
@@ -20,6 +22,8 @@ class builtins(plugin):
         self.pybot_dir = os.path.dirname(os.path.realpath(__file__))
         self.pybot_dir = os.path.abspath(os.path.join(self.pybot_dir, os.pardir))
         self.commands_as_other_user_to_send = []
+        self.time_delta_regex = re.compile(r'([0-9]+[Hh])?\W*([0-9]+[Mm])?(.*)')
+        self.ignore_timers = []
 
     class as_other_user_command:
         def __init__(self, sender_nick, hacked_nick, connection, raw_msg):
@@ -27,6 +31,9 @@ class builtins(plugin):
             self.hacked_nick = irc_nickname(hacked_nick)
             self.connection = connection
             self.raw_msg = raw_msg
+
+    def unload_plugin(self):
+        for t in self.ignore_timers: t.cancel()
 
     @command
     @doc('help <entry>: give doc msg for <entry> command / plugin or get supported commands if <entry> is empty')
@@ -113,16 +120,20 @@ class builtins(plugin):
         self.bot.say(reply)
         self.logger.info(f'{sender_nick} asked for ops: {self.bot.config["ops"]}')
 
+    def ignore_user_impl(self, username):
+        if 'ignored_users' not in self.bot.config:
+            self.bot.config['ignored_users'] = [username]
+        else:
+            self.bot.config['ignored_users'].append(username)
+
     @command
     @admin
     @doc("ignore_user <username>...: ignore user's messages")
     def ignore_user(self, sender_nick, args, **kwargs):
         if not args: return
         to_ignore = [irc_nickname(arg) for arg in args]
-        if 'ignored_users' not in self.bot.config:
-            self.bot.config['ignored_users'] = to_ignore
-        else:
-            self.bot.config['ignored_users'].extend(to_ignore)
+        for arg in to_ignore:
+            self.ignore_user_impl(arg)
 
         reply = f'{to_ignore[0]} is now ignored' if len(to_ignore) == 1 else f'{to_ignore} are now ignored'
         self.bot.say(reply)
@@ -130,14 +141,48 @@ class builtins(plugin):
 
     @command
     @admin
-    @doc("unignore_user <username>...: unignore user messages")
+    @doc("ignore_user_for <username> <time>: ignore user's messages for <time> time. <time> should be %H %M  (eg.  1h 42m)")
+    def ignore_user_for(self, sender_nick, msg, **kwargs):
+        if not msg: return
+        username = irc_nickname(msg.split()[0].strip())
+        time = msg[len(username):].strip()
+        if not time: return
+        reg_res = self.time_delta_regex.findall(time)
+        if not reg_res:
+            self.bot.say('invalid time given')
+            return
+
+        hours = int(reg_res[0][0][:-1]) if reg_res[0][0] else 0
+        minutes = int(reg_res[0][1][:-1]) if reg_res[0][1] else 0
+        if hours == 0 and minutes == 0: return
+
+        self.ignore_user_impl(username)
+        self.logger.warning(f'{sender_nick} ignored {username} for {hours}H:{minutes}M')
+        delta_time = timedelta(hours=hours, minutes=minutes).total_seconds()
+        t = Timer(delta_time, self.unignore_user_timer_ended, kwargs={'username': username})
+        self.ignore_timers.append(t)
+        t.start()
+        self.bot.say(f'{username} ignored for {time}')
+
+    def unignore_user_impl(self, username):
+        if 'ignored_users' not in self.bot.config: return
+        self.bot.config['ignored_users'].remove(username)
+
+    def unignore_user_timer_ended(self, username):
+        if username in self.bot.config['ignored_users']:
+            self.logger.warning(f'time passed, {username} is no longer ignored')
+            self.unignore_user_impl(username)
+
+    @command
+    @admin
+    @doc("unignore_user <username>...: unignore user's messages")
     def unignore_user(self, sender_nick, args, **kwargs):
         if 'ignored_users' not in self.bot.config: return
         to_unignore = [irc_nickname(arg) for arg in args]
         to_unignore = [arg for arg in to_unignore if arg in self.bot.config['ignored_users']]
         if not to_unignore: return
         for arg in to_unignore:
-            self.bot.config['ignored_users'].remove(arg)
+            self.unignore_user_impl(arg)
 
         reply = f'{to_unignore[0]} is no longer ignored' if len(to_unignore) == 1 else f'{to_unignore} are no longer ignored'
         self.bot.say(reply)

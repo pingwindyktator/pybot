@@ -188,7 +188,7 @@ class crypto(plugin):
     # --------------------------------------------------------------------------------------------------------------
 
     @command
-    @doc('crypto_watch <crypto_currency> <time>: watches <crypto_currency> every <time> time. <time> should be %H:%M  (eg.  1h 42m)')
+    @doc('crypto_watch <crypto_currency> <time>: watches <crypto_currency> every <time> time. <time> should be %H %M  (eg.  1h 42m)')
     def crypto_watch(self, sender_nick, msg, **kwargs):
         if not msg: return
         curr = msg.split()[0]
