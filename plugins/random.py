@@ -39,14 +39,14 @@ class random(plugin):
     @command
     def random2(self, args, sender_nick,  **kwargs):
         result = self.random_impl(args, 2, sender_nick)
-        self.bot.say(result)
+        self.bot.say(f'0b{result}')
 
     @doc("""random8 <min> <max>: fetch oct random number in [min, max) from random.org
             random8: fetch oct random number in [0, 1000000000) from random.org""")
     @command
     def random8(self, args, sender_nick, **kwargs):
         result = self.random_impl(args, 8, sender_nick)
-        self.bot.say(result)
+        self.bot.say(f'0o{result}')
 
     @doc("""random16 <min> <max>: fetch hex random number in [min, max) from random.org
             random16: fetch hex random number in [0, 1000000000) from random.org""")
