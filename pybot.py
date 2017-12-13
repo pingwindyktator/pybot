@@ -459,6 +459,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         """
         register command to be executed after 'fix' command came
         fixed_command SHOULD NOT start with bot command prefix
+        set None to clear fixed command
         """
         self.logger.info(f'saving fixed command: {fixed_command}')
         with self._fixed_command_lock:
