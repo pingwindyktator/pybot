@@ -28,7 +28,7 @@ class get(plugin):
 
         result = result[0] if result else None
         self.logger.info(f'{sender_nick} gets {entry}: {result}')
-        if result: self.bot.say(result)
+        if result: self.bot.say(color.cyan(f'[{entry}] ') + result)
         else:
             response = 'no such entry'
             possible_entry = self.get_best_entry_match(entry) if self.config['try_autocorrect'] else None
