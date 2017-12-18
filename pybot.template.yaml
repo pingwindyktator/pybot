@@ -60,3 +60,6 @@ weather:
 youtube:
   api_key: AIzaSyCoO8Jm9Cc3L-O_y-QH0VZRG5LifKmq4io
   results: 2
+
+book:
+  api_key: ''

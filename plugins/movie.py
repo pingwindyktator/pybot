@@ -44,7 +44,7 @@ class movie(plugin):
             self.bot.say(f'omdbapi error: {error}')
             return
 
-        rating = f' ({response["imdbRating"]} out of {response["imdbVotes"]} voters)' if 'imdbRating' in response and 'imdbVotes' in response else ''
+        rating = f' ({response["imdbRating"]}/10 out of {response["imdbVotes"]} voters)' if 'imdbRating' in response and 'imdbVotes' in response else ''
         self.bot.say(f'{self.build_prefix(response)} {self.imdb_url % response["imdbID"]}{rating}')
 
     def get_movie_info(self, movie):
