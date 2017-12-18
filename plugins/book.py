@@ -37,17 +37,19 @@ class book(plugin):
         if not title or not id:
             return
 
-        response = f'[{title}'
-        if year: response += f' ({year})'
-        if author: response += f' by {author}'
-        response += '] '
-        response += r'https://www.goodreads.com/book/show/%s' % id
+        prefix = f'[{title}'
+        if year: prefix += f' ({year})'
+        if author: prefix += f' by {author}'
+        prefix += ']'
+        prefix = color.orange(prefix)
+
+        response = r'https://www.goodreads.com/book/show/%s' % id
         if rating:
             response += f' ({rating}/5'
             if rating_count: response += f' out of {rating_count} voters'
             response += ')'
 
-        self.bot.say(response)
+        self.bot.say(f'{prefix} {response}')
 
     def get_text_or_none(self, xml_el):
         if xml_el is None: return None
