@@ -11,7 +11,7 @@ class book(plugin):
         self.goodreads_api_uri = r'https://www.goodreads.com/search.xml?key=%s&q=%s'
 
     @command
-    @doc('get book info from goodreadings.com')
+    @doc('get book info from goodreads.com')
     def book(self, sender_nick, msg, **kwargs):
         if not msg: return
         ask = urllib.parse.quote(msg)
