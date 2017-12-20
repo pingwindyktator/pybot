@@ -47,7 +47,7 @@ class get(plugin):
         self.bot.say(response)
 
     @command
-    @doc('rm_set <entry>: remove <entry> entry')
+    @doc('unset <entry>: remove <entry> entry')
     def unset(self, sender_nick, msg, **kwargs):
         if not msg: return
         entry = self.prepare_entry(msg)
