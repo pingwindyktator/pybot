@@ -79,7 +79,7 @@ class plugin:
         :param msg     - full message
         :param source  - primsg source
         """
-
+    # test
     # see https://www.alien.net.au/irc/irc2numerics.html
     # for deep explanation
     def on_whoisuser(self, raw_msg, nick, user, host, **kwargs):
