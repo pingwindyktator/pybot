@@ -27,6 +27,10 @@ class echo(plugin):
     @command
     def gimmegimmegimme(self, **kwargs):
         self.bot.say('a man after midnight!')
+        
+    @command
+    def lifeislife(self, **kwargs):
+        self.bot.say('la la la la la!')
    
     @command
     @admin
