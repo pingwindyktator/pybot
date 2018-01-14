@@ -443,7 +443,7 @@ class builtins(plugin):
         self.bot.on_pubmsg(args.connection, hacked_raw_msg)
 
     def clean_commands_as_other_user_to_send(self):
-        users = list(self.bot.channel.users())
+        users = self.bot.get_usernames_on_channel()
 
         for x in self.commands_as_other_user_to_send:
             if x.hacked_nick not in users:
