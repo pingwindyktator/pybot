@@ -47,6 +47,11 @@ class get(plugin):
         self.bot.say(response)
 
     @command
+    @doc("get all saved messages")
+    def get_all(self, **kwargs):
+        return self.get_list(**kwargs)
+
+    @command
     @doc('unset <entry>: remove <entry> entry')
     def unset(self, sender_nick, msg, **kwargs):
         if not msg: return
