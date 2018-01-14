@@ -287,18 +287,48 @@ class builtins(plugin):
         os.chdir(os.getcwd())
         os.execv(sys.executable, args)
 
-    def update_config_key(self, key, value, config):
+    def insert_to_config(self, key, value, config):
+        """
+        inserts :param key -> :param value entry into :param config
+        supports dicts nesting (subconfig in config)
+        """
+
         if key not in config:
             config[key] = value
             self.logger.info(f'inserting {key}: {value} to config file')
-        elif type(value) is dict:  # do not override non-dict values
+        elif isinstance(value, dict):  # do not override non-dict values
             for v_key, v_value in value.items():
-                self.update_config_key(v_key, v_value, config[key])
+                self.insert_to_config(v_key, v_value, config[key])
+
+    def remove_obsolete_key_from_config_impl(self, key, config, config_template):
+        """
+        removes :param key from :param config if it's not present in :param config_template
+        supports dicts nesting (subconfig in config)
+        """
+
+        if key in config_template:
+            if isinstance(config[key], dict):
+                config[key] = self.remove_obsolete_key_from_config(config[key], config_template[key])
+        else:
+            self.logger.info(f'removing {key} from config file')
+            del config[key]
+
+    def remove_obsolete_key_from_config(self, config, config_template):
+        """
+        :return :param config without keys not present in :param config_template
+        """
+
+        new_config = copy.deepcopy(config)
+        for key in config.keys():
+            self.remove_obsolete_key_from_config_impl(key, new_config, config_template)
+
+        return new_config
 
     def write_config_file(self, config, outfilename):
         """
         tries to write formatted :param config to :param outfilename
         """
+
         config = copy.deepcopy(config)
         global_config = CommentedMap()
         plugins_config = CommentedMap()
@@ -335,9 +365,12 @@ class builtins(plugin):
         """
 
         config = yaml.load(open('pybot.yaml'), Loader=yaml.RoundTripLoader)
+        config_template = yaml.load(open("pybot.template.yaml"), Loader=yaml.Loader)
         if not config: config = {}
-        for key, value in yaml.load(open("pybot.template.yaml"), Loader=yaml.Loader).items():
-            self.update_config_key(key, value, config)
+        for key, value in config_template.items():
+            self.insert_to_config(key, value, config)
+
+        config = self.remove_obsolete_key_from_config(config, config_template)
 
         if config == self.bot.config: return False
 
