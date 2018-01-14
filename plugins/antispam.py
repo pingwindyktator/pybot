@@ -15,9 +15,11 @@ class antispam(plugin):
         super().__init__(bot)
         self.msg_infos = {}  # nickname -> msg_info
         self.long_msg_infos = {}  # nickname -> msg_info
+
         self.last_msg_author = None
-        self.same_author_msgs_in_row = None
+        self.same_msgs_in_row = None
         self.last_msg_timestamp = None
+        self.same_msg = None
 
     def on_pubmsg(self, raw_msg, source, msg, **kwargs):
         sender_nick = irc_nickname(source.nick)
@@ -37,7 +39,7 @@ class antispam(plugin):
         if self.config['kick_if_too_many_msgs'] and self.too_many_msg(sender_nick, msg): result = True
         if self.config['kick_if_too_many_users_mentioned'] and self.too_many_users_mentioned(sender_nick, msg): result = True
         if self.config['kick_if_too_long_msgs'] and self.too_long_msgs(sender_nick, msg): result = True
-        if self.config['kick_if_no_one_else_active'] and self.no_one_active(sender_nick, msg): result = True
+        if self.config['kick_if_same_msg_too_many_times'] and self.same_msg_too_many_times(sender_nick, msg): result = True
 
         if self.is_whitelisted(sender_nick): result = False
         return result
@@ -109,19 +111,21 @@ class antispam(plugin):
 
         return msg_info.msgs_in_row > 2
 
-    def no_one_active(self, sender_nick, msg):
+    def same_msg_too_many_times(self, sender_nick, msg):
         now = datetime.now()
         if self.last_msg_timestamp is None or self.last_msg_author is None:
             self.last_msg_timestamp = now
             self.last_msg_author = sender_nick
-            self.same_author_msgs_in_row = 1
+            self.same_msgs_in_row = 1
+            self.same_msg = msg
             return
 
-        if sender_nick == self.last_msg_author and self.last_msg_timestamp + timedelta(minutes=60) > now:
-            self.same_author_msgs_in_row += 1
+        if msg == self.same_msg and sender_nick == self.last_msg_author and self.last_msg_timestamp + timedelta(minutes=60) > now:
+            self.same_msgs_in_row += 1
         else:
             self.last_msg_author = sender_nick
-            self.same_author_msgs_in_row = 1
+            self.same_msgs_in_row = 1
 
+        self.same_msg = msg
         self.last_msg_timestamp = now
-        return self.same_author_msgs_in_row > 9
+        return self.same_msgs_in_row > 5

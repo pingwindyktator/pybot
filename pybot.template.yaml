@@ -69,4 +69,4 @@ antispam:
   kick_if_too_many_msgs: true
   kick_if_too_many_users_mentioned: true
   kick_if_too_long_msgs: true
-  kick_if_no_one_else_active: true
+  kick_if_same_msg_too_many_times: true
