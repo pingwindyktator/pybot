@@ -53,6 +53,7 @@ class get(plugin):
 
     @command
     @doc('unset <entry>: remove <entry> entry')
+    @admin
     def unset(self, sender_nick, msg, **kwargs):
         if not msg: return
         entry = self.prepare_entry(msg)
@@ -65,6 +66,7 @@ class get(plugin):
 
     @command
     @doc('set <entry> <message>: save <message> for <entry>')
+    @admin
     def set(self, sender_nick, msg, **kwargs):
         if not msg: return
         entry = msg.split()[0]
