@@ -24,25 +24,31 @@ class antispam(plugin):
     def on_pubmsg(self, raw_msg, source, msg, **kwargs):
         sender_nick = irc_nickname(source.nick)
 
-        if self.is_spam(sender_nick, msg):
+        reason = self.get_kick_reason(sender_nick, msg)
+        if reason:
             if self.am_i_channel_operator():
                 self.bot.kick(sender_nick, 'stop it!')
-                self.logger.info(f'{sender_nick} kicked')
+                self.logger.info(f'{sender_nick} kicked: {reason}')
             else:
-                self.logger.warning(f"{sender_nick} is possibly spamer, but I've no operator privileges to kick him :(")
+                self.logger.warning(f"{sender_nick} is possibly spamer ({reason}), but I've no operator privileges to kick him :(")
 
-    def is_spam(self, sender_nick, msg):
+    def get_kick_reason(self, sender_nick, msg):
         # antispam checkers should be called even if user is whitelisted!
-        result = False
+        reason = None
 
-        if self.config['kick_if_too_colorful_msgs'] and self.too_colorful_msg(sender_nick, msg): result = True
-        if self.config['kick_if_too_many_msgs'] and self.too_many_msg(sender_nick, msg): result = True
-        if self.config['kick_if_too_many_users_mentioned'] and self.too_many_users_mentioned(sender_nick, msg): result = True
-        if self.config['kick_if_too_long_msgs'] and self.too_long_msgs(sender_nick, msg): result = True
-        if self.config['kick_if_same_msg_too_many_times'] and self.same_msg_too_many_times(sender_nick, msg): result = True
+        if self.config['kick_if_too_colorful_msgs'] and self.too_colorful_msg(sender_nick, msg):
+            reason = 'too colorful msg'
+        if self.config['kick_if_too_many_msgs'] and self.too_many_msg(sender_nick, msg):
+            reason = 'flood excess, too many msgs'
+        if self.config['kick_if_too_many_users_mentioned'] and self.too_many_users_mentioned(sender_nick, msg):
+            reason = 'too many users mentioned'
+        if self.config['kick_if_too_long_msgs'] and self.too_long_msgs(sender_nick, msg):
+            reason = 'too many long msgs'
+        if self.config['kick_if_same_msg_too_many_times'] and self.same_msg_too_many_times(sender_nick, msg):
+            reason = 'same msg too many times'
 
-        if self.is_whitelisted(sender_nick): result = False
-        return result
+        if self.is_whitelisted(sender_nick): reason = None
+        return reason
 
     def is_whitelisted(self, sender_nick):
         sender_nick = irc_nickname(sender_nick)
