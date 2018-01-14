@@ -318,6 +318,9 @@ class builtins(plugin):
         :return :param config without keys not present in :param config_template
         """
 
+        # TODO fix me!
+        return config
+
         new_config = copy.deepcopy(config)
         for key in config.keys():
             self.remove_obsolete_key_from_config_impl(key, new_config, config_template)
