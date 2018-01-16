@@ -171,6 +171,7 @@ class builtins(plugin):
             return f'invalid config value: {e}'
         except Exception as e:
             self.logger.error(f'unexpected exception: {e}')
+            if self.bot.is_debug_mode_enabled(): raise
             return 'internal error occurred'
 
         return None
@@ -427,6 +428,7 @@ class builtins(plugin):
             value = yaml.load(value, Loader=yaml.RoundTripLoader)
         except ParserError:
             self.bot.say(f'cannot parse value: {value}')
+            if self.bot.is_debug_mode_enabled(): raise
             return
 
         config = yaml.load(open('pybot.yaml'), Loader=yaml.RoundTripLoader)

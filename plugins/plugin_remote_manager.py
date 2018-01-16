@@ -99,6 +99,7 @@ class plugin_remote_manager(plugin):
             plugin_instance.unload_plugin()
         except Exception as e:
             self.logger.error(f'{name}.unload_plugin() throws: {e}. continuing anyway...')
+            if self.bot.is_debug_mode_enabled(): raise
 
         self.bot.plugins.remove(plugin_instance)
 

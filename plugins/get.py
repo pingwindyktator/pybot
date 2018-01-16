@@ -73,6 +73,7 @@ class get(plugin):
         val = msg[len(entry):].strip()
         if not val: return
         entry = self.prepare_entry(entry)
+
         try:
             with self.db_mutex:
                 self.db_cursor.execute(f"INSERT INTO '{self.db_name}' VALUES (?, ?)", (entry, val))
@@ -82,6 +83,7 @@ class get(plugin):
             self.bot.say_ok()
         except sqlite3.IntegrityError:
             self.bot.say(f'"{entry}" entry already exists')
+            return
 
     def get_list_impl(self):
         with self.db_mutex:
