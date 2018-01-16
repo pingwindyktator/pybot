@@ -138,6 +138,4 @@ def ensure_config_is_ok(config, assert_unknown_keys=False):
 
     if assert_unknown_keys:
         for key, value in config.items():
-            if type(value) is not dict:  # dict is config for plugin
-                if type(value) is not CommentedMap:  # CommentedMap is special order-aware dict from ruamel.yaml
-                    c_assert_error(key in config_keys, f'unknown config file key: {key}')
+            if not isinstance(value, dict): c_assert_error(key in config_keys, f'unknown config file key: {key}')
