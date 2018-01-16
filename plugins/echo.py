@@ -40,3 +40,15 @@ class echo(plugin):
             uptime_string = str(timedelta(seconds=uptime_seconds))
 
         self.bot.say(uptime_string)
+
+    @command
+    @doc('reply "pong"')
+    def ping(self, sender_nick, **kwargs):
+        self.logger.info(f'pinged by {sender_nick}')
+        self.bot.say('pong')
+
+    @command
+    @doc('reply "ping"')
+    def pong(self, sender_nick, **kwargs):
+        self.logger.info(f'ponged by {sender_nick}')
+        self.bot.say('ping')
