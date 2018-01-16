@@ -5,7 +5,7 @@ import sys
 from plugin import *
 
 
-class plugin_manager(plugin):
+class plugin_remote_manager(plugin):
     def __init__(self, bot):
         super().__init__(bot)
 
