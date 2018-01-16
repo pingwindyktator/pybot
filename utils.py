@@ -67,21 +67,19 @@ class config_error(Exception):
     pass
 
 
-class config_key_info:
-    def __init__(self, required, type):
-        self.required = required
-        self.type = type
-
-
-def c_assert_error(expr, text):
-    if not expr: raise config_error(text)
-
-
 def remove_national_chars(s):
     return unidecode.unidecode(s)
 
 
 def ensure_config_is_ok(config, assert_unknown_keys=False):
+    class config_key_info:
+        def __init__(self, required, type):
+            self.required = required
+            self.type = type
+
+    def c_assert_error(expr, text):
+        if not expr: raise config_error(text)
+
     config_keys = {
         'server': config_key_info(True, str),
         'port': config_key_info(True, int),
