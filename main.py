@@ -19,7 +19,8 @@ if __name__ == "__main__":
         path = ' located at %s' % e.path if e.path else ''
         print("No module named %s%s. Please try 'pip install -r requirements.txt'" % (name, path))
     except Exception as e:
-        print('Internal error occurred: %s. Please contact  ja2222ja@gmail.com  with  pybot.error  file (file paths will be compromised).' % e)
+        print('\nInternal error occurred: %s: %s\nPlease contact  ja2222ja@gmail.com  with  pybot.error  file (file paths will be compromised).'
+              % (type(e).__name__, e))
         open('pybot.error', 'w').close()
         with open('pybot.error', 'a') as error_file:
             with open('pybot.log') as log_file:

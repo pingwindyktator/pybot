@@ -8,6 +8,7 @@ from plugin import *
 
 class crypto_wa_warner:
     def __init__(self, bot):
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.bot = bot
         self.known_crypto_currencies = self.get_crypto_currencies()
         self.convert_regex = re.compile(r'^([0-9]*\.?[0-9]*)\W*([A-Za-z]+)\W+(to|in)\W+([A-Za-z]+)$')
@@ -33,6 +34,7 @@ class crypto_wa_warner:
         return False
 
     def get_crypto_currencies(self):
+        self.logger.info('updating known cryptocurrencies...')
         url = r'https://api.coinmarketcap.com/v1/ticker/'
         content = requests.get(url, timeout=10).content.decode('utf-8')
         raw_result = json.loads(content)
