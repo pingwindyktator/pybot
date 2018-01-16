@@ -35,19 +35,32 @@ class ignore(plugin):
     @command
     @admin
     @doc("ignore_for <username> <time>: ignore user's messages for <time> time. <time> should be %H %M  (eg.  1h 42m)")
+    @doc("ignore_for <time> <username>: ignore user's messages for <time> time. <time> should be %H %M  (eg.  1h 42m)")
     def ignore_for(self, sender_nick, msg, **kwargs):
         if not msg: return
+        return self.ignore_for_impl(sender_nick, msg)
+
+    def ignore_for_impl(self, sender_nick, msg, reverted=False):
         username = irc_nickname(msg.split()[0].strip())
         time = msg[len(username):].strip()
-        if not time: return
+        if not time:
+            self.bot.say('invalid format')
+            return
+
         reg_res = self.time_delta_regex.findall(time)
         if not reg_res:
-            self.bot.say('invalid time given')
+            self.bot.say('invalid format')
             return
 
         hours = int(reg_res[0][0][:-1]) if reg_res[0][0] else 0
         minutes = int(reg_res[0][1][:-1]) if reg_res[0][1] else 0
-        if hours == 0 and minutes == 0: return
+        if hours == 0 and minutes == 0:
+            if reverted:
+                self.bot.say('invalid format')
+                return
+            else:
+                # trying to parse ignore_for <time> <username> instead of ignore_for <username> <time>
+                return self.ignore_for_impl(sender_nick, f'{time} {username}', reverted=True)
 
         self.ignore_user_impl(username)
         self.logger.warning(f'{sender_nick} ignored {username} for {hours}H:{minutes}M')
