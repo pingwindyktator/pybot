@@ -1,10 +1,11 @@
+from __future__ import print_function
 import sys
 import traceback
 
 
 def main():
     import _main
-    _main.main()
+    _main.main(debug_mode=False)
 
 
 if __name__ == "__main__":

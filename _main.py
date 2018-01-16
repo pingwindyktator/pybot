@@ -28,7 +28,7 @@ def configure_logger(config):
     root_logger.addHandler(stdout_handler)
 
 
-def main():
+def main(debug_mode=False):
     try:
         if not os.path.exists("pybot.yaml"):
             shutil.copyfile('pybot.template.yaml', 'pybot.yaml')
@@ -51,9 +51,9 @@ def main():
         sys.exit(3)
 
     configure_logger(config)
-    bot = pybot(config)
+    bot = pybot(config, debug_mode)
     bot.start()
 
 
 if __name__ == "__main__":
-    main()
+    main(debug_mode=True)

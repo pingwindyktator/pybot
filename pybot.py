@@ -23,7 +23,7 @@ from ping_ponger import ping_ponger
 
 # noinspection PyUnusedLocal
 class pybot(irc.bot.SingleServerIRCBot):
-    def __init__(self, config):
+    def __init__(self, config, debug_mode=False):
         self.logger = logging.getLogger(__name__)
         self.logger.info('starting pybot...')
 
@@ -52,6 +52,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         self._say_queue = Queue()
         self._say_thread = None
         self._dying = False
+        self._debug_mode = debug_mode
         self._load_plugins()
         self._fixed_command = None
         self._fixed_command_lock = Lock()
@@ -456,7 +457,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         return len(encoded_msg + b'\r\n') > 512  # max msg len defined by IRC protocol
 
     def is_debug_mode_enabled(self):
-        return 'debug' in self.config and self.config['debug']
+        return self._debug_mode
 
     def joined_to_channel(self):
         return self.connection.is_connected() and self.channel
