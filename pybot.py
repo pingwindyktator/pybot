@@ -441,10 +441,10 @@ class pybot(irc.bot.SingleServerIRCBot):
         nickname = irc_nickname(nickname)
         return ('ignored_users' in self.config and nickname in self.config['ignored_users']) and (nickname not in self.config['ops'])
 
-    """
-    :return: names of users in channel
-    """
     def get_usernames_on_channel(self):
+        """
+        :return: names of users in channel
+        """
         return [irc_nickname(x) for x in list(self.channel.users())]
 
     def is_msg_too_long(self, msg):
