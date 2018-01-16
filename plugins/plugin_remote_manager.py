@@ -2,6 +2,7 @@ import importlib
 import inspect
 import sys
 
+from fuzzywuzzy import process, fuzz
 from plugin import *
 
 
@@ -23,6 +24,13 @@ class plugin_remote_manager(plugin):
     def plugins(self, sender_nick, **kwargs):
         self.bot.say(f'enabled plugins: {self.bot.get_plugins_names()}')
         self.logger.info(f'plugins given to {sender_nick}')
+
+    def get_best_plugin_name_match(self, plugin_name):
+        choices = [p.replace('_', ' ') for p in self.bot.get_plugins_names()]
+        plugin_name = plugin_name.replace('_', ' ')
+        result = process.extract(plugin_name, choices, scorer=fuzz.token_sort_ratio)
+        result = [(r[0].replace(' ', '_'), r[1]) for r in result]
+        return result[0][0] if result[0][1] > 65 else None
 
     @command
     @admin
@@ -73,6 +81,7 @@ class plugin_remote_manager(plugin):
         """
         module has to be loaded! 
         """
+
         enabled_plugins = {}
         for p in self.bot.get_plugins(): enabled_plugins[type(p).__name__] = p
 
@@ -168,7 +177,13 @@ class plugin_remote_manager(plugin):
 
             except (self.NoPluginsModuleFound, ImportError, ModuleNotFoundError) as e:  # user error #1
                 self.logger.info(e)
-                self.bot.say(f'cannot enable {plugin_name}, no appropriate module found')
+                response = f'cannot find {plugin_name}'
+                possible_name = self.get_best_plugin_name_match(plugin_name) if self.config['try_autocorrect'] else None
+                if possible_name:
+                    fixed_command = f'load_plugin {possible_name}'
+                    response = f'{response}, did you mean {possible_name}?'
+                    self.bot.register_fixed_command(fixed_command)
+                self.bot.say(response)
 
             except self.PluginNotEnabled as e:  # user error #2
                 self.logger.info(e)

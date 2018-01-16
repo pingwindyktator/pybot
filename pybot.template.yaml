@@ -23,6 +23,9 @@ connection_remote_manager:
   disconnect_msg: '[disconnect]'
   die_msg: '[die]'
 
+plugin_remote_manager:
+  try_autocorrect: true
+
 builtins:
   source: https://github.com/pingwindyktator/pybot/tree/develop
 
