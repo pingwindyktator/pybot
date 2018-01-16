@@ -19,7 +19,7 @@ wrap_too_long_msgs: true
 health_check: false
 health_check_interval_s: 100
 
-bot_remote_manager:
+connection_remote_manager:
   disconnect_msg: '[disconnect]'
   die_msg: '[die]'
 
