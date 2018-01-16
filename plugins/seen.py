@@ -129,6 +129,10 @@ class seen(plugin):
             self.bot.say('o rly?')
             return
 
+        if self.bot.is_user_ignored(nickname):
+            self.bot.say(f"{nickname} is ignored, I can't help you with than :(")
+            return
+
         with self.db_mutex:
             self.db_cursor.execute(f"SELECT data FROM '{self.db_name}' WHERE nickname = ? COLLATE NOCASE", (nickname,))
             result = self.db_cursor.fetchone()
