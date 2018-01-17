@@ -3,6 +3,7 @@ import shutil
 import sys
 import utils
 import os.path
+import os
 
 from ruamel import yaml
 from plugins import *
@@ -56,4 +57,5 @@ def main(debug_mode=False):
 
 
 if __name__ == "__main__":
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
     main(debug_mode=True)
