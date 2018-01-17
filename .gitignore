@@ -95,4 +95,5 @@ ENV/
 pybot.error
 .pybot.yaml
 ..pybot.yaml
+db/
 pybot.log
