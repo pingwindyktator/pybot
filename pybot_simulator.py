@@ -155,4 +155,7 @@ def simulator_main():
 
 
 if __name__ == "__main__":
+    print('TODO, pybot simulator wont work now...')
+    sys.exit(0)
+
     simulator_main()

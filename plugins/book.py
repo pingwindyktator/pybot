@@ -15,6 +15,7 @@ class book(plugin):
     def book(self, sender_nick, msg, **kwargs):
         if not msg: return
         ask = urllib.parse.quote(msg)
+        self.logger.info(f'{sender_nick} asked goodreads.com "{msg}"')
         raw_response = requests.get(self.goodreads_api_uri % (self.config['api_key'], ask)).content.decode('utf-8')
         xml_root = xml.etree.ElementTree.fromstring(raw_response)
 
@@ -35,6 +36,7 @@ class book(plugin):
         id = self.get_text_or_none(result.find('id'))
 
         if not title or not id:
+            self.bot.say_err(msg)
             return
 
         prefix = f'[{title}'
