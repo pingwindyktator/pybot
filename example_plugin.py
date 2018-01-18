@@ -9,6 +9,7 @@ from plugin import *
 # - Plugin class name should be equal to module name
 # - Message you'd get ('msg', 'args' arguments) might be empty
 # - Help docs should follow docopt standard (see http://docopt.org)
+# - You can safely assume that config won't change at runtime
 
 
 @doc("this is what you will see as plugin's help")

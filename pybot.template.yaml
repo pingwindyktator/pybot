@@ -67,7 +67,7 @@ book:
   api_key: ''
 
 antispam:
-  kick_if_too_colorful_msgs: true
+  kick_if_too_colorful_msg: true
   kick_if_too_many_msgs: true
   kick_if_too_many_users_mentioned: true
   kick_if_too_long_msgs: true
