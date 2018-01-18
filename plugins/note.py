@@ -47,6 +47,10 @@ class note(plugin):
             self.bot.say('orly?')
             return
 
+        if self.bot.is_user_ignored(target):
+            self.bot.say(f"{target} is ignored, I can't help you with than :(")
+            return
+
         new_note = msg[len(target):].strip()
         if not new_note: return
         self.logger.info(f'{sender_nick} notes "{new_note}" for {target}')
