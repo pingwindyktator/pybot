@@ -49,13 +49,13 @@ That's all. Really.
 
 Bot config is placed in `pybot.yaml` file, which is widely known yaml-format file. During the very first start, such file will be prepared based on `pybot.template.yaml`. I believe most of config values are self-descriptive, there are some tricky ones:
 
-`max_autorejoin_attempts` - describes how many times bot rejoins after gets kicked from channel
-`ops` - bot operators
-`command_prefix` - prefix that every bot command should start with
-`flood_protection` - prevents plugins from exceeding Excess Flood limit
-`try_autocorrect` - if enabled, bot will propose best matching commands for unknown ones
-`wrap_too_long_msgs` - if enabled, bot will slice every msg longer than 512
-`health_check` - allows bot to ping IRC server occasionally. If no pong received, bot will try to reconnect to server
+`max_autorejoin_attempts` - describes how many times bot rejoins after gets kicked from channel  
+`ops` - bot operators  
+`command_prefix` - prefix that every bot command should start with  
+`flood_protection` - prevents plugins from exceeding Excess Flood limit  
+`try_autocorrect` - if enabled, bot will propose best matching commands for unknown ones  
+`wrap_too_long_msgs` - if enabled, bot will slice every msg longer than 512  
+`health_check` - allows bot to ping IRC server occasionally. If no pong received, bot will try to reconnect to server  
 
 Go ahead and freely customize config to match your preferences. Bot will ensure it looks okay. Trust him!
 
