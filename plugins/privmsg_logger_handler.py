@@ -20,8 +20,6 @@ class irc_privmsg_logger_handler(logging.StreamHandler):
                 if record.levelno >= level and self.bot.is_connected():
                     force = True if record.levelno >= logging.WARNING else False
                     self.bot.say(msg, target, force)
-        except (KeyboardInterrupt, SystemExit):
-            raise
         except Exception:
             self.handleError(record)
 
