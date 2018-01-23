@@ -22,7 +22,7 @@ class irc_privmsg_logger_handler(logging.StreamHandler):
                     self.bot.say(msg, target, force)
         except (KeyboardInterrupt, SystemExit):
             raise
-        except:
+        except Exception:
             self.handleError(record)
 
 
@@ -85,7 +85,7 @@ class privmsg_logger_handler(plugin):
             self.db_connection.commit()
 
         self.logger.info(f'plh for {sender_nick} removed')
-        self.bot.say('plh removed')
+        self.bot.say_ok()
 
     @command
     @doc('get all registered privmsg logger handlers')

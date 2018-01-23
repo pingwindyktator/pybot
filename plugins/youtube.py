@@ -28,7 +28,7 @@ class youtube(plugin):
             return
 
         if len(response['items']) == 0:
-            self.bot.say('no results :(')
+            self.bot.say_err()
             return
 
         result_count = min(self.config['results'], len(response['items']))

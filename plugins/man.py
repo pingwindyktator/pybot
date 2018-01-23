@@ -16,7 +16,6 @@ class man(plugin):
         ask = args[0].strip().casefold()
         if ask == 'df':
             self.man_df()
-            self.logger.info(f'df easter egg given to {sender_nick}')
             return
 
         url = self.man_url % ask

@@ -28,7 +28,7 @@ class movie(plugin):
         self.logger.info(f'{sender_nick} asked omdbapi about {msg}')
         response, error = self.get_movie_info(msg)
         if not response:
-            self.bot.say(f'omdbapi error: {error}')
+            self.bot.say_err()
             return
 
         prefix = self.build_prefix(response)

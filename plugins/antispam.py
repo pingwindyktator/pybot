@@ -154,7 +154,7 @@ class antispam(plugin):
         else:
             if self.am_i_channel_operator():
                 self.bot.kick(sender_nick, 'stop it!')
-                self.logger.info(f'{sender_nick} kicked: {reason}')
+                self.logger.warning(f'{sender_nick} kicked: {reason}')
             else:
                 self.logger.warning(f"{sender_nick} is possibly spamer ({reason}), but I've no operator privileges to kick him :(")
 

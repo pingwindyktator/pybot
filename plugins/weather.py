@@ -32,7 +32,7 @@ class weather(plugin):
         self.logger.info(f'getting weather in {msg} for {sender_nick}')
         weather_info = self.get_weather_info(msg)
         if not weather_info:
-            self.bot.say(f'cannot obtain weather in {msg}')
+            self.bot.say_err()
             return
 
         prefix = color.orange(f'[Latest recorded weather for {weather_info["name"]}, {weather_info["sys"]["country"]}]')
@@ -59,7 +59,7 @@ class weather(plugin):
         self.logger.info(f'getting weather forecast in {msg} for {sender_nick}')
         weather_info = self.get_forecast_info(msg)
         if not weather_info:
-            self.bot.say(f'cannot obtain weather in {msg}')
+            self.bot.say_err()
             return
 
         forecasts = {

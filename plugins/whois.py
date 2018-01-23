@@ -17,11 +17,8 @@ class whois(plugin):
 
         try:
             data = pythonwhois.get_whois(domain, normalized=True)
-        except WhoisException:
-            self.bot.say(f'no match for {domain}')
-            return
-        except:
-            self.bot.say(f'no info for {domain}')
+        except Exception:
+            self.bot.say_err()
             return
 
         result = []
@@ -42,7 +39,8 @@ class whois(plugin):
             result.append(['Admin', self.build_contact_str(data, 'admin')])
 
         if not result:
-            self.bot.say(f'no info for {domain}')
+            self.bot.say_err()
+            return
 
         for i in result:
             self.bot.say(f'{i[0]}: {i[1]}')

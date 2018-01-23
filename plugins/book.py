@@ -14,6 +14,7 @@ class book(plugin):
     @doc('get book info from goodreads.com')
     def book(self, sender_nick, msg, **kwargs):
         if not msg: return
+        msg = msg.strip()
         ask = urllib.parse.quote(msg)
         self.logger.info(f'{sender_nick} asked goodreads.com "{msg}"')
         raw_response = requests.get(self.goodreads_api_uri % (self.config['api_key'], ask)).content.decode('utf-8')
@@ -21,7 +22,7 @@ class book(plugin):
 
         result = xml_root.find('search').find('results')
         if len(result) == 0:
-            self.bot.say('No such book :(')
+            self.bot.say_err(msg)
             return
 
         result = xml_root.find('search').find('results')[0]
@@ -36,7 +37,7 @@ class book(plugin):
         id = self.get_text_or_none(result.find('id'))
 
         if not title or not id:
-            self.bot.say_err(msg)
+            self.bot.say_err()
             return
 
         prefix = f'[{title}'
