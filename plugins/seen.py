@@ -134,12 +134,12 @@ class seen(plugin):
             return
 
         with self.db_mutex:
-            self.db_cursor.execute(f"SELECT data FROM '{self.db_name}' WHERE nickname = ? COLLATE NOCASE", (nickname,))
-            result = self.db_cursor.fetchone()
+            self.db_cursor.execute(f"SELECT * FROM '{self.db_name}' WHERE nickname LIKE ? COLLATE NOCASE", (f'%{nickname}%',))
+            results = self.db_cursor.fetchall()
 
-        result = self.seen_data.from_json(result[0]) if result else None
-
-        if result:
-            self.bot.say(result.to_response(nickname))
-        else:
-            self.bot.say_err(nickname)
+        if results:
+            for result in results:
+                nick = result[0]
+                data = self.seen_data.from_json(result[1])
+                self.bot.say(data.to_response(nick))
+        else: self.bot.say_err(nickname)
