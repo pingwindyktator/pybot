@@ -3,6 +3,8 @@ import requests
 import urllib.parse
 import xml.etree.ElementTree
 
+from datetime import timedelta
+from threading import Timer, Lock
 from plugin import *
 
 
@@ -10,7 +12,11 @@ class crypto_wa_warner:
     def __init__(self, bot):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.bot = bot
-        self.known_crypto_currencies = self.get_crypto_currencies()
+        self.update_delta_time = timedelta(hours=1).total_seconds()
+        self.update_timer = None
+        self.crypto_currencies_lock = Lock()
+        self.known_crypto_currencies = None
+        self.update_known_crypto_currencies()
         self.convert_regex = re.compile(r'^([0-9]*\.?[0-9]*)\W*([A-Za-z]+)\W+(to|in)\W+([A-Za-z]+)$')
 
     def handle_msg(self, msg):
@@ -33,9 +39,8 @@ class crypto_wa_warner:
 
         return False
 
-    def get_crypto_currencies(self):
-        self.logger.info('updating known cryptocurrencies...')
-        url = r'https://api.coinmarketcap.com/v1/ticker/'
+    def get_known_crypto_currencies(self):
+        url = r'https://api.coinmarketcap.com/v1/ticker/?limit=0'
         content = requests.get(url, timeout=10).content.decode('utf-8')
         raw_result = json.loads(content)
         result = []
@@ -44,13 +49,23 @@ class crypto_wa_warner:
 
         return result
 
+    def update_known_crypto_currencies(self):
+        self.logger.info('updating known cryptocurrencies...')
+        res = self.get_known_crypto_currencies()
+        with self.crypto_currencies_lock:
+            self.known_crypto_currencies = res
+
+        self.update_timer = Timer(self.update_delta_time, self.update_known_crypto_currencies)
+        self.update_timer.start()
+
     def is_any_currency_known(self, aliases):
         aliases = [a.casefold() for a in aliases]
 
-        for alias in aliases:
-            for entry in self.known_crypto_currencies:
-                if entry.id.casefold() == alias or entry.name.casefold() == alias or entry.symbol.casefold() == alias:
-                    return True
+        with self.crypto_currencies_lock:
+            for alias in aliases:
+                for entry in self.known_crypto_currencies:
+                    if entry.id.casefold() == alias or entry.name.casefold() == alias or entry.symbol.casefold() == alias:
+                        return True
 
         return False
 
