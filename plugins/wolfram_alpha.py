@@ -135,17 +135,37 @@ class wolfram_alpha(plugin):
             if it > 0 and not answers[it].primary: break
             prefix = color.orange(f'[{answers[it].title}] ')
             for subpod in answers[it].subpods:
-                result = prefix
-                if subpod.title:
-                    result = result + subpod.title + ': '
+                if subpod.title: prefix = prefix + subpod.title + ': '
+                self.say_single_subpod(subpod.plaintext, prefix)
 
-                result = result + subpod.plaintext
-                self.bot.say(result)
+    def say_single_subpod(self, plaintext, prefix):
+        assert not self.bot.is_msg_too_long(prefix)
+        join_token = self.wa_subpod.get_join_token()
+        plaintext = plaintext.split(join_token)
+        to_send = ''
+
+        while plaintext:
+            maybe_to_send = join_token.join([to_send, plaintext[0]] if to_send else [plaintext[0]])  # taking next part of subpod
+            if self.bot.is_msg_too_long(prefix + maybe_to_send):
+                assert to_send
+                self.bot.say(prefix + to_send)
+                to_send = ''
+            else:
+                to_send = maybe_to_send
+                del plaintext[0]
+
+        if to_send: self.bot.say(prefix + to_send)
 
     class wa_subpod:
         def __init__(self, plaintext, title=''):
             self.title = title.strip()
-            self.plaintext = plaintext.strip().replace('  ', ' ').replace('\n', ' :: ').replace('\t', ' ').replace('|', '-')
+            self.plaintext = plaintext.strip().replace('  ', ' ').replace('\t', ' ').replace('|', '-').split('\n')
+            self.plaintext = list(filter(lambda e: e != '...', self.plaintext))  # remove all '...' from self.plaintext
+            self.plaintext = self.get_join_token().join(self.plaintext)
+
+        @staticmethod
+        def get_join_token():
+            return ' :: '
 
     class wa_pod:
         def __init__(self, title, position, subpods, primary=False):
