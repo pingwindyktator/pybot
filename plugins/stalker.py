@@ -53,6 +53,8 @@ class stalker(plugin):
 
     def update_database(self, nick, host):
         result = self.get_nicknames_from_database(host)
+        nick = irc_nickname(nick)
+
         if result:
             if nick not in result:
                 result.extend([nick])

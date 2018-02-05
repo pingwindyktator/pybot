@@ -148,6 +148,7 @@ class seen(plugin):
         if possible_results:
             possible_result = self.get_best_result(possible_results)
             if not exact_result or self.get_strptimed_timestamp(exact_result[1]) < self.get_strptimed_timestamp(possible_result[1]):
+                # if there wasn't exact_result or possible_result is better
                 self.bot.say(self.seen_data.from_json(possible_result[1]).to_response(possible_result[0]))
 
         if not exact_results and not possible_results:
