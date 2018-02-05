@@ -163,7 +163,7 @@ class antispam(plugin):
         reason = None
         for checker in self.checkers:
             if checker.check(sender_nick, msg):
-                reason = checker.reason
+                reason = checker.reason()
 
         return reason
 
