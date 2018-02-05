@@ -56,7 +56,7 @@ class privmsg_logger_handler(plugin):
     def add_plh(self, sender_nick, args, **kwargs):
         if not args: return
         level = args[0].strip().casefold()
-        sender_nick = sender_nick.casefold()
+        sender_nick = sender_nick
 
         if level not in utils.logging_level_str_to_int:
             self.bot.say(f'unknown level: {level}')
@@ -66,7 +66,7 @@ class privmsg_logger_handler(plugin):
         level = utils.logging_level_str_to_int[level]
 
         with self.db_mutex:
-            self.db_cursor.execute(f"INSERT OR REPLACE into '{self.db_name}' VALUES (?, ?)", (sender_nick, level))
+            self.db_cursor.execute(f"INSERT OR REPLACE into '{self.db_name}' VALUES (?, ?)", (sender_nick.casefold(), level))
             self.db_connection.commit()
 
         self.bot.say(f'plh added: {sender_nick} at {utils.int_to_logging_level_str[level]}')
