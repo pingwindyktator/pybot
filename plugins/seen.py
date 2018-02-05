@@ -134,12 +134,27 @@ class seen(plugin):
             return
 
         with self.db_mutex:
-            self.db_cursor.execute(f"SELECT * FROM '{self.db_name}' WHERE nickname LIKE ? COLLATE NOCASE", (f'%{nickname}%',))
-            results = self.db_cursor.fetchall()
+            self.db_cursor.execute(f"SELECT nickname, data FROM '{self.db_name}' WHERE nickname = ? COLLATE NOCASE", (nickname,))
+            exact_results = self.db_cursor.fetchall()
+            self.db_cursor.execute(f"SELECT nickname, data FROM '{self.db_name}' WHERE nickname LIKE ? COLLATE NOCASE", (f'%{nickname}%',))
+            possible_results = self.db_cursor.fetchall()
 
-        if results:
-            for result in results:
-                nick = result[0]
-                data = self.seen_data.from_json(result[1])
-                self.bot.say(data.to_response(nick))
-        else: self.bot.say_err(nickname)
+        exact_result = None
+        if exact_results:
+            possible_results = list(filter(lambda x: x not in exact_results, possible_results))  # remove all exact_results from possible_results
+            exact_result = self.get_best_result(exact_results)
+            self.bot.say(self.seen_data.from_json(exact_result[1]).to_response(exact_result[0]))
+
+        if possible_results:
+            possible_result = self.get_best_result(possible_results)
+            if not exact_result or self.get_strptimed_timestamp(exact_result[1]) < self.get_strptimed_timestamp(possible_result[1]):
+                self.bot.say(self.seen_data.from_json(possible_result[1]).to_response(possible_result[0]))
+
+        if not exact_results and not possible_results:
+            self.bot.say_err(nickname)
+
+    def get_best_result(self, serialized_iterable):
+        return max(serialized_iterable, key=lambda x: self.get_strptimed_timestamp(x[1]))
+
+    def get_strptimed_timestamp(self, serialized_data):
+        return datetime.strptime(self.seen_data.from_json(serialized_data).timestamp, r'%d-%m-%Y %H:%M:%S')
