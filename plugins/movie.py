@@ -46,7 +46,7 @@ class movie(plugin):
         if ratings_str: self.bot.say(f'{prefix} {ratings_str}')
 
     @command
-    @doc('imdb <tutle>: get imdb URL to <title> movie')
+    @doc('imdb <title>: get imdb URL to <title> movie')
     def imdb(self, sender_nick, msg, **kwargs):
         if not msg: return
         self.logger.info(f'{sender_nick} asked omdbapi about imdb of {msg}')
