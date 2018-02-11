@@ -24,7 +24,7 @@ class builtins(plugin):
     def help(self, sender_nick, args, **kwargs):
         if args and args[0]:
             entry = args[0].strip()
-            if entry in self.bot.commands:
+            if entry in self.bot.get_commands():
                 self.help_for_command(entry)
             elif entry in self.bot.get_plugins_names():
                 self.help_for_plugin(entry)
@@ -44,7 +44,7 @@ class builtins(plugin):
             self.bot.say(f'available commands for {reply}: {", ".join(commands[reply])}', sender_nick)
 
     def help_for_command(self, entry):
-        obj = self.bot.commands[entry]
+        obj = self.bot.get_commands()[entry]
 
         if hasattr(obj, '__doc_string'):
             for reply in getattr(obj, "__doc_string").split('\n'):

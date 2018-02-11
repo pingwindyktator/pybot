@@ -109,7 +109,7 @@ class seen(plugin):
         serialized = self.seen_data(timestamp, activity, data).to_json()
 
         with self.db_mutex:
-            self.db_cursor.execute(f"INSERT OR REPLACE into '{self.db_name}' VALUES (?, ?)", (nickname, serialized))
+            self.db_cursor.execute(f"INSERT OR REPLACE INTO '{self.db_name}' VALUES (?, ?)", (nickname, serialized))
             self.db_connection.commit()
 
         self.logger.debug(f'new database entry: {nickname} -> {serialized}')

@@ -27,42 +27,42 @@ from ping_ponger import ping_ponger
 # noinspection PyUnusedLocal
 class pybot(irc.bot.SingleServerIRCBot):
     def __init__(self, config, debug_mode=False):
-        if not debug_mode:
-            signal.signal(signal.SIGINT, self._sigint_handler)
-            atexit.register(self._atexit)
-            
-        self.logger = logging.getLogger(__name__)
-        self.logger.info('starting pybot...')
+        self._logger = logging.getLogger(__name__)
+        self._logger.info('starting pybot...')
 
-        if config['colors']:
-            color.enable_colors()
-            self.logger.debug('colors loaded')
-        else: color.disable_colors()
-
-        self.logger.debug('initiating irc.bot.SingleServerIRCBot...')
-        connection_args = {}
-        if config['use_ssl']:
-            ssl_factory = irc.connection.Factory(wrapper=ssl.wrap_socket)
-            connection_args['connect_factory'] = ssl_factory
-
-        super(pybot, self).__init__([(config['server'], config['port'])], config['nickname'][0], config['nickname'][0], **connection_args)
-        self.ping_ponger = ping_ponger(self.connection, config['health_check_interval_s'], self.on_not_healthy) if config['health_check'] else utils.null_object()
-        self.logger.debug('irc.bot.SingleServerIRCBot initiated')
-
-        self._nickname_id = 0
         self.config = config
+        self._nickname_id = 0
         self._autorejoin_attempts = 0
-
-        self.plugins = set()
-        self.commands = {}  # command -> func
-        self.msg_regexps = {}  # regex -> [funcs]
+        self._plugins = set()
+        self._commands = {}  # command -> func
+        self._msg_regexps = {}  # regex -> [funcs]
         self._say_queue = Queue()
         self._say_thread = None
         self._dying = False
         self._debug_mode = debug_mode
-        self._load_plugins()
         self._fixed_command = None
         self._fixed_command_lock = Lock()
+
+        if self.config['colors']:
+            color.enable_colors()
+            self._logger.debug('colors loaded')
+        else: color.disable_colors()
+
+        self._logger.debug('initiating irc.bot.SingleServerIRCBot...')
+        connection_args = {}
+        if self.config['use_ssl']:
+            ssl_factory = irc.connection.Factory(wrapper=ssl.wrap_socket)
+            connection_args['connect_factory'] = ssl_factory
+
+        super(pybot, self).__init__([(self.config['server'], self.config['port'])], self.config['nickname'][0], self.config['nickname'][0], **connection_args)
+        self._ping_ponger = ping_ponger(self.connection, self.config['health_check_interval_s'], self.on_not_healthy) if self.config['health_check'] else utils.null_object()
+        self._logger.debug('irc.bot.SingleServerIRCBot initiated')
+
+        if not debug_mode:
+            signal.signal(signal.SIGINT, self._sigint_handler)
+            atexit.register(self._atexit)
+
+        self._load_plugins()
 
     class _say_info:
         def __init__(self, target, msg):
@@ -71,13 +71,13 @@ class pybot(irc.bot.SingleServerIRCBot):
 
     def start(self):
         ssl_info = ' over SSL' if self.config['use_ssl'] else ''
-        self.logger.info(f'connecting to {self.config["server"]}:{self.config["port"]}{ssl_info}...')
+        self._logger.info(f'connecting to {self.config["server"]}:{self.config["port"]}{ssl_info}...')
         self.connection.buffer_class.errors = 'replace'
         super(pybot, self).start()
 
     def on_not_healthy(self):
-        self.logger.warning(f'unexpectedly disconnected from {self.config["server"]}')
-        self.ping_ponger.stop()
+        self._logger.warning(f'unexpectedly disconnected from {self.config["server"]}')
+        self._ping_ponger.stop()
         self.start()
 
     # callbacks
@@ -88,28 +88,28 @@ class pybot(irc.bot.SingleServerIRCBot):
         self._nickname_id += 1
 
         if self._nickname_id >= len(self.config['nickname']):
-            self.logger.critical(f'nickname {old_nickname} is busy, no more nicknames to use')
+            self._logger.critical(f'nickname {old_nickname} is busy, no more nicknames to use')
             sys.exit(2)
 
         new_nickname = irc_nickname(self.config['nickname'][self._nickname_id])
-        self.logger.warning(f'nickname {old_nickname} is busy, trying {new_nickname}')
+        self._logger.warning(f'nickname {old_nickname} is busy, trying {new_nickname}')
         self._call_plugins_methods('nicknameinuse', raw_msg=raw_msg, busy_nickname=old_nickname)
         self.connection.nick(new_nickname)
 
     def on_welcome(self, _, raw_msg):
         """ called by super() when connected to server """
-        self.ping_ponger.start()
+        self._ping_ponger.start()
         ssl_info = ' over SSL' if self.config['use_ssl'] else ''
-        self.logger.info(f'connected to {self.config["server"]}:{self.config["port"]}{ssl_info} using nickname {self.get_nickname()}')
+        self._logger.info(f'connected to {self.config["server"]}:{self.config["port"]}{ssl_info} using nickname {self.get_nickname()}')
         self._call_plugins_methods('welcome', raw_msg=raw_msg, server=self.config['server'], port=self.config['port'], nickname=self.get_nickname())
         self._login()
         self.join_channel()
 
     def on_disconnect(self, _, raw_msg):
         """ called by super() when disconnected from server """
-        self.ping_ponger.stop()
+        self._ping_ponger.stop()
         msg = f': {raw_msg.arguments[0]}' if raw_msg.arguments else ''
-        self.logger.warning(f'disconnected from {self.config["server"]}{msg}')
+        self._logger.warning(f'disconnected from {self.config["server"]}{msg}')
 
         if not self._dying:
             self._call_plugins_methods('disconnect', raw_msg=raw_msg, server=self.config['server'], port=self.config['port'])
@@ -123,7 +123,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         """ called by super() when somebody joins channel """
         self.names()  # to immediately updated channel's user list
         if raw_msg.source.nick == self.get_nickname() and not self.joined_to_channel():
-            self.logger.info(f'joined to {self.config["channel"]}')
+            self._logger.info(f'joined to {self.config["channel"]}')
             self._call_plugins_methods('me_joined', raw_msg=raw_msg)
         else:
             self._call_plugins_methods('join', raw_msg=raw_msg, source=raw_msg.source)
@@ -135,7 +135,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         logging.info(f'[PRIVATE MSG] {sender_nick}: {full_msg}')
 
         if self.is_user_ignored(sender_nick):
-            self.logger.debug(f'user {sender_nick} is ignored, skipping msg')
+            self._logger.debug(f'user {sender_nick} is ignored, skipping msg')
             return
 
         self._call_plugins_methods('privmsg', raw_msg=raw_msg, source=raw_msg.source, msg=full_msg)
@@ -146,7 +146,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         sender_nick = irc_nickname(raw_msg.source.nick)
 
         if self.is_user_ignored(sender_nick):
-            self.logger.debug(f'user {sender_nick} is ignored, skipping msg')
+            self._logger.debug(f'user {sender_nick} is ignored, skipping msg')
             return
 
         self._call_plugins_methods('pubmsg', raw_msg=raw_msg, source=raw_msg.source, msg=full_msg)
@@ -164,13 +164,13 @@ class pybot(irc.bot.SingleServerIRCBot):
             fixed_command = self._get_fixed_command()
             if 'builtins' not in self.get_plugins_names() or 'fix' not in self.get_plugin_commands('builtins'):
                 pass
-            elif hasattr(self.commands['fix'], '__admin') and sender_nick not in self.config['ops']:
+            elif hasattr(self.get_commands()['fix'], '__admin') and sender_nick not in self.config['ops']:
                 pass
             elif not fixed_command:
                 self.say('no fix available')
                 args = ''  # to disable further cmd executing
             else:
-                self.logger.info(f'fixing command for {sender_nick}: {fixed_command}')
+                self._logger.info(f'fixing command for {sender_nick}: {fixed_command}')
                 args = fixed_command
                 self.register_fixed_command(None)
                 raw_msg = None
@@ -189,9 +189,9 @@ class pybot(irc.bot.SingleServerIRCBot):
         # args_list == ["some", "msg"]
         # raw_msg   == IRC Event class
 
-        if cmd in self.commands:
-            func = self.commands[cmd]
-            self.logger.debug(f'calling command  {func.__qualname__}(sender_nick={sender_nick}, args={args_list}, msg=\'{args}\', raw_msg=...)...')
+        if cmd in self.get_commands():
+            func = self.get_commands()[cmd]
+            self._logger.debug(f'calling command  {func.__qualname__}(sender_nick={sender_nick}, args={args_list}, msg=\'{args}\', raw_msg=...)...')
             func(sender_nick=sender_nick, args=args_list, msg=args, raw_msg=raw_msg)
         elif self.config['try_autocorrect'] and cmd and len(cmd) > 0 and cmd[0].isalpha():
             possible_cmd = self._get_best_command_match(cmd, sender_nick)
@@ -202,11 +202,11 @@ class pybot(irc.bot.SingleServerIRCBot):
             else:
                 self.say(f'no such command: {cmd}')
 
-        for reg in self.msg_regexps:
+        for reg in self._msg_regexps:
             regex_search_result = reg.findall(reg_full_msg)
             if regex_search_result:
-                for func in self.msg_regexps[reg]:
-                    self.logger.debug(f'calling message regex handler  {func.__qualname__}(sender_nick={sender_nick}, msg=\'{reg_full_msg}\', reg_res={regex_search_result}, raw_msg=...)...')
+                for func in self._msg_regexps[reg]:
+                    self._logger.debug(f'calling message regex handler  {func.__qualname__}(sender_nick={sender_nick}, msg=\'{reg_full_msg}\', reg_res={regex_search_result}, raw_msg=...)...')
                     func(sender_nick=sender_nick, msg=reg_full_msg, reg_res=regex_search_result, raw_msg=reg_raw_msg)
 
     def on_kick(self, _, raw_msg):
@@ -218,11 +218,11 @@ class pybot(irc.bot.SingleServerIRCBot):
 
     def on_me_kicked(self, _, raw_msg):
         """ called when bot gets kicked """
-        self.logger.warning(f'kicked by {raw_msg.source.nick}')
+        self._logger.warning(f'kicked by {raw_msg.source.nick}')
         self._call_plugins_methods('me_kicked', raw_msg=raw_msg, source=raw_msg.source)
 
         if self._autorejoin_attempts >= self.config['max_autorejoin_attempts']:
-            self.logger.warning('autorejoin attempts limit reached, waiting for user interact now')
+            self._logger.warning('autorejoin attempts limit reached, waiting for user interact now')
             choice = None
             while choice != 'Y' and choice != 'y' and choice != 'N' and choice != 'n':
                 choice = input(f'rejoin to {self.config["channel"]}? [Y/n] ')
@@ -272,23 +272,23 @@ class pybot(irc.bot.SingleServerIRCBot):
         if 'password' in self.config and self._nickname_id < len(self.config['password']):
             password = self.config['password'][self._nickname_id]
             if password is not None and password != '':
-                self.logger.info(f'identifying as {self.get_nickname()}...')
+                self._logger.info(f'identifying as {self.get_nickname()}...')
                 self.say('NickServ', f'identify {self.get_nickname()} {password}')
         else:
-            self.logger.debug(f'no password provided for {self.config["nickname"][self._nickname_id]}')
+            self._logger.debug(f'no password provided for {self.config["nickname"][self._nickname_id]}')
 
     def _sigint_handler(self, signal, frame):
         if not self._dying:
-            self.logger.info(f'interrupted by user, dying...')
+            self._logger.info(f'interrupted by user, dying...')
             self.die()
 
     def _atexit(self):
         if not self._dying:
-            self.logger.info(f'interrupted, dying...')
+            self._logger.info(f'interrupted, dying...')
             self.die()
 
     def _get_best_command_match(self, command, sender_nick):
-        choices = [c.replace('_', ' ') for c in self.commands if not (hasattr(self.commands[c], '__admin') and sender_nick not in self.config['ops'])]
+        choices = [c.replace('_', ' ') for c in self.get_commands() if not (hasattr(self.get_commands()[c], '__admin') and sender_nick not in self.config['ops'])]
         command = command.replace('_', ' ')
         result = process.extract(command, choices, scorer=fuzz.token_sort_ratio)
         result = [(r[0].replace(' ', '_'), r[1]) for r in result]
@@ -300,40 +300,40 @@ class pybot(irc.bot.SingleServerIRCBot):
             try:
                 p.__getattribute__(func_name)(**kwargs)
             except Exception as e:
-                self.logger.error(f'exception caught calling {p.__getattribute__(func_name).__qualname__}: {type(e).__name__}: {e}')
+                self._logger.error(f'exception caught calling {p.__getattribute__(func_name).__qualname__}: {type(e).__name__}: {e}')
                 if self.is_debug_mode_enabled(): raise
 
     def _load_plugins(self):
-        self.logger.debug('loading plugins...')
+        self._logger.debug('loading plugins...')
         disabled_plugins = self.config['disabled_plugins'] if 'disabled_plugins' in self.config else []
         enabled_plugins = self.config['enabled_plugins'] if 'enabled_plugins' in self.config else [x.__name__ for x in plugin.plugin.__subclasses__()]
 
         for plugin_class in plugin.plugin.__subclasses__():
             if plugin_class.__name__ in disabled_plugins or plugin_class.__name__ not in enabled_plugins:
-                self.logger.info(f'- plugin {plugin_class.__name__} skipped')
+                self._logger.info(f'- plugin {plugin_class.__name__} skipped')
                 continue
 
             try:
                 plugin_instance = plugin_class(self)
             except utils.config_error as e:
-                self.logger.warning(f'- invalid {plugin_class.__name__} plugin config: {type(e).__name__}: {e}')
+                self._logger.warning(f'- invalid {plugin_class.__name__} plugin config: {type(e).__name__}: {e}')
                 if self.is_debug_mode_enabled(): raise
                 continue
             except Exception as e:
-                self.logger.warning(f'- unable to load plugin {plugin_class.__name__}: {type(e).__name__}: {e}')
+                self._logger.warning(f'- unable to load plugin {plugin_class.__name__}: {type(e).__name__}: {e}')
                 if self.is_debug_mode_enabled(): raise
                 continue
 
             self.register_plugin(plugin_instance)
 
-        self.logger.debug('plugins loaded')
+        self._logger.debug('plugins loaded')
 
     def _say_dispatcher(self, msg, target, force=False):
         if self.config['flood_protection'] and not force:
             self._say_queue.put(self._say_info(target, msg))
 
             if self._say_thread is None or not self._say_thread.is_alive():
-                self.logger.debug('starting _say_thread...')
+                self._logger.debug('starting _say_thread...')
                 self._say_thread = Thread(target=self._process_say)
                 self._say_thread.start()
         else:
@@ -343,14 +343,14 @@ class pybot(irc.bot.SingleServerIRCBot):
         try:
             self.connection.privmsg(target, msg)
         except Exception as e:
-            self.logger.error(f'cannot send "{msg}": {type(e).__name__}: {e}. discarding msg...')
+            self._logger.error(f'cannot send "{msg}": {type(e).__name__}: {e}. discarding msg...')
 
     def _process_say(self):
         msgs_sent = 0
 
         while not self._say_queue.empty() and msgs_sent < 5:
             say_info = self._say_queue.get()
-            self.logger.debug(f'sending reply to {say_info.target}: {say_info.msg}')
+            self._logger.debug(f'sending reply to {say_info.target}: {say_info.msg}')
             self._say_impl(say_info.msg, say_info.target)
             msgs_sent += 1
             self._say_queue.task_done()
@@ -359,36 +359,36 @@ class pybot(irc.bot.SingleServerIRCBot):
 
         while not self._say_queue.empty():
             say_info = self._say_queue.get()
-            self.logger.debug(f'sending reply to {say_info.target}: {say_info.msg}')
+            self._logger.debug(f'sending reply to {say_info.target}: {say_info.msg}')
             self._say_impl(say_info.msg, say_info.target)
             time.sleep(0.5)  # to not get kicked because of Excess Flood
 
-        self.logger.debug('no more msgs to send, exiting...')
+        self._logger.debug('no more msgs to send, exiting...')
 
     def _register_plugin_handlers(self, plugin_instance):
-        if plugin_instance not in self.plugins:
-            self.logger.error(f'plugin {type(plugin_instance).__name__} not registered, aborting...')
+        if plugin_instance not in self._plugins:
+            self._logger.error(f'plugin {type(plugin_instance).__name__} not registered, aborting...')
             raise RuntimeError(f'plugin {type(plugin_instance).__name__} not registered!')
 
         for f in inspect.getmembers(plugin_instance, predicate=inspect.ismethod):
             func = f[1]
             func_name = f[0]
             if hasattr(func, '__command'):
-                if func_name in self.commands:
-                    self.logger.warning(f'command {func_name} already registered, skipping...')
+                if func_name in self.get_commands():
+                    self._logger.warning(f'command {func_name} already registered, skipping...')
                     continue
 
-                self.commands[func_name] = func
-                self.logger.debug(f'command {func_name} registered')
+                self._commands[func_name] = func
+                self._logger.debug(f'command {func_name} registered')
 
             if hasattr(func, '__regex'):
                 __regex = getattr(func, '__regex')
-                if __regex not in self.msg_regexps:
-                    self.msg_regexps[__regex] = []
+                if __regex not in self._msg_regexps:
+                    self._msg_regexps[__regex] = []
 
-                self.msg_regexps[__regex].append(func)
-                self.msg_regexps[__regex] = list(set(self.msg_regexps[__regex]))
-                self.logger.debug(f'regex for {func.__qualname__} registered: \'{getattr(func, "__regex").pattern}\'')
+                self._msg_regexps[__regex].append(func)
+                self._msg_regexps[__regex] = list(set(self._msg_regexps[__regex]))
+                self._logger.debug(f'regex for {func.__qualname__} registered: \'{getattr(func, "__regex").pattern}\'')
 
     def _get_fixed_command(self):
         with self._fixed_command_lock:
@@ -402,17 +402,36 @@ class pybot(irc.bot.SingleServerIRCBot):
         handles multiple plugin_instance registered
         throws RuntimeError if plugin_instance does not inherit from plugin base class
         """
+        plugin_name = type(plugin_instance).__name__
         if not issubclass(type(plugin_instance), plugin.plugin):
-            self.logger.error(f'trying to register no-plugin class {type(plugin_instance).__name__} as plugin, aborting...')
-            raise RuntimeError(f'class {type(plugin_instance).__name__} does not inherit from plugin!')
+            self._logger.error(f'trying to register no-plugin class {plugin_name} as plugin, aborting...')
+            raise RuntimeError(f'class {plugin_name} does not inherit from plugin!')
 
-        if plugin_instance in self.plugins:
-            self.logger.warning(f'plugin {type(plugin_instance).__name__} already registered, skipping...')
+        if plugin_instance in self.get_plugins():
+            self._logger.warning(f'plugin {plugin_name} already registered, skipping...')
             return
 
-        self.plugins.add(plugin_instance)
-        self.logger.info(f'+ plugin {type(plugin_instance).__name__} loaded')
+        self._plugins.add(plugin_instance)
+        self._logger.info(f'+ plugin {plugin_name} loaded')
         self._register_plugin_handlers(plugin_instance)
+
+    def remove_plugin(self, plugin_instance):
+        """
+        unload and remove plugin_instance bot plugin
+        """
+        plugin_name = type(plugin_instance).__name__
+
+        if plugin_instance not in self.get_plugins():
+            self._logger.warning(f'plugin {plugin_name} not registered, skipping...')
+            return
+
+        try:
+            plugin_instance.unload_plugin()
+        except Exception as e:
+            self._logger.error(f'{plugin_name}.unload_plugin() throws: {type(e).__name__}: {e}. continuing anyway...')
+            if self.is_debug_mode_enabled(): raise
+
+        self._plugins.remove(plugin_instance)
 
     def get_commands_by_plugin(self):
         """
@@ -429,7 +448,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         :return: commands registered by plugin plugin_name
         """
         if plugin_name in self.get_plugins_names():
-            return [x for x in self.commands if type(self.commands[x].__self__).__name__ == plugin_name]
+            return [x for x in self.get_commands() if type(self.get_commands()[x].__self__).__name__ == plugin_name]
         else:
             return None
 
@@ -446,17 +465,25 @@ class pybot(irc.bot.SingleServerIRCBot):
         """
         :return: registered plugins
         """
-        return self.plugins
+        return self._plugins
+
+    def get_commands(self):
+        """
+        :return: registered commands: map {command -> func}
+        """
+        return self._commands
+
+    def get_msg_regexps(self):
+        """
+        :return: registered msg regexps: map {regex -> [funcs]}
+        """
+        return self._msg_regexps
 
     def get_plugins_names(self):
         """
         :return: names of registered plugins
         """
         return [type(p).__name__ for p in self.get_plugins()]
-
-    def is_user_ignored(self, nickname):
-        nickname = irc_nickname(nickname)
-        return ('ignored_users' in self.config and nickname in self.config['ignored_users']) and (nickname not in self.config['ops'])
 
     def get_usernames_on_channel(self):
         """
@@ -485,7 +512,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         fixed_command SHOULD NOT start with bot command prefix
         set None to clear fixed command
         """
-        self.logger.info(f'saving fixed command: {fixed_command}')
+        self._logger.info(f'saving fixed command: {fixed_command}')
         with self._fixed_command_lock:
             self._fixed_command = fixed_command
 
@@ -501,7 +528,7 @@ class pybot(irc.bot.SingleServerIRCBot):
     # connection API funcs
 
     def join_channel(self):
-        self.logger.info(f'joining {self.config["channel"]}...')
+        self._logger.info(f'joining {self.config["channel"]}...')
         self.connection.join(self.config['channel'])
 
     def say(self, msg, target=None, force=False):
@@ -518,10 +545,10 @@ class pybot(irc.bot.SingleServerIRCBot):
 
         if self.is_msg_too_long(msg):
             if not self.config['wrap_too_long_msgs']:
-                self.logger.debug('privmsg too long, discarding...')
+                self._logger.debug('privmsg too long, discarding...')
                 raise MessageTooLong(msg)
 
-            self.logger.debug('privmsg too long, wrapping...')
+            self._logger.debug('privmsg too long, wrapping...')
             for part in textwrap.wrap(msg, 450):
                 self._say_dispatcher(part, target, force)
         else:
@@ -537,7 +564,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         self.say(random.choice(errs_ctx) % ctx) if ctx else self.say(random.choice(errs), target, force)
 
     def leave_channel(self):
-        self.logger.info(f'leaving {self.config["channel"]}...')
+        self._logger.info(f'leaving {self.config["channel"]}...')
         self.connection.part(self.config['channel'])
 
     def get_nickname(self):

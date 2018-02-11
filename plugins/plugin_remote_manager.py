@@ -104,26 +104,20 @@ class plugin_remote_manager(plugin):
         plugin_class = type(plugin_instance)
         cmds = self.bot.get_plugin_commands(plugin_class.__name__)
 
-        try:
-            plugin_instance.unload_plugin()
-        except Exception as e:
-            self.logger.error(f'{name}.unload_plugin() throws: {e}. continuing anyway...')
-            if self.bot.is_debug_mode_enabled(): raise
-
-        self.bot.plugins.remove(plugin_instance)
+        self.bot.remove_plugin(plugin_instance)
 
         # using copy and update here
-        commands_copy = self.bot.commands.copy()
+        commands_copy = self.bot.get_commands().copy()
         for cmd in cmds: del commands_copy[cmd]
 
-        msg_regexps_copy = self.bot.msg_regexps.copy()
+        msg_regexps_copy = self.bot.get_msg_regexps().copy()
         for f in inspect.getmembers(plugin_instance, predicate=inspect.ismethod):
             func = f[1]
             __regex = getattr(func, '__regex') if hasattr(func, '__regex') else None
-            if (__regex) and (__regex in msg_regexps_copy) and (func in msg_regexps_copy[__regex]): msg_regexps_copy[__regex].remove(func)
+            if __regex and (__regex in msg_regexps_copy) and (func in msg_regexps_copy[__regex]): msg_regexps_copy[__regex].remove(func)
 
-        self.bot.commands = commands_copy
-        self.bot.msg_regexps = msg_regexps_copy
+        self.bot._commands = commands_copy
+        self.bot._msg_regexps = msg_regexps_copy
         self.logger.warning(f'plugin {name} disabled with commands {cmds}')
 
     @command
