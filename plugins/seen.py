@@ -140,6 +140,8 @@ class seen(plugin):
             possible_results = self.db_cursor.fetchall()
 
         exact_result = None
+        possible_results = list(filter(lambda x: x[0] != sender_nick and x[0] != self.bot.get_nickname(), possible_results))
+
         if exact_results:
             possible_results = list(filter(lambda x: x not in exact_results, possible_results))  # remove all exact_results from possible_results
             exact_result = self.get_best_result(exact_results)
