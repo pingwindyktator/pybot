@@ -69,43 +69,6 @@ class builtins(plugin):
 
     @command
     @admin
-    @doc('add_op <nickname>...: add bot operator')
-    def add_op(self, sender_nick, args, **kwargs):
-        if not args: return
-        to_add = [irc_nickname(arg) for arg in args]
-        self.bot.config['ops'].extend(to_add)
-        reply = f'{to_add[0]} is now op' if len(to_add) == 1 else f'{to_add} are now ops'
-        self.bot.say(reply)
-        self.logger.warning(f'{sender_nick} added new ops: {to_add}')
-
-    @command
-    @admin
-    @doc('rm_op <nickname>...: remove bot operator')
-    def rm_op(self, sender_nick, args, **kwargs):
-        to_remove = [irc_nickname(arg) for arg in args]
-        to_remove = [arg for arg in to_remove if arg in self.bot.config['ops']]
-        if not to_remove: return
-        for arg in to_remove:
-            self.bot.config['ops'].remove(arg)
-
-        reply = f'{to_remove[0]} is no longer op' if len(to_remove) == 1 else f'{to_remove} are no longer ops'
-        self.bot.say(reply)
-        self.logger.warning(f'{sender_nick} removed ops: {to_remove}')
-
-    @command
-    @admin
-    @doc('get bot operators')
-    def ops(self, sender_nick, **kwargs):
-        if len(self.bot.config['ops']) == 0:
-            reply = 'no bot operators'
-        else:
-            reply = f'bot operators: {self.bot.config["ops"]}'
-
-        self.bot.say(reply)
-        self.logger.info(f'{sender_nick} asked for ops: {self.bot.config["ops"]}')
-
-    @command
-    @admin
     @doc('enable colorful answers')
     def enable_colors(self, sender_nick, **kwargs):
         color.enable_colors()

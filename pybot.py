@@ -46,10 +46,12 @@ class pybot(irc.bot.SingleServerIRCBot):
         self._fixed_command_lock = Lock()
 
         os.makedirs(os.path.dirname(os.path.realpath(self.config['db_location'])), exist_ok=True)
+        self._db_ops_tablename = 'ops'
         self._db_ignored_users_tablename = 'ignored_users'
         self._db_connection = sqlite3.connect(self.config['db_location'], check_same_thread=False)
         self._db_cursor = self._db_connection.cursor()
         self._db_cursor.execute(f"CREATE TABLE IF NOT EXISTS '{self._db_ops_tablename}' (nickname TEXT primary key not null)")
+        self._db_cursor.execute(f"CREATE TABLE IF NOT EXISTS '{self._db_ignored_users_tablename}' (nickname TEXT primary key not null)")
         self._db_mutex = Lock()
 
         if self.config['colors']:
@@ -173,7 +175,7 @@ class pybot(irc.bot.SingleServerIRCBot):
             fixed_command = self._get_fixed_command()
             if 'builtins' not in self.get_plugins_names() or 'fix' not in self.get_plugin_commands('builtins'):
                 pass
-            elif hasattr(self.get_commands()['fix'], '__admin') and sender_nick not in self.config['ops']:
+            elif hasattr(self.get_commands()['fix'], '__admin') and not self.is_user_op(sender_nick):
                 pass
             elif not fixed_command:
                 self.say('no fix available')
@@ -297,7 +299,7 @@ class pybot(irc.bot.SingleServerIRCBot):
             self.die()
 
     def _get_best_command_match(self, command, sender_nick):
-        choices = [c.replace('_', ' ') for c in self.get_commands() if not (hasattr(self.get_commands()[c], '__admin') and sender_nick not in self.config['ops'])]
+        choices = [c.replace('_', ' ') for c in self.get_commands() if not (hasattr(self.get_commands()[c], '__admin') and not self.is_user_op(sender_nick))]
         command = command.replace('_', ' ')
         result = process.extract(command, choices, scorer=fuzz.token_sort_ratio)
         result = [(r[0].replace(' ', '_'), r[1]) for r in result]
@@ -545,6 +547,30 @@ class pybot(irc.bot.SingleServerIRCBot):
     def is_user_ignored(self, nickname):
         return irc_nickname(nickname) in self.get_ignored_users()
 
+    def add_op(self, nickname):
+        if irc_nickname(nickname) == self.config['superop']: return
+
+        with self._db_mutex:
+            self._db_cursor.execute(f"INSERT OR REPLACE INTO '{self._db_ops_tablename}' VALUES (?)", (nickname,))
+            self._db_connection.commit()
+
+    def rm_op(self, nickname):
+        if irc_nickname(nickname) == self.config['superop']: return
+
+        with self._db_mutex:
+            self._db_cursor.execute(f"DELETE FROM '{self._db_ops_tablename}' WHERE nickname = ? COLLATE NOCASE", (nickname,))
+            self._db_connection.commit()
+
+    def get_ops(self):
+        with self._db_mutex:
+            self._db_cursor.execute(f"SELECT nickname FROM '{self._db_ops_tablename}'")
+            result = self._db_cursor.fetchall()
+
+        return [irc_nickname(n[0]) for n in result] + [self.config['superop']]
+
+    def is_user_op(self, nickname):
+        return irc_nickname(nickname) in self.get_ops()
+
     @property
     def channel(self):
         return self.channels[self.config['channel']] if self.config['channel'] in self.channels else None
@@ -627,8 +653,8 @@ class pybot(irc.bot.SingleServerIRCBot):
     def set_topic(self, channel, new_topic=None):
         return self.connection.topic(self.config['channel'], new_topic)
 
-    def set_nick(self, newnick):
-        return self.connection.nick(newnick)
+    def set_nick(self, new_nick):
+        return self.connection.nick(new_nick)
 
     def mode(self, target, command):
         return self.connection.mode(target, command)

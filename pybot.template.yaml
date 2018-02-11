@@ -5,7 +5,7 @@ nickname: [pybot, pybot_, pybot__]
 password: []
 use_ssl: true
 max_autorejoin_attempts: 5
-ops: []
+superop: ''
 file_logging_level: info
 stdout_logging_level: info
 # enabled_plugins: []

@@ -208,7 +208,7 @@ def admin(function):
     @wraps(function)
     def admin_impl(self, sender_nick, **kwargs):
         sender_nick = irc_nickname(sender_nick)
-        if sender_nick in self.bot.config['ops']:
+        if self.bot.is_user_op(sender_nick):
             function(self, sender_nick=sender_nick, **kwargs)
         else:
             self.logger.info(f'{sender_nick} is not op, skipping command')

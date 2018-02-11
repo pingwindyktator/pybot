@@ -88,7 +88,6 @@ def ensure_config_is_ok(config, assert_unknown_keys=False):
         'use_ssl': config_key_info(True, bool),
         'flood_protection': config_key_info(True, bool),
         'max_autorejoin_attempts': config_key_info(True, int),
-        'ops': config_key_info(True, list),
         'colors': config_key_info(True, bool),
         'file_logging_level': config_key_info(True, str),
         'stdout_logging_level': config_key_info(True, str),
@@ -98,6 +97,7 @@ def ensure_config_is_ok(config, assert_unknown_keys=False):
         'health_check': config_key_info(True, bool),
         'health_check_interval_s': config_key_info(True, int),
         'db_location': config_key_info(True, str),
+        'superop': config_key_info(True, str),
 
         'password': config_key_info(False, list),
         'disabled_plugins': config_key_info(False, list),
@@ -122,6 +122,7 @@ def ensure_config_is_ok(config, assert_unknown_keys=False):
     c_assert_error(config['file_logging_level'] in logging_level_str_to_int, f'file_logging_level can be one of: {", ".join((logging_level_str_to_int.keys()))}')
     c_assert_error(config['stdout_logging_level'] in logging_level_str_to_int, f'stdout_logging_level can be one of: {", ".join((logging_level_str_to_int.keys()))}')
     c_assert_error(config['command_prefix'].strip(), 'you have to specify command prefix')
+    c_assert_error(config['superop'].strip(), 'you have to specify superop')
     c_assert_error(config['health_check_interval_s'] >= 15, 'health_check_interval_s should be >= 15')
 
     if 'disabled_plugins' in config:

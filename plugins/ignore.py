@@ -98,6 +98,6 @@ class ignore(plugin):
         if len(ignored) == 0:
             self.bot.say('no ignored users')
         else:
-            self.bot.say(f'ignored users: {ignored}')
+            self.bot.say(f'ignored users: {", ".join(ignored)}')
 
         self.logger.info(f'{sender_nick} asked for ignored users: {ignored}')
