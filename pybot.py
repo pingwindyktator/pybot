@@ -528,6 +528,8 @@ class pybot(irc.bot.SingleServerIRCBot):
             self._fixed_command = fixed_command
 
     def ignore_user(self, nickname):
+        if self.is_user_op(nickname): return
+
         with self._db_mutex:
             self._db_cursor.execute(f"INSERT OR REPLACE INTO '{self._db_ignored_users_tablename}' VALUES (?)", (nickname,))
             self._db_connection.commit()
@@ -545,9 +547,10 @@ class pybot(irc.bot.SingleServerIRCBot):
         return [irc_nickname(n[0]) for n in result]
 
     def is_user_ignored(self, nickname):
-        return irc_nickname(nickname) in self.get_ignored_users()
+        return irc_nickname(nickname) in self.get_ignored_users() and not self.is_user_op(nickname)
 
     def add_op(self, nickname):
+        if self.is_user_ignored(nickname): self.unignore_user(nickname)
         if irc_nickname(nickname) == self.config['superop']: return
 
         with self._db_mutex:

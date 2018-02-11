@@ -13,20 +13,33 @@ class ignore(plugin):
     def unload_plugin(self):
         for t in self.ignore_timers: t.cancel()
 
+    def can_ignore_user(self, nickname):
+        if self.bot.get_nickname() == nickname:
+            return False, 'nice try'
+
+        if self.bot.is_user_op(nickname):
+            return False, f'{nickname} is a bot operator, I cannot ignore him'
+
+        if self.bot.is_user_ignored(nickname):
+            return False, f'{nickname} is already ignored'
+
+        return True, None
+
     @command
     @admin
-    @doc("ignore <nickname>...: ignore user's messages")
+    @doc("ignore <nickname>: ignore user's messages")
     def ignore(self, sender_nick, args, **kwargs):
-        to_ignore = [irc_nickname(arg) for arg in args if not self.bot.is_user_ignored(arg)]
-        if not to_ignore:
-            self.bot.say('no one to ignore')
+        if not args: return
+        nickname = irc_nickname(args[0])
+
+        can_ignore, reason = self.can_ignore_user(nickname)
+        if not can_ignore:
+            self.bot.say(reason)
             return
 
-        for arg in to_ignore: self.bot.ignore_user(arg)
-
-        reply = f'{to_ignore[0]} is now ignored' if len(to_ignore) == 1 else f'{to_ignore} are now ignored'
-        self.bot.say(reply)
-        self.logger.warning(f'{sender_nick} ignored {to_ignore}')
+        self.bot.ignore_user(nickname)
+        self.bot.say(f'{nickname} is now ignored')
+        self.logger.warning(f'{sender_nick} ignored {nickname}')
 
     @command
     @admin
@@ -58,8 +71,9 @@ class ignore(plugin):
                 # trying to parse ignore_for <time> <nickname> instead of ignore_for <nickname> <time>
                 return self.ignore_for_impl(sender_nick, f'{time} {nickname}', reverted=True)
 
-        if self.bot.is_user_ignored(nickname):
-            self.bot.say(f'{nickname} is already ignored')
+        can_ignore, reason = self.can_ignore_user(nickname)
+        if not can_ignore:
+            self.bot.say(reason)
             return
 
         self.bot.ignore_user(nickname)
@@ -76,18 +90,18 @@ class ignore(plugin):
 
     @command
     @admin
-    @doc("unignore <nickname>...: unignore user's messages")
+    @doc("unignore <nickname>: unignore user's messages")
     def unignore(self, sender_nick, args, **kwargs):
-        to_unignore = [irc_nickname(arg) for arg in args if self.bot.is_user_ignored(arg)]
-        if not to_unignore:
-            self.bot.say('no one to unignore')
+        if not args: return
+        nickname = irc_nickname(args[0])
+
+        if not self.bot.is_user_ignored(nickname):
+            self.bot.say(f'{nickname} is not ignored')
             return
 
-        for arg in to_unignore: self.bot.unignore_user(arg)
-
-        reply = f'{to_unignore[0]} is no longer ignored' if len(to_unignore) == 1 else f'{to_unignore} are no longer ignored'
-        self.bot.say(reply)
-        self.logger.warning(f'{sender_nick} unignored {to_unignore}')
+        self.bot.unignore_user(nickname)
+        self.bot.say(f'{nickname} is no longer ignored')
+        self.logger.warning(f'{sender_nick} unignored: {nickname}')
 
     @command
     @admin
