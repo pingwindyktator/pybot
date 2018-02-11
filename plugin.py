@@ -161,7 +161,7 @@ def command(function):
         try:
             function(self, **kwargs)
         except Exception as e:
-            self.logger.error(f'exception caught calling {function.__qualname__}: {e}')
+            self.logger.error(f'exception caught calling {function.__qualname__}: {type(e).__name__}: {e}')
             self.bot.say('internal error, sorry :(')
             if self.bot.is_debug_mode_enabled(): raise
 
@@ -180,7 +180,7 @@ def on_message(regex_str):
             try:
                 function(self, **kwargs)
             except Exception as e:
-                self.logger.error(f'exception caught calling {function.__qualname__}: {e}')
+                self.logger.error(f'exception caught calling {function.__qualname__}: {type(e).__name__}: {e}')
                 if self.bot.is_debug_mode_enabled(): raise
 
         if hasattr(on_message_impl_impl, '__command'):
@@ -190,7 +190,7 @@ def on_message(regex_str):
             on_message_impl_impl.__regex = re.compile(regex_str)
             return on_message_impl_impl
         except Exception as e:
-            print(f'invalid regex for regex handler {function.__qualname__}: {e}')
+            print(f'invalid regex for regex handler {function.__qualname__}: {type(e).__name__}: {e}')
             sys.exit(5)
 
     return on_message_impl

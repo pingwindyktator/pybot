@@ -300,7 +300,7 @@ class pybot(irc.bot.SingleServerIRCBot):
             try:
                 p.__getattribute__(func_name)(**kwargs)
             except Exception as e:
-                self.logger.error(f'exception caught calling {p.__getattribute__(func_name).__qualname__}: {e}')
+                self.logger.error(f'exception caught calling {p.__getattribute__(func_name).__qualname__}: {type(e).__name__}: {e}')
                 if self.is_debug_mode_enabled(): raise
 
     def _load_plugins(self):
@@ -316,11 +316,11 @@ class pybot(irc.bot.SingleServerIRCBot):
             try:
                 plugin_instance = plugin_class(self)
             except utils.config_error as e:
-                self.logger.warning(f'- invalid {plugin_class.__name__} plugin config: {e}')
+                self.logger.warning(f'- invalid {plugin_class.__name__} plugin config: {type(e).__name__}: {e}')
                 if self.is_debug_mode_enabled(): raise
                 continue
             except Exception as e:
-                self.logger.warning(f'- unable to load plugin {plugin_class.__name__}: {e}')
+                self.logger.warning(f'- unable to load plugin {plugin_class.__name__}: {type(e).__name__}: {e}')
                 if self.is_debug_mode_enabled(): raise
                 continue
 
@@ -343,7 +343,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         try:
             self.connection.privmsg(target, msg)
         except Exception as e:
-            self.logger.error(f'cannot send "{msg}": {e}. discarding msg...')
+            self.logger.error(f'cannot send "{msg}": {type(e).__name__}: {e}. discarding msg...')
 
     def _process_say(self):
         msgs_sent = 0
