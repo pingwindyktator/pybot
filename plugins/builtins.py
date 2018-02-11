@@ -254,8 +254,8 @@ class builtins(plugin):
         return True
 
     @command
-    @admin
-    @doc('updated config with config template defaults and ** restarts **, should be used with caution!')
+    @superadmin
+    @doc('update config with config template defaults and ** restarts **, should be used with caution!')
     def update_config(self, sender_nick, **kwargs):
         shutil.copyfile('pybot.yaml', '..pybot.yaml')
 
@@ -279,7 +279,7 @@ class builtins(plugin):
             if self.bot.is_debug_mode_enabled(): raise
 
     @command
-    @admin
+    @superadmin
     @doc('self_update [<force>]: pull changes from git remote ref and update config file, use [<force>] to discard local changes')
     def self_update(self, sender_nick, args, **kwargs):
         # TODO pip requirements update
@@ -329,7 +329,7 @@ class builtins(plugin):
         repo.head.orig_head().set_commit(repo.head)
 
     @command
-    @admin
+    @superadmin
     @doc('change_config <entry> <value>: change, save, apply bot config file and ** restart **. use ":" to separate config nesting (eg. "a:b:c" means config["a"]["b"]["c"])')
     def change_config(self, msg, sender_nick, **kwargs):
         if not msg: return

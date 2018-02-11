@@ -60,6 +60,12 @@ class example_plugin(plugin):
         pass
 
     @command
+    @superadmin
+    def example_admin_command(self, sender_nick, **kwargs):
+        # you need superadmin privileges to call this command
+        pass
+
+    @command
     @doc("this is what you will see as command's help")
     def example_command_with_doc(self, sender_nick, **kwargs):
         # try '.help example_command_with_doc' to see "this is what you will see as command's help"

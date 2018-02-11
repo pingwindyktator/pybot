@@ -216,3 +216,17 @@ def admin(function):
 
     admin_impl.__admin = True
     return admin_impl
+
+
+def superadmin(function):
+    @wraps(function)
+    def admin_impl(self, sender_nick, **kwargs):
+        sender_nick = irc_nickname(sender_nick)
+        if sender_nick == self.bot.config['superop']:
+            function(self, sender_nick=sender_nick, **kwargs)
+        else:
+            self.logger.info(f'{sender_nick} is not superop, skipping command')
+            self.bot.say(f"{sender_nick}: you're not super bot operator, sorry!")
+
+    admin_impl.__admin = True
+    return admin_impl
