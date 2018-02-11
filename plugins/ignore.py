@@ -13,20 +13,16 @@ class ignore(plugin):
     def unload_plugin(self):
         for t in self.ignore_timers: t.cancel()
 
-    def ignore_user_impl(self, username):
-        if 'ignored_users' not in self.bot.config:
-            self.bot.config['ignored_users'] = [username]
-        else:
-            self.bot.config['ignored_users'].append(username)
-
     @command
     @admin
-    @doc("ignore <username>...: ignore user's messages")
+    @doc("ignore <nickname>...: ignore user's messages")
     def ignore(self, sender_nick, args, **kwargs):
-        if not args: return
-        to_ignore = [irc_nickname(arg) for arg in args]
-        for arg in to_ignore:
-            self.ignore_user_impl(arg)
+        to_ignore = [irc_nickname(arg) for arg in args if not self.bot.is_user_ignored(arg)]
+        if not to_ignore:
+            self.bot.say('no one to ignore')
+            return
+
+        for arg in to_ignore: self.bot.ignore_user(arg)
 
         reply = f'{to_ignore[0]} is now ignored' if len(to_ignore) == 1 else f'{to_ignore} are now ignored'
         self.bot.say(reply)
@@ -34,15 +30,15 @@ class ignore(plugin):
 
     @command
     @admin
-    @doc("ignore_for <username> <time>: ignore user's messages for <time> time. <time> should be %H %M  (eg.  1h 42m)")
-    @doc("ignore_for <time> <username>: ignore user's messages for <time> time. <time> should be %H %M  (eg.  1h 42m)")
+    @doc("ignore_for <nickname> <time>: ignore user's messages for <time> time. <time> should be %H %M  (eg.  1h 42m)")
+    @doc("ignore_for <time> <nickname>: ignore user's messages for <time> time. <time> should be %H %M  (eg.  1h 42m)")
     def ignore_for(self, sender_nick, msg, **kwargs):
         if not msg: return
         return self.ignore_for_impl(sender_nick, msg)
 
     def ignore_for_impl(self, sender_nick, msg, reverted=False):
-        username = irc_nickname(msg.split()[0].strip())
-        time = msg[len(username):].strip()
+        nickname = irc_nickname(msg.split()[0].strip())
+        time = msg[len(nickname):].strip()
         if not time:
             self.bot.say('invalid format')
             return
@@ -59,36 +55,35 @@ class ignore(plugin):
                 self.bot.say('invalid format')
                 return
             else:
-                # trying to parse ignore_for <time> <username> instead of ignore_for <username> <time>
-                return self.ignore_for_impl(sender_nick, f'{time} {username}', reverted=True)
+                # trying to parse ignore_for <time> <nickname> instead of ignore_for <nickname> <time>
+                return self.ignore_for_impl(sender_nick, f'{time} {nickname}', reverted=True)
 
-        self.ignore_user_impl(username)
-        self.logger.warning(f'{sender_nick} ignored {username} for {hours}H:{minutes}M')
+        if self.bot.is_user_ignored(nickname):
+            self.bot.say(f'{nickname} is already ignored')
+            return
+
+        self.bot.ignore_user(nickname)
+        self.logger.warning(f'{sender_nick} ignored {nickname} for {hours}H:{minutes}M')
         delta_time = timedelta(hours=hours, minutes=minutes).total_seconds()
-        t = Timer(delta_time, self.unignore_user_timer_ended, kwargs={'username': username})
+        t = Timer(delta_time, self.unignore_user_timer_ended, kwargs={'nickname': nickname})
         self.ignore_timers.append(t)
         t.start()
-        self.bot.say(f'{username} ignored for {time}')
+        self.bot.say(f'{nickname} ignored for {time}')
 
-    def unignore_user_impl(self, username):
-        if 'ignored_users' not in self.bot.config: return
-        self.bot.config['ignored_users'].remove(username)
-
-    def unignore_user_timer_ended(self, username):
-        if username in self.bot.config['ignored_users']:
-            self.logger.warning(f'time passed, {username} is no longer ignored')
-            self.unignore_user_impl(username)
+    def unignore_user_timer_ended(self, nickname):
+        self.logger.warning(f'time passed, {nickname} is no longer ignored')
+        self.bot.unignore_user(nickname)
 
     @command
     @admin
-    @doc("unignore <username>...: unignore user's messages")
+    @doc("unignore <nickname>...: unignore user's messages")
     def unignore(self, sender_nick, args, **kwargs):
-        if 'ignored_users' not in self.bot.config: return
-        to_unignore = [irc_nickname(arg) for arg in args]
-        to_unignore = [arg for arg in to_unignore if arg in self.bot.config['ignored_users']]
-        if not to_unignore: return
-        for arg in to_unignore:
-            self.unignore_user_impl(arg)
+        to_unignore = [irc_nickname(arg) for arg in args if self.bot.is_user_ignored(arg)]
+        if not to_unignore:
+            self.bot.say('no one to unignore')
+            return
+
+        for arg in to_unignore: self.bot.unignore_user(arg)
 
         reply = f'{to_unignore[0]} is no longer ignored' if len(to_unignore) == 1 else f'{to_unignore} are no longer ignored'
         self.bot.say(reply)
@@ -98,12 +93,11 @@ class ignore(plugin):
     @admin
     @doc('get ignored users')
     def ignored_users(self, sender_nick, **kwargs):
-        ignored = self.bot.config['ignored_users'] if 'ignored_users' in self.bot.config else []
+        ignored = self.bot.get_ignored_users()
 
         if len(ignored) == 0:
-            reply = 'no ignored users'
+            self.bot.say('no ignored users')
         else:
-            reply = f'ignored users: {ignored}'
+            self.bot.say(f'ignored users: {ignored}')
 
-        self.bot.say(reply)
         self.logger.info(f'{sender_nick} asked for ignored users: {ignored}')

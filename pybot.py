@@ -1,11 +1,13 @@
 import inspect
 import logging
+import sqlite3
 import ssl
 import time
 import textwrap
 import sys
 import random
 import atexit
+import os
 import plugin
 import msg_parser
 import irc.bot
@@ -42,6 +44,13 @@ class pybot(irc.bot.SingleServerIRCBot):
         self._debug_mode = debug_mode
         self._fixed_command = None
         self._fixed_command_lock = Lock()
+
+        os.makedirs(os.path.dirname(os.path.realpath(self.config['db_location'])), exist_ok=True)
+        self._db_ignored_users_tablename = 'ignored_users'
+        self._db_connection = sqlite3.connect(self.config['db_location'], check_same_thread=False)
+        self._db_cursor = self._db_connection.cursor()
+        self._db_cursor.execute(f"CREATE TABLE IF NOT EXISTS '{self._db_ops_tablename}' (nickname TEXT primary key not null)")
+        self._db_mutex = Lock()
 
         if self.config['colors']:
             color.enable_colors()
@@ -515,6 +524,26 @@ class pybot(irc.bot.SingleServerIRCBot):
         self._logger.info(f'saving fixed command: {fixed_command}')
         with self._fixed_command_lock:
             self._fixed_command = fixed_command
+
+    def ignore_user(self, nickname):
+        with self._db_mutex:
+            self._db_cursor.execute(f"INSERT OR REPLACE INTO '{self._db_ignored_users_tablename}' VALUES (?)", (nickname,))
+            self._db_connection.commit()
+
+    def unignore_user(self, nickname):
+        with self._db_mutex:
+            self._db_cursor.execute(f"DELETE FROM '{self._db_ignored_users_tablename}' WHERE nickname = ? COLLATE NOCASE", (nickname,))
+            self._db_connection.commit()
+
+    def get_ignored_users(self):
+        with self._db_mutex:
+            self._db_cursor.execute(f"SELECT nickname FROM '{self._db_ignored_users_tablename}'")
+            result = self._db_cursor.fetchall()
+
+        return [irc_nickname(n[0]) for n in result]
+
+    def is_user_ignored(self, nickname):
+        return irc_nickname(nickname) in self.get_ignored_users()
 
     @property
     def channel(self):

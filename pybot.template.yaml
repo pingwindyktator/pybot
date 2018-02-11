@@ -11,13 +11,13 @@ stdout_logging_level: info
 # enabled_plugins: []
 # disabled_plugins: []
 command_prefix: '!'
-ignored_users: []
 colors: true
 flood_protection: true
 try_autocorrect: true
 wrap_too_long_msgs: true
 health_check: false
 health_check_interval_s: 100
+db_location: db/pybot.db
 
 connection_remote_manager:
   disconnect_msg: '[disconnect]'

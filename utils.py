@@ -97,11 +97,11 @@ def ensure_config_is_ok(config, assert_unknown_keys=False):
         'wrap_too_long_msgs': config_key_info(True, bool),
         'health_check': config_key_info(True, bool),
         'health_check_interval_s': config_key_info(True, int),
+        'db_location': config_key_info(True, str),
 
         'password': config_key_info(False, list),
         'disabled_plugins': config_key_info(False, list),
         'enabled_plugins': config_key_info(False, list),
-        'ignored_users': config_key_info(False, list),
     }
 
     c_assert_error(config, 'config seems to be empty')
