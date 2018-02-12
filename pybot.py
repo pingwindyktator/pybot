@@ -84,7 +84,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         super(pybot, self).start()
 
     def on_not_healthy(self):
-        self._logger.warning(f'unexpectedly disconnected from {self.config["server"]}')
+        self._logger.warning(f'unexpectedly disconnected from {self.connection.server}')
         self._ping_ponger.stop()
         self.start()
 
@@ -108,8 +108,8 @@ class pybot(irc.bot.SingleServerIRCBot):
         """ called by super() when connected to server """
         self._ping_ponger.start()
         ssl_info = ' over SSL' if self.config['use_ssl'] else ''
-        self._logger.info(f'connected to {self.config["server"]}:{self.config["port"]}{ssl_info} using nickname {self.get_nickname()}')
-        self._call_plugins_methods('welcome', raw_msg=raw_msg, server=self.config['server'], port=self.config['port'], nickname=self.get_nickname())
+        self._logger.info(f'connected to {self.connection.real_server_name}:{self.connection.port}{ssl_info} using nickname {self.get_nickname()}')
+        self._call_plugins_methods('welcome', raw_msg=raw_msg, server=self.connection.server, port=self.connection.port, nickname=self.get_nickname())
         self._login()
         self.join_channel()
 
@@ -117,10 +117,10 @@ class pybot(irc.bot.SingleServerIRCBot):
         """ called by super() when disconnected from server """
         self._ping_ponger.stop()
         msg = f': {raw_msg.arguments[0]}' if raw_msg.arguments else ''
-        self._logger.warning(f'disconnected from {self.config["server"]}{msg}')
+        self._logger.warning(f'disconnected from {self.connection.server}{msg}')
 
         if not self._dying:
-            self._call_plugins_methods('disconnect', raw_msg=raw_msg, server=self.config['server'], port=self.config['port'])
+            self._call_plugins_methods('disconnect', raw_msg=raw_msg, server=self.connection.server, port=self.connection.port)
             self.start()
 
     def on_quit(self, _, raw_msg):
@@ -131,7 +131,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         """ called by super() when somebody joins channel """
         self.names()  # to immediately updated channel's user list
         if raw_msg.source.nick == self.get_nickname() and not self.joined_to_channel():
-            self._logger.info(f'joined to {self.config["channel"]}')
+            self._logger.info(f'joined to {self.get_channel_name()}')
             self._call_plugins_methods('me_joined', raw_msg=raw_msg)
         else:
             self._call_plugins_methods('join', raw_msg=raw_msg, source=raw_msg.source)
@@ -233,7 +233,7 @@ class pybot(irc.bot.SingleServerIRCBot):
             self._logger.warning('autorejoin attempts limit reached, waiting for user interact now')
             choice = None
             while choice != 'Y' and choice != 'y' and choice != 'N' and choice != 'n':
-                choice = input(f'rejoin to {self.config["channel"]}? [Y/n] ')
+                choice = input(f'rejoin to {self.get_channel_name()}? [Y/n] ')
 
             if choice == 'Y' or choice == 'y':
                 self._autorejoin_attempts = 0
@@ -466,7 +466,7 @@ class pybot(irc.bot.SingleServerIRCBot):
 
     def get_plugins(self):
         """
-        :return: registered plugins
+        :return: registered plugins instances
         """
         return self._plugins
 
@@ -492,14 +492,14 @@ class pybot(irc.bot.SingleServerIRCBot):
         """
         :return: names of users in channel
         """
-        return [irc_nickname(x) for x in list(self.channel.users())]
+        return [irc_nickname(x) for x in list(self.get_channel().users())]
 
     def is_msg_too_long(self, msg):
         """
         IRC protocol defines 512 as max length of message
         handles utf-8 encoding and additional information required
         """
-        msg = f"PRIVMSG {self.config['channel']} :{msg}"
+        msg = f"PRIVMSG {self.get_channel_name()} :{msg}"
         encoded_msg = msg.encode('utf-8')
         return len(encoded_msg + b'\r\n') > 512  # max msg len defined by IRC protocol
 
@@ -507,7 +507,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         return self._debug_mode
 
     def joined_to_channel(self):
-        return self.connection.is_connected() and self.channel
+        return self.connection.is_connected() and self.get_channel()
 
     def register_fixed_command(self, fixed_command):
         """
@@ -566,20 +566,30 @@ class pybot(irc.bot.SingleServerIRCBot):
     def is_user_op(self, nickname):
         return irc_nickname(nickname) in self.get_ops()
 
-    @property
-    def channel(self):
-        return self.channels[self.config['channel']] if self.config['channel'] in self.channels else None
+    def get_channel(self):
+        return list(self.channels.items())[0][1] if list(self.channels.items()) else None
+
+    def get_channel_name(self):
+        return list(self.channels.items())[0][0] if list(self.channels.items()) else self.config['channel']
 
     def die(self, msg='Bye!'):
+        """
+        you really shouldn't use bot in any way after this function called!
+        """
         if not self._dying:
             self._dying = True
-            self.connection.disconnect(msg)
+            for plugin_instance in self.get_plugins().copy():
+                self.remove_plugin(plugin_instance)
+
+            self.disconnect(msg)
 
     # connection API funcs
 
-    def join_channel(self):
-        self._logger.info(f'joining {self.config["channel"]}...')
-        self.connection.join(self.config['channel'])
+    def join_channel(self, channel=None):
+        if not channel: channel = self.config["channel"]
+
+        self._logger.info(f'joining {channel}...')
+        self.connection.join(channel)
 
     def say(self, msg, target=None, force=False):
         """
@@ -589,7 +599,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         throws MessageTooLong if wrap_too_long_msgs config entry is false
         """
         if not msg: return
-        if not target: target = self.config['channel']
+        if not target: target = self.get_channel_name()
         if type(msg) is bytes: msg = msg.decode('utf-8')
         if not isinstance(msg, str): msg = str(msg)
 
@@ -614,8 +624,8 @@ class pybot(irc.bot.SingleServerIRCBot):
         self.say(random.choice(errs_ctx) % ctx) if ctx else self.say(random.choice(errs), target, force)
 
     def leave_channel(self):
-        self._logger.info(f'leaving {self.config["channel"]}...')
-        self.connection.part(self.config['channel'])
+        self._logger.info(f'leaving {self.get_channel_name()}...')
+        self.connection.part(self.get_channel_name())
 
     def get_nickname(self):
         return irc_nickname(self.connection.get_nickname())
@@ -624,38 +634,35 @@ class pybot(irc.bot.SingleServerIRCBot):
         return self.connection.whois(targets)
 
     def whowas(self, nick, max=""):
-        return self.connection.whowas(nick, max, self.config['server'])
+        return self.connection.whowas(nick, max, self.connection.server)
 
     def userhost(self, nicks):
         return self.connection.userhost(nicks)
 
     def notice(self, msg, target=None):
-        if not target: target = self.config['channel']
+        if not target: target = self.get_channel_name()
         return self.connection.notice(target, msg)
 
     def invite(self, nick):
-        return self.connection.invite(nick, self.config['channel'])
+        return self.connection.invite(nick, self.get_channel_name())
 
     def kick(self, nick, comment=''):
-        return self.connection.kick(self.config['channel'], nick, comment)
+        return self.connection.kick(self.get_channel_name(), nick, comment)
 
     def list(self):
-        return self.connection.list([self.config['channel']], self.config['server'])
+        return self.connection.list([self.get_channel_name()], self.connection.server)
 
     def names(self):
-        return self.connection.names([self.config['channel']])
+        return self.connection.names([self.get_channel_name()])
 
     def set_topic(self, channel, new_topic=None):
-        return self.connection.topic(self.config['channel'], new_topic)
+        return self.connection.topic(self.get_channel_name(), new_topic)
 
     def set_nick(self, new_nick):
         return self.connection.nick(new_nick)
 
     def mode(self, target, command):
         return self.connection.mode(target, command)
-
-    def disconnect(self, message=''):
-        return self.connection.disconnect(message)
 
     def is_connected(self):
         return self.connection.is_connected()

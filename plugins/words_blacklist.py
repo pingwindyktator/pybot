@@ -40,4 +40,4 @@ class words_blacklist(plugin):
         self.logger.info(f'words {to_unban} unbanned by {sender_nick}')
 
     def am_i_channel_operator(self):
-        return self.bot.get_nickname() in self.bot.channel.mode_users['o']
+        return self.bot.get_nickname() in self.bot.get_channel().mode_users['o']
