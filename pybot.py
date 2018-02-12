@@ -84,7 +84,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         super(pybot, self).start()
 
     def on_not_healthy(self):
-        self._logger.warning(f'unexpectedly disconnected from {self.connection.server}')
+        self._logger.warning(f'unexpectedly disconnected from {self.get_server_name()}')
         self._ping_ponger.stop()
         self.start()
 
@@ -109,7 +109,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         self._ping_ponger.start()
         ssl_info = ' over SSL' if self.config['use_ssl'] else ''
         self._logger.info(f'connected to {self.connection.real_server_name}:{self.connection.port}{ssl_info} using nickname {self.get_nickname()}')
-        self._call_plugins_methods('welcome', raw_msg=raw_msg, server=self.connection.server, port=self.connection.port, nickname=self.get_nickname())
+        self._call_plugins_methods('welcome', raw_msg=raw_msg, server=self.get_server_name(), port=self.connection.port, nickname=self.get_nickname())
         self._login()
         self.join_channel()
 
@@ -117,10 +117,10 @@ class pybot(irc.bot.SingleServerIRCBot):
         """ called by super() when disconnected from server """
         self._ping_ponger.stop()
         msg = f': {raw_msg.arguments[0]}' if raw_msg.arguments else ''
-        self._logger.warning(f'disconnected from {self.connection.server}{msg}')
+        self._logger.warning(f'disconnected from {self.get_server_name()}{msg}')
 
         if not self._dying:
-            self._call_plugins_methods('disconnect', raw_msg=raw_msg, server=self.connection.server, port=self.connection.port)
+            self._call_plugins_methods('disconnect', raw_msg=raw_msg, server=self.get_server_name(), port=self.connection.port)
             self.start()
 
     def on_quit(self, _, raw_msg):
@@ -566,12 +566,6 @@ class pybot(irc.bot.SingleServerIRCBot):
     def is_user_op(self, nickname):
         return irc_nickname(nickname) in self.get_ops()
 
-    def get_channel(self):
-        return list(self.channels.items())[0][1] if list(self.channels.items()) else None
-
-    def get_channel_name(self):
-        return list(self.channels.items())[0][0] if list(self.channels.items()) else self.config['channel']
-
     def die(self, msg='Bye!'):
         """
         you really shouldn't use bot in any way after this function called!
@@ -634,7 +628,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         return self.connection.whois(targets)
 
     def whowas(self, nick, max=""):
-        return self.connection.whowas(nick, max, self.connection.server)
+        return self.connection.whowas(nick, max, self.get_server_name())
 
     def userhost(self, nicks):
         return self.connection.userhost(nicks)
@@ -650,7 +644,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         return self.connection.kick(self.get_channel_name(), nick, comment)
 
     def list(self):
-        return self.connection.list([self.get_channel_name()], self.connection.server)
+        return self.connection.list([self.get_channel_name()], self.get_server_name())
 
     def names(self):
         return self.connection.names([self.get_channel_name()])
@@ -666,3 +660,13 @@ class pybot(irc.bot.SingleServerIRCBot):
 
     def is_connected(self):
         return self.connection.is_connected()
+
+    def get_channel(self):
+        return list(self.channels.items())[0][1] if list(self.channels.items()) else None
+
+    def get_channel_name(self):
+        return list(self.channels.items())[0][0] if list(self.channels.items()) else self.config['channel']
+
+    def get_server_name(self):
+        try: return self.connection.server
+        except AttributeError: return self.config['server']
