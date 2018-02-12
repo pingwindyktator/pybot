@@ -149,6 +149,7 @@ class builtins(plugin):
             args = [f'"{arg}"' for arg in args]
 
         sender_nick = f' by {sender_nick}' if sender_nick else ''
+        self.bot.die()
         self.logger.warning(f"re-spawning '{' '.join(args)}'{sender_nick}")
         os.chdir(os.getcwd())
         os.execv(sys.executable, args)
