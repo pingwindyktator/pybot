@@ -14,7 +14,6 @@ import irc.bot
 import irc.connection
 import irc.client
 import utils
-import signal
 import sys
 
 from queue import Queue
@@ -59,7 +58,7 @@ class pybot(irc.bot.SingleServerIRCBot):
             self._logger.debug('colors loaded')
         else: color.disable_colors()
 
-        self._logger.debug('initiating irc.bot.SingleServerIRCBot...')
+        self._logger.info('initiating irc.bot.SingleServerIRCBot...')
         connection_args = {}
         if self.config['use_ssl']:
             ssl_factory = irc.connection.Factory(wrapper=ssl.wrap_socket)
@@ -67,11 +66,9 @@ class pybot(irc.bot.SingleServerIRCBot):
 
         super(pybot, self).__init__([(self.config['server'], self.config['port'])], self.config['nickname'][0], self.config['nickname'][0], **connection_args)
         self._ping_ponger = ping_ponger(self.connection, self.config['health_check_interval_s'], self.on_not_healthy) if self.config['health_check'] else utils.null_object()
-        self._logger.debug('irc.bot.SingleServerIRCBot initiated')
+        self._logger.info('irc.bot.SingleServerIRCBot initiated')
 
-        if not debug_mode:
-            signal.signal(signal.SIGINT, self._sigint_handler)
-            atexit.register(self._atexit)
+        if not debug_mode: atexit.register(self._atexit)
 
         self._load_plugins()
 
@@ -288,15 +285,10 @@ class pybot(irc.bot.SingleServerIRCBot):
         else:
             self._logger.debug(f'no password provided for {self.config["nickname"][self._nickname_id]}')
 
-    def _sigint_handler(self, signal, frame):
-        if not self._dying:
-            self._logger.info(f'interrupted by user, dying...')
-            self.die()
-
     def _atexit(self):
         if not self._dying:
             self._logger.info(f'interrupted, dying...')
-            self.die()
+            self.die('Interrupted by OS')
 
     def _get_best_command_match(self, command, sender_nick):
         choices = [c.replace('_', ' ') for c in self.get_commands() if not (hasattr(self.get_commands()[c], '__admin') and not self.is_user_op(sender_nick))]
@@ -578,10 +570,10 @@ class pybot(irc.bot.SingleServerIRCBot):
     def channel(self):
         return self.channels[self.config['channel']] if self.config['channel'] in self.channels else None
 
-    def die(self, *args, **kwargs):
+    def die(self, msg='Bye!'):
         if not self._dying:
             self._dying = True
-            super().die(*args, **kwargs)
+            self.connection.disconnect(msg)
 
     # connection API funcs
 

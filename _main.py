@@ -53,7 +53,12 @@ def main(debug_mode=False):
 
     configure_logger(config)
     bot = pybot(config, debug_mode)
-    bot.start()
+    try:
+        bot.start()
+    except KeyboardInterrupt:
+        bot.die('Interrupted by owner')
+        try: sys.exit(0)
+        except SystemExit: os._exit(0)
 
 
 if __name__ == "__main__":
