@@ -43,8 +43,8 @@ class ignore(plugin):
 
     @command
     @admin
-    @doc("ignore_for <nickname> <time>: ignore user's messages for <time> time. <time> should be %H %M  (eg.  1h 42m)")
-    @doc("ignore_for <time> <nickname>: ignore user's messages for <time> time. <time> should be %H %M  (eg.  1h 42m)")
+    @doc("""ignore_for <nickname> <time>: ignore user's messages for <time> time. <time> should be %H %M  (eg.  1h 42m)
+            ignore_for <time> <nickname>: ignore user's messages for <time> time. <time> should be %H %M  (eg.  1h 42m)""")
     def ignore_for(self, sender_nick, msg, **kwargs):
         if not msg: return
         return self.ignore_for_impl(sender_nick, msg)
