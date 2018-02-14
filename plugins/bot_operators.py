@@ -46,9 +46,8 @@ class bot_operators(plugin):
         ops = self.bot.get_ops()
 
         if len(ops) == 0:
-            reply = 'no bot operators'
+            self.bot.say('no bot operators')
         else:
-            reply = f'bot operators: {", ".join(ops)}'
+            self.bot.say(f'bot operators: {", ".join(ops)}')
 
-        self.bot.say(reply)
         self.logger.info(f'{sender_nick} asked for ops: {ops}')
