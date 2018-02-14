@@ -287,7 +287,7 @@ class pybot(irc.bot.SingleServerIRCBot):
 
     def _atexit(self):
         if not self._dying:
-            self._logger.info(f'interrupted, dying...')
+            self._logger.warning(f'interrupted, dying...')
             self.die('Interrupted by OS')
 
     def _get_best_command_match(self, command, sender_nick):
@@ -318,6 +318,8 @@ class pybot(irc.bot.SingleServerIRCBot):
 
             try:
                 plugin_instance = plugin_class(self)
+                self.register_plugin(plugin_instance)
+                self._logger.info(f'+ plugin {plugin_class.__name__} loaded')
             except utils.config_error as e:
                 self._logger.warning(f'- invalid {plugin_class.__name__} plugin config: {type(e).__name__}: {e}')
                 if self.is_debug_mode_enabled(): raise
@@ -326,8 +328,6 @@ class pybot(irc.bot.SingleServerIRCBot):
                 self._logger.warning(f'- unable to load plugin {plugin_class.__name__}: {type(e).__name__}: {e}')
                 if self.is_debug_mode_enabled(): raise
                 continue
-
-            self.register_plugin(plugin_instance)
 
         self._logger.debug('plugins loaded')
 
@@ -347,6 +347,7 @@ class pybot(irc.bot.SingleServerIRCBot):
             self.connection.privmsg(target, msg)
         except Exception as e:
             self._logger.error(f'cannot send "{msg}": {type(e).__name__}: {e}. discarding msg...')
+            if self.is_debug_mode_enabled(): raise
 
     def _process_say(self):
         msgs_sent = 0
@@ -415,7 +416,6 @@ class pybot(irc.bot.SingleServerIRCBot):
             return
 
         self._plugins.add(plugin_instance)
-        self._logger.info(f'+ plugin {plugin_name} loaded')
         self._register_plugin_handlers(plugin_instance)
 
     def remove_plugin(self, plugin_instance):
@@ -434,6 +434,19 @@ class pybot(irc.bot.SingleServerIRCBot):
             self._logger.error(f'{plugin_name}.unload_plugin() throws: {type(e).__name__}: {e}. continuing anyway...')
             if self.is_debug_mode_enabled(): raise
 
+        plugin_cmds = self.get_plugin_commands(plugin_name)
+        commands_copy = self.get_commands().copy()  # using copy and update here
+        # noinspection PyTypeChecker
+        for cmd in plugin_cmds: del commands_copy[cmd]
+
+        msg_regexps_copy = self.get_msg_regexps().copy()  # using copy and update here
+        for f in inspect.getmembers(plugin_instance, predicate=lambda func: inspect.ismethod(func) and hasattr(func, '__regex')):
+            func = f[1]
+            __regex = getattr(func, '__regex')
+            if __regex and (__regex in msg_regexps_copy) and (func in msg_regexps_copy[__regex]): msg_regexps_copy[__regex].remove(func)
+
+        self._commands = commands_copy
+        self._msg_regexps = msg_regexps_copy
         self._plugins.remove(plugin_instance)
 
     def get_commands_by_plugin(self):
@@ -515,7 +528,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         fixed_command SHOULD NOT start with bot command prefix
         set None to clear fixed command
         """
-        self._logger.info(f'saving fixed command: {fixed_command}')
+        self._logger.debug(f'saving fixed command: {fixed_command}')
         with self._fixed_command_lock:
             self._fixed_command = fixed_command
 
@@ -570,12 +583,19 @@ class pybot(irc.bot.SingleServerIRCBot):
         """
         you really shouldn't use bot in any way after this function called!
         """
-        if not self._dying:
-            self._dying = True
-            for plugin_instance in self.get_plugins().copy():
-                self.remove_plugin(plugin_instance)
+        if self._dying: return
 
-            self.disconnect(msg)
+        self._dying = True
+        for plugin_instance in self.get_plugins():
+            try:
+                plugin_instance.unload_plugin()
+            except Exception as e:
+                self._logger.error(f'{type(plugin_instance).__name__}.unload_plugin() throws: {type(e).__name__}: {e}. continuing anyway...')
+                if self.is_debug_mode_enabled(): raise
+
+        self._commands.clear()
+        self._msg_regexps.clear()
+        self.disconnect(msg)
 
     # connection API funcs
 

@@ -142,7 +142,7 @@ class antispam(plugin):
         if self.config['kick_if_too_long_msgs']: self.checkers.append(too_long_msgs(self.bot))
         if self.config['kick_if_same_msg_too_many_times']: self.checkers.append(same_msg_too_many_times(self.bot))
         checkers_names = [type(c).__name__ for c in self.checkers]
-        self.logger.info(f'antispam checkers registered: {checkers_names}')
+        self.logger.debug(f'antispam checkers registered: {checkers_names}')
 
     def on_pubmsg(self, raw_msg, source, msg, **kwargs):
         sender_nick = irc_nickname(source.nick)

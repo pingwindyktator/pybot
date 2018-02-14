@@ -2,7 +2,6 @@ import logging
 import shutil
 import sys
 import utils
-import os.path
 import os
 
 from ruamel import yaml
