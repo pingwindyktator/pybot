@@ -142,15 +142,14 @@ class builtins(plugin):
         self.bot.say("I'll be back soon...", force=True)
         self.restart_impl(sender_nick)
 
-    def restart_impl(self, sender_nick=None):
+    def restart_impl(self, sender_nick):
         args = sys.argv[:]
         args.insert(0, sys.executable)
         if sys.platform == 'win32':
             args = [f'"{arg}"' for arg in args]
 
-        sender_nick = f' by {sender_nick}' if sender_nick else ''
         self.bot.die()
-        self.logger.warning(f"re-spawning '{' '.join(args)}'{sender_nick}")
+        self.logger.warning(f"re-spawning '{' '.join(args)}' by {sender_nick}")
         os.chdir(os.getcwd())
         os.execv(sys.executable, args)
 
