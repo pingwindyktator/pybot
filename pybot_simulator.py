@@ -40,11 +40,14 @@ class buffer_class_t:
 
 # noinspection PyUnusedLocal
 class connection_t:
-    def __init__(self, bot_nickname, handlers):
+    def __init__(self, bot_nickname, handlers, server, port):
         self.buffer_class = buffer_class_t()
         self.bot_nickname = bot_nickname
         self.handlers = handlers
         self.connected = False
+        self.server = server
+        self.port = port
+        self.real_server_name = server
 
     def call_handler(self, handler_name, *args):
         if handler_name not in self.handlers: return
@@ -71,6 +74,12 @@ class connection_t:
 
     def is_connected(self):
         return self.connected
+
+    def disconnect(self, msg):
+        print(f'> {self.get_nickname()} has quit ({msg})')
+
+    def names(self, *args):
+        pass
 
 
 class source_t:
@@ -111,7 +120,7 @@ class SingleServerIRCBot_mock:
                             "on_whoisuser"]:
             handlers[method_name] = getattr(self, method_name)
 
-        self.connection = connection_t(nickname, handlers)
+        self.connection = connection_t(nickname, handlers, server_list[0][0], server_list[0][1])
 
     def init_bot(self):
         self.connection.call_handler('on_welcome', self.connection, None)
@@ -131,7 +140,7 @@ class SingleServerIRCBot_mock:
             self.connection.call_handler('on_pubmsg', self.connection, raw_msg)
 
     def disconnect(self, msg):
-        print(f'> {self.connection.get_nickname()} has quit ({msg})')
+        return self.connection.disconnect(msg)
 
     def die(self, msg):
         self.disconnect(msg)
@@ -140,7 +149,7 @@ class SingleServerIRCBot_mock:
 
 def configure_logger(*args, **kwargs):
     logging_format = '%(levelname)-10s%(asctime)s %(filename)s:%(funcName)-16s: %(message)s'
-    logging.basicConfig(format=logging_format, level=logging.DEBUG, stream=sys.stdout)
+    logging.basicConfig(format=logging_format, level=logging.INFO, stream=sys.stdout)
 
 
 def simulator_main():
