@@ -49,7 +49,7 @@ class too_many_msgs:
 
         mi.last_msg_timestamp = now
         self.msg_infos[sender_nick] = mi
-        return mi.msgs_in_row > 5
+        return mi.msgs_in_row > 3
 
 
 class too_many_users_mentioned:
@@ -129,7 +129,7 @@ class same_msg_too_many_times:
 
         smi.last_msg_timestamp = now
         self.same_msg_infos[sender_nick] = smi
-        return smi.count > 5
+        return smi.count > 4
 
 
 class antispam(plugin):
