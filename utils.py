@@ -113,7 +113,7 @@ def ensure_config_is_ok(config, assert_unknown_keys=False):
         if key in config:
             c_assert_error(type(config[key]) is key_info.type, f'{key} field type should be {key_info.type.__name__}')
 
-    c_assert_error(config['server'].strip(), 'you have to specify server address')
+    c_assert_error(config['server'].strip(), 'you have to specify server field')
     c_assert_error(config['port'] > 0, 'port should be > 0')
     c_assert_error(config['port'] <= 65535, 'port should be <= 65535')
     c_assert_error(config['channel'].startswith('#'), 'channel should start with #')
@@ -121,8 +121,8 @@ def ensure_config_is_ok(config, assert_unknown_keys=False):
     c_assert_error(config['max_autorejoin_attempts'] >= 0, 'max_autorejoin_attempts should be >= 0')
     c_assert_error(config['file_logging_level'] in logging_level_str_to_int, f'file_logging_level can be one of: {", ".join((logging_level_str_to_int.keys()))}')
     c_assert_error(config['stdout_logging_level'] in logging_level_str_to_int, f'stdout_logging_level can be one of: {", ".join((logging_level_str_to_int.keys()))}')
-    c_assert_error(config['command_prefix'].strip(), 'you have to specify command prefix')
-    c_assert_error(config['superop'].strip(), 'you have to specify superop')
+    c_assert_error(config['command_prefix'].strip(), 'you have to specify command_prefix field')
+    c_assert_error(config['superop'].strip(), 'you have to specify superop field')
     c_assert_error(config['health_check_interval_s'] >= 15, 'health_check_interval_s should be >= 15')
 
     if 'disabled_plugins' in config:
