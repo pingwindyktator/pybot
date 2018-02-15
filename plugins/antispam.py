@@ -42,7 +42,7 @@ class too_many_msgs:
 
         mi = self.msg_infos[sender_nick]
 
-        if mi.last_msg_timestamp + timedelta(seconds=2) > now:
+        if mi.last_msg_timestamp + timedelta(milliseconds=1500) > now:
             mi.msgs_in_row += 1
         else:
             mi.msgs_in_row = 1
