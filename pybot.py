@@ -267,6 +267,8 @@ class pybot(irc.bot.SingleServerIRCBot):
         for i in range(0, len(nicks)):
             for prefix in nickname_prefixes:
                 if nicks[i].startswith(prefix): nicks[i] = nicks[i][1:].strip()
+            
+            nicks[i] = irc_nickname(nicks[i])
 
         self._call_plugins_methods('namreply', raw_msg=raw_msg, nicknames=nicks)
 
