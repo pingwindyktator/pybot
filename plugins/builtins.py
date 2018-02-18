@@ -2,6 +2,8 @@ import json
 import os
 import sys
 import shutil
+from datetime import datetime
+
 import git
 import copy
 import requests
@@ -415,6 +417,11 @@ class builtins(plugin):
     @doc('uploads error logs to file.io')
     def upload_errors(self, sender_nick, **kwargs):
         self.upload_file_impl(sender_nick, r'pybot.error')
+
+    @command
+    @doc("get bot's local time")
+    def time(self, **kwargs):
+        self.bot.say(datetime.now().strftime('%d-%m-%Y %H:%M:%S') + utils.get_str_utc_offset())
 
     @command
     @admin

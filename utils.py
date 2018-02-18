@@ -1,7 +1,9 @@
 import sys
 import logging
 import unidecode
+import tzlocal
 
+from datetime import datetime
 from functools import total_ordering
 from ruamel.yaml.comments import CommentedMap
 
@@ -69,6 +71,16 @@ class config_error(Exception):
 
 def remove_national_chars(s):
     return unidecode.unidecode(s)
+
+
+def get_str_utc_offset():
+    result = tzlocal.get_localzone().utcoffset(datetime.now()).total_seconds()
+    lt = result < 0
+    result = abs(result)
+    hours = int(result // 3600)
+    mins = int((result - 3600 * hours) // 60)
+    result = f'{hours}:{str(mins).zfill(2)}'
+    return f'-{result}' if lt else f'+{result}'
 
 
 def ensure_config_is_ok(config, assert_unknown_keys=False):
