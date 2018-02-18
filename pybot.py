@@ -521,6 +521,9 @@ class pybot(irc.bot.SingleServerIRCBot):
     def is_debug_mode_enabled(self):
         return self._debug_mode
 
+    def set_debug_mode(self, enabled):
+        self._debug_mode = enabled
+
     def joined_to_channel(self):
         return self.connection.is_connected() and self.get_channel()
 

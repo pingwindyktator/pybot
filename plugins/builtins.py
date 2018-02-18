@@ -84,6 +84,22 @@ class builtins(plugin):
         self.bot.say_ok()
 
     @command
+    @superadmin
+    @doc('enable debug mode')
+    def enable_debug_mode(self, sender_nick, **kwargs):
+        self.bot.set_debug_mode(True)
+        self.logger.warning(f'{sender_nick} enables debug mode')
+        self.bot.say_ok()
+
+    @command
+    @superadmin
+    @doc('disable debug mode')
+    def disable_debug_mode(self, sender_nick, **kwargs):
+        self.bot.set_debug_mode(False)
+        self.logger.warning(f'{sender_nick} disables debug mode')
+        self.bot.say_ok()
+
+    @command
     @admin
     @doc('change_log_level <file|stdout> <level>: change logging level')
     def change_log_level(self, sender_nick, args, **kwargs):
