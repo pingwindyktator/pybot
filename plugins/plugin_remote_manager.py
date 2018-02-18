@@ -46,12 +46,12 @@ class plugin_remote_manager(plugin):
         except self.no_plugins_module_found as e:
             self.logger.info(e)
             fixed_command = f'load_plugin {plugin_name}'
-            self.bot.say(f'no such plugin: {plugin_name}, use \'{self.bot.config["command_prefix"]}{fixed_command}\' to load new plugin')
+            self.bot.say(f'no such plugin: {plugin_name}, use \'{self.bot.get_command_prefix()}{fixed_command}\' to load new plugin')
             self.bot.register_fixed_command(fixed_command)
         except self.plugin_already_enabled as e:
             self.logger.info(e)
             fixed_command = f'load_plugin {plugin_name}'
-            self.bot.say(f'plugin already enabled, use \'{self.bot.config["command_prefix"]}{fixed_command}\' to reload it')
+            self.bot.say(f'plugin already enabled, use \'{self.bot.get_command_prefix()}{fixed_command}\' to reload it')
             self.bot.register_fixed_command(fixed_command)
         except Exception as e:
             self.logger.error(f'exception caught while trying to enable plugin {plugin_name}: {type(e).__name__}: {e}')

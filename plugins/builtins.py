@@ -136,7 +136,7 @@ class builtins(plugin):
     def restart(self, sender_nick, args, **kwargs):
         reason = self.is_restart_unsafe()
         if reason and not (args and args[0].strip().casefold() == 'force'):
-            self.bot.say(f'{reason}, aborting restart, use \'{self.bot.config["command_prefix"]}restart force\' to ignore it')
+            self.bot.say(f'{reason}, aborting restart, use \'{self.bot.get_command_prefix()}restart force\' to ignore it')
             return
 
         self.bot.say("I'll be back soon...", force=True)
@@ -295,7 +295,7 @@ class builtins(plugin):
                 repo.head.reset(commit=repo.head.commit, index=True, working_tree=True)
                 force_str = ', local changes discarded'
             else:
-                self.bot.say(f'local changes prevents me from update, use \'{self.bot.config["command_prefix"]}self_update force\' to discard them')
+                self.bot.say(f'local changes prevents me from update, use \'{self.bot.get_command_prefix()}self_update force\' to discard them')
                 self.logger.info(f'cannot self-update, local changes: {[x.a_path for x in repo.head.commit.diff(None)]}')
                 return
 

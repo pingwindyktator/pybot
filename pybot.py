@@ -140,7 +140,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         """ called by super() when private msg received """
         full_msg = raw_msg.arguments[0]
         sender_nick = irc_nickname(raw_msg.source.nick)
-        logging.info(f'[PRIVATE MSG] {sender_nick}: {full_msg}')
+        logging.debug(f'privmsg received: {sender_nick}: {full_msg}')
 
         if self.is_user_ignored(sender_nick):
             self._logger.debug(f'user {sender_nick} is ignored, skipping msg')
@@ -159,7 +159,7 @@ class pybot(irc.bot.SingleServerIRCBot):
 
         self._call_plugins_methods('pubmsg', raw_msg=raw_msg, source=raw_msg.source, msg=full_msg)
 
-        args = msg_parser.trim_msg(self.config['command_prefix'], full_msg)
+        args = msg_parser.trim_msg(self.get_command_prefix(), full_msg)
         if not args:
             args = msg_parser.trim_msg(self.get_nickname() + ':', full_msg)
         if not args:
@@ -598,6 +598,9 @@ class pybot(irc.bot.SingleServerIRCBot):
         self._commands.clear()
         self._msg_regexps.clear()
         self.disconnect(msg)
+
+    def get_command_prefix(self):
+        return self.config['command_prefix']
 
     # connection API funcs
 

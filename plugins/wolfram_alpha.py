@@ -31,7 +31,7 @@ class crypto_wa_warner:
 
             if 'crypto' in self.bot.get_plugins_names() and 'crypto' in self.bot.get_plugin_commands('crypto'):
                 fixed_command = f'crypto {msg}'
-                suffix = f', you may try {self.bot.config["command_prefix"]}{fixed_command}'
+                suffix = f', you may try {self.bot.get_command_prefix()}{fixed_command}'
                 self.bot.register_fixed_command(fixed_command)
 
             self.bot.say(f'{prefix}Wolfram-Alpha seems not to handle cryptocurrencies properly{suffix}')
@@ -102,6 +102,7 @@ class wolfram_alpha(plugin):
     @doc('wa <ask>: ask Wolfram|Alpha about <ask>')
     @command
     def wa(self, msg, sender_nick, **kwargs):
+        if not msg: return
         self.logger.info(f'{sender_nick} asked wolfram alpha "{msg}"')
         if self.config['warn_crypto_asks']: self.crypto_warner.handle_msg(msg)
         ask = urllib.parse.quote(msg)
