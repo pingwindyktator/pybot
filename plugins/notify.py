@@ -9,6 +9,7 @@ class notify(plugin):
         self.database = {}  # username -> {words to watch}
 
     def on_pubmsg(self, source, msg, **kwargs):
+        if self.bot.is_user_ignored(source.nick): return
         self.find_word(source.nick, msg)
 
     def find_word(self, sender_nick, full_msg):
