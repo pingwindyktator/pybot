@@ -11,8 +11,9 @@ from plugin import *
 class spacex_launches(plugin):
     def __init__(self, bot):
         super().__init__(bot)
-        self.api_uri = r'https://api.spacexdata.com/v2/launches/upcoming'
+        self.upcoming_api_uri = r'https://api.spacexdata.com/v2/launches/upcoming'
         self.flight_api_uri = r'https://api.spacexdata.com/v2/launches/all?flight_number=%s'
+        self.latest_api_uri = r'https://api.spacexdata.com/v2/launches/latest'
         self.db_name = self.bot.get_server_name()
         os.makedirs(os.path.dirname(os.path.realpath(self.config['db_location'])), exist_ok=True)
         self.db_connection = sqlite3.connect(self.config['db_location'], check_same_thread=False)
@@ -32,17 +33,24 @@ class spacex_launches(plugin):
         if self.check_upcoming_launches_timer: self.check_upcoming_launches_timer.cancel()
 
     def get_upcoming_launches(self):
-        raw_response = requests.get(self.api_uri).content.decode('utf-8')
+        raw_response = requests.get(self.upcoming_api_uri).content.decode('utf-8')
         response = json.loads(raw_response)
         return sorted(response, key=lambda x: x['launch_date_unix'])
 
-    def get_launch(self, flight_id):
+    def get_launch_by_id(self, flight_id):
         raw_response = requests.get(self.flight_api_uri % flight_id).content.decode('utf-8')
         return json.loads(raw_response)[0]
 
+    def get_latest_launch(self):
+        raw_response = requests.get(self.latest_api_uri).content.decode('utf-8')
+        return json.loads(raw_response)
+
+    def get_next_launch(self):
+        return self.get_upcoming_launches()[0]
+
     def check_upcoming_launches(self):
         self.logger.info('checking next upcoming launch...')
-        next_launch = self.get_upcoming_launches()[0]
+        next_launch = self.get_next_launch()
         flight_id = next_launch['flight_number']
         next_launch_time = datetime.fromtimestamp(next_launch['launch_date_unix'])
         if flight_id in self.inform_upcoming_launches_timers: return
@@ -61,59 +69,66 @@ class spacex_launches(plugin):
         timer = Timer((time - now).total_seconds(), self.remind_upcoming_launch, kwargs={'flight_id': flight_id})
         self.inform_upcoming_launches_timers[flight_id].append(timer)
         timer.start()
-        self.logger.info(f'reminder at {time} set for next upcoming flight: {flight_id}')
+        self.logger.info(f'reminder at {time} set for next upcoming launch: {flight_id}')
 
     def remind_upcoming_launch(self, flight_id):
-        self.logger.info(f'reminding about next upcoming flight: {flight_id}')
+        self.logger.info(f'reminding about next upcoming launch: {flight_id}')
         to_call = self.get_users_to_call()
         if not to_call: return
 
-        launch = self.get_launch(flight_id)
+        launch = self.get_launch_by_id(flight_id)
+
+        self.bot.say(', '.join(to_call))  # TODO if too long...
+        self.bot.say(self.get_launch_info_str(launch, include_video_uri=True))
+
+    @command
+    @doc('get upcoming SpaceX launches info')
+    def spacex_next(self, sender_nick, **kwargs):
+        self.logger.info(f'{sender_nick} wants spacex upcoming launch')
+        self.get_upcoming_launches()
+        launches = self.get_upcoming_launches()
+
+        for launch in launches:
+            self.bot.say(self.get_launch_info_str(launch, include_flight_id=True))
+
+    def get_launch_info_str(self, launch, include_flight_id=False, include_video_uri=False):
+        past = datetime.fromtimestamp(launch['launch_date_unix']) < datetime.now()
+        flight_id = color.orange(f'[flight id: {launch["flight_number"]}]')
         time = color.green(datetime.fromtimestamp(launch['launch_date_unix']).strftime('%d-%m-%Y %H:%M'))
         rocket_name = color.cyan(launch['rocket']['rocket_name'])
         reused = launch['reuse']['core'] or launch['reuse']['side_core1'] or launch['reuse']['side_core2']
         reused = 'Reused' if reused else 'Unused'
         launch_site = launch['launch_site']['site_name']
         uri = launch['links']['video_link'] if launch['links']['video_link'] else r'http://www.spacex.com/webcast'
+
         try:
             payload_weight = sum([payload['payload_mass_kg'] for payload in launch['rocket']['second_stage']['payloads']])
+            payload_weight = f' with {payload_weight}kg payload'
+        except (KeyError, TypeError): payload_weight = ''
+        try:
             orbits = [payload['orbit'] for payload in launch['rocket']['second_stage']['payloads']]
             orbits = ', '.join(list(set(orbits)))
-            payload_info = f' with {payload_weight}kg payload to {orbits}'
-        except KeyError:
-            payload_info = ''
+            orbits = f' to {orbits}'
+        except (KeyError, TypeError): orbits = ''
+        payload_info = f'{payload_weight}{orbits}'
 
-        self.bot.say(', '.join(to_call))  # TODO if too long...
-        self.bot.say(f'{reused} {rocket_name} launches at {time}{utils.get_str_utc_offset()} from {launch_site}{payload_info}: {uri}')
-
-    @command
-    @doc('get upcoming SpaceX launches')
-    def spacex_next(self, sender_nick, **kwargs):
-        self.logger.info(f'{sender_nick} wants spacex upcoming starts')
-        self.get_upcoming_launches()
-        launches = self.get_upcoming_launches()
-
-        for launch in launches:
-            time = color.green(datetime.fromtimestamp(launch['launch_date_unix']).strftime('%d-%m-%Y %H:%M'))
-            rocket_name = color.cyan(launch['rocket']['rocket_name'])
-            reused = launch['reuse']['core'] or launch['reuse']['side_core1'] or launch['reuse']['side_core2']
-            reused = 'Reused' if reused else 'Unused'
-            flight_id = color.orange(f'[flight id: {launch["flight_number"]}]')
-            launch_site = launch['launch_site']['site_name']
-            try:
-                payload_weight = sum([payload['payload_mass_kg'] for payload in launch['rocket']['second_stage']['payloads']])
-                orbits = [payload['orbit'] for payload in launch['rocket']['second_stage']['payloads']]
-                orbits = ', '.join(list(set(orbits)))
-                payload_info = f'with {payload_weight}kg payload to {orbits}'
-            except KeyError:
-                payload_info = ''
-
-            self.bot.say(f'{flight_id} {reused} {rocket_name} launches at {time}{utils.get_str_utc_offset()} from {launch_site} {payload_info}')
+        result = f'{flight_id} ' if include_flight_id else ''
+        result += f'{reused} {rocket_name} {"launched" if past else "launches"} at {time}{utils.get_str_utc_offset()} from {launch_site}{payload_info}'
+        result += f': {uri}' if include_video_uri else ''
+        return result
 
     @command
-    @doc('')
+    @doc('get last SpaceX launch info')
     def spacex_last(self, sender_nick, **kwargs):
-        pass  # TODO
+        self.logger.info(f'{sender_nick} wants spacex latest launch')
+        latest_launch = self.get_latest_launch()
+        prefix = color.orange('[LAUNCH SUCCESS]' if latest_launch['launch_success'] else '[LAUNCH FAIL]')
+
+        if latest_launch['details']:
+            self.bot.say(self.get_launch_info_str(latest_launch, include_video_uri=True))
+            self.bot.say(f'{prefix} {latest_launch["details"]}')
+        else:
+            self.bot.say(f'{prefix} {self.get_launch_info_str(latest_launch, include_video_uri=True)}')
 
     def get_users_to_call(self):
         with self.db_mutex:
