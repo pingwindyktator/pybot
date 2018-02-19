@@ -85,8 +85,7 @@ class spacex_launches(plugin):
     @doc('get upcoming SpaceX launches info')
     def spacex_next(self, sender_nick, **kwargs):
         self.logger.info(f'{sender_nick} wants spacex upcoming launch')
-        self.get_upcoming_launches()
-        launches = self.get_upcoming_launches()
+        launches = self.get_upcoming_launches()[0:3]
 
         for launch in launches:
             self.bot.say(self.get_launch_info_str(launch, include_flight_id=True))
