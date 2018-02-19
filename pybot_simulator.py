@@ -160,7 +160,7 @@ def simulator_main():
     patcher = mock.patch.object(_main.pybot, '__bases__', (SingleServerIRCBot_mock,))
     with patcher:
         patcher.is_local = True
-        _main.main()
+        _main.main(debug_mode=True)
 
 
 if __name__ == "__main__":
