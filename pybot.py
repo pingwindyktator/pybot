@@ -130,7 +130,7 @@ class pybot(irc.bot.SingleServerIRCBot):
     def on_join(self, _, raw_msg):
         """ called by super() when somebody joins channel """
         self.names()  # to immediately updated channel's user list
-        if raw_msg.source.nick == self.get_nickname() and not self.joined_to_channel():
+        if raw_msg.source.nick == self.get_nickname() and self.joined_to_channel():
             self._logger.info(f'joined to {self.get_channel_name()}')
             self._call_plugins_methods('me_joined', raw_msg=raw_msg)
         else:
@@ -525,7 +525,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         self._debug_mode = enabled
 
     def joined_to_channel(self):
-        return self.connection.is_connected() and self.get_channel()
+        return self.connection.is_connected() and self.get_channel() is not None
 
     def register_fixed_command(self, fixed_command):
         """
