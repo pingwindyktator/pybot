@@ -148,16 +148,14 @@ class antispam(plugin):
         sender_nick = irc_nickname(source.nick)
         reason = self.get_kick_reason(sender_nick, msg)
         if not reason: return
-
-        if self.is_whitelisted(sender_nick):
-            self.bot.say(f'{sender_nick}, stop spamming!')
+        if self.is_whitelisted(sender_nick): return
+        
+        if self.am_i_channel_operator():
+            self.bot.kick(sender_nick, 'stop it!')
+            self.logger.warning(f'{sender_nick} kicked: {reason}')
         else:
-            if self.am_i_channel_operator():
-                self.bot.kick(sender_nick, 'stop it!')
-                self.logger.warning(f'{sender_nick} kicked: {reason}')
-            else:
-                self.bot.say(f'{sender_nick}, stop spamming!')
-                self.logger.warning(f"{sender_nick} is possibly spamer ({reason}), but I've no operator privileges to kick him :(")
+            self.bot.say(f'{sender_nick}, stop spamming!')
+            self.logger.warning(f"{sender_nick} is possibly spamer ({reason}), but I've no operator privileges to kick him :(")
 
     def get_kick_reason(self, sender_nick, msg):
         # antispam checkers should be called even if user is whitelisted!
