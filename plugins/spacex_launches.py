@@ -41,7 +41,7 @@ class spacex_launches(plugin):
         return json.loads(raw_response)[0]
 
     def check_upcoming_launches(self):
-        self.logger.info('checking next upcoming flight...')
+        self.logger.info('checking next upcoming launch...')
         next_launch = self.get_upcoming_launches()[0]
         flight_id = next_launch['flight_number']
         next_launch_time = datetime.fromtimestamp(next_launch['launch_date_unix'])
@@ -60,7 +60,7 @@ class spacex_launches(plugin):
         timer = Timer((time - now).total_seconds(), self.remind_upcoming_launch, kwargs={'flight_id': flight_id})
         self.inform_upcoming_launches_timers[flight_id].append(timer)
         timer.start()
-        self.logger.info(f'reminder set to {time} set for next upcoming flight: {flight_id}')
+        self.logger.info(f'reminder at {time} set for next upcoming flight: {flight_id}')
 
     def remind_upcoming_launch(self, flight_id):
         self.logger.info(f'reminding about next upcoming flight: {flight_id}')
