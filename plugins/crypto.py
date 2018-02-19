@@ -20,6 +20,12 @@ class crypto(plugin):
         self.watch_timers = {}  # {curr -> watch_desc}
         self.update_known_crypto_currencies()
 
+    def unload_plugin(self):
+        if self.update_timer: self.update_timer.cancel()
+
+        for t in self.watch_timers.values():
+            t.timer_object.cancel()
+
     def get_known_crypto_currencies(self):
         url = r'https://api.coinmarketcap.com/v1/ticker/?limit=0'
         content = requests.get(url, timeout=10).content.decode('utf-8')
@@ -59,12 +65,6 @@ class crypto(plugin):
             self.day_change = float(raw_result['percent_change_24h']) if raw_result['percent_change_24h'] else None
             self.week_change = float(raw_result['percent_change_7d']) if raw_result['percent_change_7d'] else None
             self.marker_cap_usd = float(raw_result['market_cap_usd']) if raw_result['market_cap_usd'] else None
-
-    def unload_plugin(self):
-        if self.update_timer: self.update_timer.cancel()
-
-        for t in self.watch_timers.values():
-            t.timer_object.cancel()
 
     def get_crypto_currency_id(self, alias):
         alias = alias.casefold()

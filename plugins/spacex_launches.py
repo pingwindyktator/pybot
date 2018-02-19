@@ -47,6 +47,7 @@ class spacex_launches(plugin):
         next_launch_time = datetime.fromtimestamp(next_launch['launch_date_unix'])
         if flight_id in self.inform_upcoming_launches_timers: return
 
+        self.add_reminder_at(next_launch_time - timedelta(hours=24), flight_id)
         self.add_reminder_at(next_launch_time - timedelta(hours=1), flight_id)
         self.add_reminder_at(next_launch_time - timedelta(minutes=20), flight_id)
 

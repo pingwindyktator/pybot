@@ -99,6 +99,9 @@ class wolfram_alpha(plugin):
                         r'&excludepodid=Input' \
                         r'&excludepodid=Sequence'
 
+    def unload_plugin(self):
+        if self.crypto_warner.update_timer: self.crypto_warner.update_timer.cancel()
+
     @doc('wa <ask>: ask Wolfram|Alpha about <ask>')
     @command
     def wa(self, msg, sender_nick, **kwargs):
