@@ -4,7 +4,7 @@ import urllib.parse
 import xml.etree.ElementTree
 
 from datetime import timedelta
-from threading import Timer, Lock
+from threading import Lock
 from plugin import *
 
 
@@ -12,12 +12,11 @@ class crypto_wa_warner:
     def __init__(self, bot):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.bot = bot
-        self.update_delta_time = timedelta(hours=1).total_seconds()
-        self.update_timer = None
         self.crypto_currencies_lock = Lock()
         self.known_crypto_currencies = None
-        self.update_known_crypto_currencies()
         self.convert_regex = re.compile(r'^([0-9]*\.?[0-9]*)\W*([A-Za-z]+)\W+(to|in)\W+([A-Za-z]+)$')
+        self.update_timer = utils.repeated_timer(timedelta(hours=1).total_seconds(), self.update_known_crypto_currencies)
+        self.update_timer.start()
 
     def handle_msg(self, msg):
         msg = msg.strip()
@@ -54,9 +53,6 @@ class crypto_wa_warner:
         res = self.get_known_crypto_currencies()
         with self.crypto_currencies_lock:
             self.known_crypto_currencies = res
-
-        self.update_timer = Timer(self.update_delta_time, self.update_known_crypto_currencies)
-        self.update_timer.start()
 
     def is_any_currency_known(self, aliases):
         aliases = [a.casefold() for a in aliases]
@@ -100,7 +96,7 @@ class wolfram_alpha(plugin):
                         r'&excludepodid=Sequence'
 
     def unload_plugin(self):
-        if self.crypto_warner.update_timer: self.crypto_warner.update_timer.cancel()
+        self.crypto_warner.update_timer.cancel()
 
     @doc('wa <ask>: ask Wolfram|Alpha about <ask>')
     @command

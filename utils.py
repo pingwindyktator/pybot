@@ -3,6 +3,8 @@ import logging
 import unidecode
 import tzlocal
 
+from threading import Timer
+from contextlib import suppress
 from datetime import datetime
 from functools import total_ordering
 from ruamel.yaml.comments import CommentedMap
@@ -47,6 +49,20 @@ class null_object:
     def __setattr__(self, name, value): return self
 
     def __delattr__(self, name): return self
+
+
+class repeated_timer(Timer):
+    """
+    exception safe, repeating timer
+    """
+    def run(self):
+        while not self.finished.is_set():
+            with suppress(Exception):
+                self.function(*self.args, **self.kwargs)
+
+            self.finished.wait(self.interval)
+
+        self.finished.set()
 
 
 @total_ordering

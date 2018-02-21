@@ -10,18 +10,17 @@ class crypto(plugin):
     def __init__(self, bot):
         super().__init__(bot)
         self.known_crypto_currencies = None
-        self.update_delta_time = timedelta(hours=1).total_seconds()
-        self.crypto_currencies_lock = Lock()
-        self.update_timer = None
         self.convert_regex = re.compile(r'^([0-9]*\.?[0-9]*)\W*([A-Za-z]+)\W+(to|in)\W+([A-Za-z]+)$')
         self.time_delta_regex = re.compile(r'([0-9]+[Hh])?\W*([0-9]+[Mm])?(.*)')
         self.coinmarketcap_url = r'https://api.coinmarketcap.com/v1/ticker/%s'
         self.fixer_url = r'http://api.fixer.io/latest?base=%s'
         self.watch_timers = {}  # {curr -> watch_desc}
-        self.update_known_crypto_currencies()
+        self.crypto_currencies_lock = Lock()
+        self.update_timer = utils.repeated_timer(timedelta(hours=1).total_seconds(), self.update_known_crypto_currencies)
+        self.update_timer.start()
 
     def unload_plugin(self):
-        if self.update_timer: self.update_timer.cancel()
+        self.update_timer.cancel()
 
         for t in self.watch_timers.values():
             t.timer_object.cancel()
@@ -41,9 +40,6 @@ class crypto(plugin):
         res = self.get_known_crypto_currencies()
         with self.crypto_currencies_lock:
             self.known_crypto_currencies = res
-
-        self.update_timer = Timer(self.update_delta_time, self.update_known_crypto_currencies)
-        self.update_timer.start()
 
     class watch_desc:
         def __init__(self, timer_object, timedelta):
