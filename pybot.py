@@ -568,7 +568,11 @@ class pybot(irc.bot.SingleServerIRCBot):
             self._db_connection.commit()
 
     def rm_op(self, nickname):
-        if irc_nickname(nickname) == self.config['superop']: return
+        """
+        throws RuntimeError when nickname is superop
+        """
+        if irc_nickname(nickname) == self.config['superop']:
+            raise RuntimeError('cannot remove superop')
 
         with self._db_mutex:
             self._db_cursor.execute(f"DELETE FROM '{self._db_ops_tablename}' WHERE nickname = ? COLLATE NOCASE", (nickname,))

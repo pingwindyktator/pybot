@@ -126,7 +126,7 @@ class seen(plugin):
             return
 
         if nickname == sender_nick:
-            self.bot.say('o rly?')
+            self.bot.say('orly?')
             return
 
         with self.db_mutex:

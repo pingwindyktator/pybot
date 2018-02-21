@@ -12,6 +12,10 @@ class bot_operators(plugin):
         if not args: return
         nickname = irc_nickname(args[0])
 
+        if nickname == self.bot.get_nickname():
+            self.bot.say('oh thank you!')
+            return
+
         if self.bot.is_user_op(nickname):
             self.bot.say(f'{nickname} is already bot operator')
             return
@@ -26,6 +30,10 @@ class bot_operators(plugin):
     def rm_op(self, sender_nick, args, **kwargs):
         if not args: return
         nickname = irc_nickname(args[0])
+
+        if nickname == self.bot.get_nickname():
+            self.bot.say('nice try')
+            return
 
         if not self.bot.is_user_op(nickname):
             self.bot.say(f'{nickname} is not bot operator')
