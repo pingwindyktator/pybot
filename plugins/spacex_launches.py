@@ -103,7 +103,8 @@ class spacex_launches(plugin):
         launches = self.get_upcoming_launches()[0:3]
 
         for launch in launches:
-            self.bot.say(self.get_launch_info_str(launch, include_flight_id=True))
+            include_video = datetime.fromtimestamp(launch['launch_date_unix']) < datetime.now() + timedelta(hours=1)
+            self.bot.say(self.get_launch_info_str(launch, include_flight_id=True, include_video_uri=include_video))
 
     def get_launch_info_str(self, launch, include_flight_id=False, include_video_uri=False):
         past = datetime.fromtimestamp(launch['launch_date_unix']) < datetime.now()
