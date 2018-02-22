@@ -138,17 +138,18 @@ class spacex_launches(plugin):
         self.logger.info(f'{sender_nick} wants spacex latest launch')
         latest_launch = self.get_latest_launch()
 
-        prefix = color.orange('[LAUNCH SUCCESS] ' if latest_launch['launch_success'] else '[LAUNCH FAIL] ')
+        prefix = '[LAUNCH SUCCESS] ' if latest_launch['launch_success'] else '[LAUNCH FAIL] '
         land_success = [c['land_success'] for c in latest_launch['rocket']['first_stage']['cores']]
 
         if land_success.count(None) == len(land_success):
             prefix += '[NO LANDING ATTEMPT]'
         else:
             land_success = list(filter(lambda l: l is not None, land_success))
-            if True in land_success and False in land_success: prefix += color.orange('[LANDING PARTIALLY SUCCESS]')
-            elif True in land_success: prefix += color.orange('[LANDING SUCCESS]')
-            else: prefix += color.orange('[LANDING FAIL]')
+            if True in land_success and False in land_success: prefix += '[LANDING PARTIALLY SUCCESS]'
+            elif True in land_success: prefix += '[LANDING SUCCESS]'
+            else: prefix += '[LANDING FAIL]'
 
+        prefix = color.orange(prefix)
         if latest_launch['details']:
             self.bot.say(self.get_launch_info_str(latest_launch, include_video_uri=True))
             self.bot.say(f'{prefix} {latest_launch["details"]}')
