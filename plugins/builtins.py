@@ -330,7 +330,11 @@ class builtins(plugin):
             return
 
         self.logger.warning(f'updated {repo.head.orig_head().commit} -> {repo.head.commit}')
-        diff_str = f', diffs in {", ".join([x.a_path for x in repo.head.commit.diff(repo.head.orig_head().commit)])}'
+        diff = [x.a_path for x in repo.head.commit.diff(repo.head.orig_head().commit)]
+        plugins_diff = [x[len('plugins/'):] for x in diff if x.startswith('plugins/')]
+        core_diff = [x for x in diff if not x.startswith('plugins/')]
+        if len(plugins_diff) == len(diff): diff_str = f', you should update {", ".join(plugins_diff)} plugins'
+        else: diff_str = ', you should restart bot now'
 
         try:
             if self.update_config_file(): config_updated_str = ', config file updated'
@@ -343,7 +347,7 @@ class builtins(plugin):
             if self.bot.is_debug_mode_enabled(): raise
             return
 
-        self.bot.say(f'updated, now at "{str(repo.head.commit)[:6]}: {repo.head.commit.message.strip()}"{config_updated_str}{diff_str}{force_str}')
+        self.bot.say(f'updated, now at "{str(repo.head.commit)[:6]}: {repo.head.commit.message.strip()}"{config_updated_str}{force_str}{diff_str}')
         repo.head.orig_head().set_commit(repo.head)
 
     @command
