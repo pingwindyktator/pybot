@@ -622,7 +622,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         send public message to channel or private one to target if specified
         block until message delivered if force param is true
         does nothing if msg is None
-        throws MessageTooLong if wrap_too_long_msgs config entry is false
+        throws MessageTooLong if wrap_too_long_msgs config entry is false and msg is too long
         """
         if not msg: return
         if not target: target = self.get_channel_name()

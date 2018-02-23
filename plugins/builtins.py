@@ -332,9 +332,8 @@ class builtins(plugin):
         self.logger.warning(f'updated {repo.head.orig_head().commit} -> {repo.head.commit}')
         diff = [x.a_path for x in repo.head.commit.diff(repo.head.orig_head().commit)]
         plugins_diff = [x[len('plugins/'):] for x in diff if x.startswith('plugins/')]
-        core_diff = [x for x in diff if not x.startswith('plugins/')]
         if len(plugins_diff) == len(diff): diff_str = f', you should update {", ".join(plugins_diff)} plugins'
-        else: diff_str = ', you should restart bot now'
+        else: diff_str = ', probably you should restart bot now'
 
         try:
             if self.update_config_file(): config_updated_str = ', config file updated'
