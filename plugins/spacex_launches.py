@@ -54,21 +54,23 @@ class spacex_launches(plugin):
 
     def check_upcoming_launches(self):
         self.logger.info('checking next upcoming launch...')
-        next_launch = self.get_next_launch()
-        flight_id = next_launch['flight_number']
-        next_launch_time = datetime.fromtimestamp(next_launch['launch_date_unix'])
+        next_launches = self.get_upcoming_launches()
 
-        if flight_id in self.upcoming_launches_timers:
-            if self.upcoming_launches_timers[flight_id].launch_datetime != next_launch_time:
-                self.logger.info(f'launch {flight_id} was postponed, setting new timers')
-                self.upcoming_launches_timers[flight_id].timers.clear()
-            else:  # timers already set
-                self.logger.debug(f'timers for {flight_id} launch already set')
-                return
+        for next_launch in next_launches:
+            flight_id = next_launch['flight_number']
+            next_launch_time = datetime.fromtimestamp(next_launch['launch_date_unix'])
 
-        self.add_reminder_at(next_launch_time - timedelta(hours=24), flight_id, next_launch_time)
-        self.add_reminder_at(next_launch_time - timedelta(hours=1), flight_id, next_launch_time)
-        self.add_reminder_at(next_launch_time - timedelta(minutes=20), flight_id, next_launch_time)
+            if flight_id in self.upcoming_launches_timers:
+                if self.upcoming_launches_timers[flight_id].launch_datetime != next_launch_time:
+                    self.logger.info(f'launch {flight_id} was postponed, setting new timers')
+                    self.upcoming_launches_timers[flight_id].timers.clear()
+                else:  # timers already set
+                    self.logger.debug(f'timers for {flight_id} launch already set')
+                    return
+
+            self.add_reminder_at(next_launch_time - timedelta(hours=24), flight_id, next_launch_time)
+            self.add_reminder_at(next_launch_time - timedelta(hours=1), flight_id, next_launch_time)
+            self.add_reminder_at(next_launch_time - timedelta(minutes=20), flight_id, next_launch_time)
 
     def add_reminder_at(self, time, flight_id, launch_time):
         now = datetime.now()
@@ -109,7 +111,8 @@ class spacex_launches(plugin):
     def get_launch_info_str(self, launch, include_flight_id=False, include_video_uri=False):
         past = datetime.fromtimestamp(launch['launch_date_unix']) < datetime.now()
         flight_id = color.orange(f'[flight id: {launch["flight_number"]}]')
-        time = color.green(datetime.fromtimestamp(launch['launch_date_unix']).strftime('%d-%m-%Y %H:%M'))
+        time = datetime.fromtimestamp(launch['launch_date_unix'])
+        time = 'on ' + color.green(time.strftime("%d-%m-%Y")) + ' at ' + color.green(time.strftime("%H:%M"))
         rocket_name = color.cyan(launch['rocket']['rocket_name'])
         reused = launch['reuse']['core'] or launch['reuse']['side_core1'] or launch['reuse']['side_core2']
         reused = 'Reused' if reused else 'Unused'
@@ -128,7 +131,7 @@ class spacex_launches(plugin):
         payload_info = f'{payload_weight}{orbits}'
 
         result = f'{flight_id} ' if include_flight_id else ''
-        result += f'{reused} {rocket_name} {"launched" if past else "launches"} at {time}{utils.get_str_utc_offset()} from {launch_site}{payload_info}'
+        result += f'{reused} {rocket_name} {"launched" if past else "launches"} {time}{utils.get_str_utc_offset()} from {launch_site}{payload_info}'
         result += f': {uri}' if include_video_uri else ''
         return result
 
