@@ -1,18 +1,5 @@
 from plugin import *
 
-# TIPS:
-# - All plugin functions will be called from one, main thread
-# - IRC nickname is case-insensitive. Usually you should'nt worry about it, since pybot API uses irc_nickname class
-#     to represent it, but - for example - if you wan't to use database, use .casefold()
-# - All exceptions from commands and from on_* methods will be caught by bot - nothing bad will happen
-# - If your __init__ throws, plugin won't be loaded by bot. You can use it to assert environment compatibility
-# - Plugin class name should be equal to module name
-# - Message you'd get ('msg', 'args' arguments) might be empty
-# - Help docs should follow docopt standard (see http://docopt.org)
-# - You can safely assume that config won't change at runtime
-# - You can safely assume that channel, server won't change at runtime
-# - All your on_* funcs will be called even when sender is ignored - you should handle this by yourself
-
 
 @doc("this is what you will see as plugin's help")
 class example_plugin(plugin):
@@ -28,8 +15,6 @@ class example_plugin(plugin):
         # assert config compatibility here
         # should throw utils.config_error if config is invalid (see utils.c_assert_error)
         # in such case, plugin won't be loaded
-        #
-        # ex: utils.c_assert_error(config['port'] >= 1024, 'port should be >= 1024')
         pass
 
     @command
