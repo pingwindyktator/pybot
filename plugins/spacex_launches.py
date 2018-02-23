@@ -112,7 +112,7 @@ class spacex_launches(plugin):
         past = datetime.fromtimestamp(launch['launch_date_unix']) < datetime.now()
         flight_id = color.orange(f'[flight id: {launch["flight_number"]}]')
         time = datetime.fromtimestamp(launch['launch_date_unix'])
-        time = 'on ' + color.green(time.strftime("%d-%m-%Y")) + ' at ' + color.green(time.strftime("%H:%M"))
+        time = 'on ' + color.green(time.strftime("%Y-%m-%d")) + ' at ' + color.green(time.strftime("%H:%M"))
         rocket_name = color.cyan(launch['rocket']['rocket_name'])
         reused = launch['reuse']['core'] or launch['reuse']['side_core1'] or launch['reuse']['side_core2']
         reused = 'Reused' if reused else 'Unused'

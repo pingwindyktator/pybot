@@ -27,10 +27,10 @@ class whois(plugin):
             result.append(['Registrar', format(data['registrar'][0])])
 
         with suppress(KeyError):
-            result.append(['Registered', format(data['creation_date'][0].strftime('%d-%m-%Y'))])
+            result.append(['Registered', format(data['creation_date'][0].strftime('%Y-%m-%d'))])
 
         with suppress(KeyError):
-            result.append(['Expires', format(data['expiration_date'][0].strftime('%d-%m-%Y'))])
+            result.append(['Expires', format(data['expiration_date'][0].strftime('%Y-%m-%d'))])
 
         if data['contacts']['registrant']:
             result.append(['Registrant', self.build_contact_str(data, 'registrant')])

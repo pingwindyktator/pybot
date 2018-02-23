@@ -421,7 +421,7 @@ class builtins(plugin):
     @command
     @doc("get bot's local time")
     def time(self, **kwargs):
-        self.bot.say(datetime.now().strftime('%d-%m-%Y %H:%M:%S') + utils.get_str_utc_offset())
+        self.bot.say(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + utils.get_str_utc_offset())
 
     @command
     @admin

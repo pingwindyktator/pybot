@@ -65,7 +65,7 @@ class note(plugin):
         return result
 
     def build_msg(self, nickname, msg):
-        time = datetime.now().strftime("%d-%m-%Y %H:%M")
+        time = datetime.now().strftime("%Y-%m-%d %H:%M")
 
         if nickname: return f'{time}  <{nickname}> {msg}'
         return f'{time}  {msg}'

@@ -66,7 +66,7 @@ class weather(plugin):
             'today': self.parse_forecast(weather_info, 0),
             'next night': self.parse_forecast(weather_info, 1, night=True),
             'tomorrow': self.parse_forecast(weather_info, 1),
-            (datetime.date.today() + datetime.timedelta(days=2)).strftime(r'%d-%m-%Y'): self.parse_forecast(weather_info, 2)
+            (datetime.date.today() + datetime.timedelta(days=2)).strftime(r'%Y-%m-%d'): self.parse_forecast(weather_info, 2)
         }
 
         for _time, forec in forecasts.items():
