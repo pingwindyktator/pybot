@@ -65,6 +65,10 @@ class spacex_launches(plugin):
                     self.logger.info(f'launch {flight_id} was postponed, setting new timers')
                     self.upcoming_launches_timers[flight_id].timers.clear()
 
+                    if not self.get_users_to_call():
+                        self.bot.say(f'{color.cyan(next_launch["rocket"]["rocket_name"])} launch {color.orange(flight_id)} was just postponed')
+                        self.bot.say(self.get_launch_info_str(next_launch))
+
                 else:  # timers already set
                     self.logger.debug(f'timers for {flight_id} launch already set')
                     return
@@ -117,7 +121,7 @@ class spacex_launches(plugin):
         include_video_uri = (datetime.fromtimestamp(launch['launch_date_unix']) < datetime.now() + timedelta(hours=2)) or past
         flight_id = color.orange(f'[flight id: {launch["flight_number"]}]')
         time = datetime.fromtimestamp(launch['launch_date_unix'])
-        time = 'on ' + color.green(time.strftime("%Y-%m-%d")) + ' at ' + color.green(time.strftime("%H:%M"))
+        time = 'on ' + color.green(time.strftime('%Y-%m-%d')) + ' at ' + color.green(time.strftime('%H:%M'))
         rocket_name = color.cyan(launch['rocket']['rocket_name'])
         reused = launch['reuse']['core'] or launch['reuse']['side_core1'] or launch['reuse']['side_core2']
         reused = 'Reused' if reused else 'Unused'
