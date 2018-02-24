@@ -18,7 +18,7 @@ class spacex_launches(plugin):
         self.db_cursor.execute(f"CREATE TABLE IF NOT EXISTS '{self.db_name}' (nickname TEXT primary key not null)")
         self.db_mutex = Lock()
         self.upcoming_launches_timers = {}  # {flight_id -> upcoming_launch_info}
-        self.check_upcoming_launches_timer = utils.repeated_timer(timedelta(minutes=10).total_seconds(), self.check_upcoming_launches)
+        self.check_upcoming_launches_timer = utils.repeated_timer(timedelta(minutes=self.config['update_every_min']).total_seconds(), self.check_upcoming_launches)
         self.check_upcoming_launches_timer.start()
 
     class upcoming_launch_info:
@@ -65,8 +65,12 @@ class spacex_launches(plugin):
                     self.logger.info(f'launch {flight_id} was postponed, setting new timers')
                     self.upcoming_launches_timers[flight_id].timers.clear()
 
-                    if not self.get_users_to_call():
-                        self.bot.say(f'{color.cyan(next_launch["rocket"]["rocket_name"])} launch {color.orange(flight_id)} was just postponed')
+                    users_to_call = self.get_users_to_call()
+                    if self.config['inform_about_postponed_launches'] and users_to_call:
+                        if self.config['call_users_for_postponed_launches']: prefix = ', '.join(users_to_call) + ': '
+                        else: prefix = ''
+
+                        self.bot.say(f'{prefix}{color.cyan(next_launch["rocket"]["rocket_name"])} launch {color.orange(flight_id)} was just postponed')
                         self.bot.say(self.get_launch_info_str(next_launch))
 
                 else:  # timers already set
@@ -107,18 +111,18 @@ class spacex_launches(plugin):
     @doc('get upcoming SpaceX launches info')
     def spacex_next(self, sender_nick, **kwargs):
         self.logger.info(f'{sender_nick} wants spacex upcoming launch')
-        launches = self.get_upcoming_launches()[0:3]
+        launches = self.get_upcoming_launches()[0:self.config['next_launches']]
 
         if not launches:
             self.bot.say('no scheduled launches')
             return
 
         for launch in launches:
-            self.bot.say(self.get_launch_info_str(launch, include_flight_id=True))
+            self.bot.say(self.get_launch_info_str(launch))
 
-    def get_launch_info_str(self, launch, include_flight_id=False):
+    def get_launch_info_str(self, launch):
         past = datetime.fromtimestamp(launch['launch_date_unix']) < datetime.now()
-        include_video_uri = (datetime.fromtimestamp(launch['launch_date_unix']) < datetime.now() + timedelta(hours=2)) or past
+        include_video_uri = (datetime.fromtimestamp(launch['launch_date_unix']) < datetime.now() + timedelta(hours=2)) or (past and launch['links']['video_link'])
         flight_id = color.orange(f'[flight id: {launch["flight_number"]}]')
         time = datetime.fromtimestamp(launch['launch_date_unix'])
         time = 'on ' + color.green(time.strftime('%Y-%m-%d')) + ' at ' + color.green(time.strftime('%H:%M'))
@@ -139,7 +143,7 @@ class spacex_launches(plugin):
         except (KeyError, TypeError): orbits = ''
         payload_info = f'{payload_weight}{orbits}'
 
-        result = f'{flight_id} ' if include_flight_id else ''
+        result = f'{flight_id} ' if self.config['include_flight_id'] else ''
         result += f'{reused} {rocket_name} {"launched" if past else "launches"} {time}{utils.get_str_utc_offset()} from {launch_site}{payload_info}'
         result += f': {uri}' if include_video_uri else ''
         return result
@@ -162,7 +166,7 @@ class spacex_launches(plugin):
             else: prefix += '[LANDING FAIL]'
 
         prefix = color.orange(prefix)
-        if latest_launch['details']:
+        if self.config['include_details'] and latest_launch['details']:
             self.bot.say(self.get_launch_info_str(latest_launch))
             self.bot.say(f'{prefix} {latest_launch["details"]}')
         else:
