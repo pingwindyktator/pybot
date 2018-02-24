@@ -64,6 +64,7 @@ class spacex_launches(plugin):
                 if self.upcoming_launches_timers[flight_id].launch_datetime != next_launch_time:
                     self.logger.info(f'launch {flight_id} was postponed, setting new timers')
                     self.upcoming_launches_timers[flight_id].timers.clear()
+
                 else:  # timers already set
                     self.logger.debug(f'timers for {flight_id} launch already set')
                     return
@@ -96,7 +97,7 @@ class spacex_launches(plugin):
             return
 
         self.bot.say(', '.join(to_call))  # TODO if too long...
-        self.bot.say(self.get_launch_info_str(launch, include_video_uri=True))
+        self.bot.say(self.get_launch_info_str(launch))
 
     @command
     @doc('get upcoming SpaceX launches info')
@@ -104,12 +105,16 @@ class spacex_launches(plugin):
         self.logger.info(f'{sender_nick} wants spacex upcoming launch')
         launches = self.get_upcoming_launches()[0:3]
 
-        for launch in launches:
-            include_video = datetime.fromtimestamp(launch['launch_date_unix']) < datetime.now() + timedelta(hours=1)
-            self.bot.say(self.get_launch_info_str(launch, include_flight_id=True, include_video_uri=include_video))
+        if not launches:
+            self.bot.say('no scheduled launches')
+            return
 
-    def get_launch_info_str(self, launch, include_flight_id=False, include_video_uri=False):
+        for launch in launches:
+            self.bot.say(self.get_launch_info_str(launch, include_flight_id=True))
+
+    def get_launch_info_str(self, launch, include_flight_id=False):
         past = datetime.fromtimestamp(launch['launch_date_unix']) < datetime.now()
+        include_video_uri = (datetime.fromtimestamp(launch['launch_date_unix']) < datetime.now() + timedelta(hours=2)) or past
         flight_id = color.orange(f'[flight id: {launch["flight_number"]}]')
         time = datetime.fromtimestamp(launch['launch_date_unix'])
         time = 'on ' + color.green(time.strftime("%Y-%m-%d")) + ' at ' + color.green(time.strftime("%H:%M"))
@@ -154,10 +159,10 @@ class spacex_launches(plugin):
 
         prefix = color.orange(prefix)
         if latest_launch['details']:
-            self.bot.say(self.get_launch_info_str(latest_launch, include_video_uri=True))
+            self.bot.say(self.get_launch_info_str(latest_launch))
             self.bot.say(f'{prefix} {latest_launch["details"]}')
         else:
-            self.bot.say(f'{prefix} {self.get_launch_info_str(latest_launch, include_video_uri=True)}')
+            self.bot.say(f'{prefix} {self.get_launch_info_str(latest_launch)}')
 
     def get_users_to_call(self):
         with self.db_mutex:
