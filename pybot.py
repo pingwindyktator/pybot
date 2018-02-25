@@ -294,6 +294,7 @@ class pybot(irc.bot.SingleServerIRCBot):
 
     def _get_best_command_match(self, command, sender_nick):
         choices = [c.replace('_', ' ') for c in self.get_commands() if not (hasattr(self.get_commands()[c], '__admin') and not self.is_user_op(sender_nick))]
+        if 'fix' in choices and not self._get_fixed_command(): choices.remove('fix')
         command = command.replace('_', ' ')
         result = process.extract(command, choices, scorer=fuzz.token_sort_ratio)
         result = [(r[0].replace(' ', '_'), r[1]) for r in result]
