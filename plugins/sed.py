@@ -30,7 +30,7 @@ class sed(plugin):
 
             for old_msg in list(reversed(self.database[source.nick])):
                 new_msg = re.sub(to_replace, replace_with, old_msg, 0 if replace_all else 1, re.I if ignore_case else 0)
-                if new_msg != old_msg:
+                if new_msg != old_msg and new_msg:
                     self.bot.say(f'{source.nick} meant {repr(new_msg)}')
                     break
         else:
