@@ -125,7 +125,7 @@ class spacex_launches(plugin):
     def get_launch_info_str(self, launch):
         past = datetime.fromtimestamp(launch['launch_date_unix']) < datetime.now()
         include_video_uri = (datetime.fromtimestamp(launch['launch_date_unix']) < datetime.now() + timedelta(hours=2)) or (past and launch['links']['video_link'])
-        flight_id = color.orange(f'[flight id: {launch["flight_number"]}]')
+        flight_id = color.orange(f'[{launch["flight_number"]}]')
         time = datetime.fromtimestamp(launch['launch_date_unix'])
         time = 'on ' + color.green(time.strftime('%Y-%m-%d')) + ' at ' + color.green(time.strftime('%H:%M'))
         rocket_name = color.cyan(launch['rocket']['rocket_name'])
