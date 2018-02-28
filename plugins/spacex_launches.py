@@ -37,7 +37,7 @@ class spacex_launches(plugin):
         upcoming_api_uri = r'https://api.spacexdata.com/v2/launches/upcoming'
         raw_response = requests.get(upcoming_api_uri).content.decode('utf-8')
         response = json.loads(raw_response)
-        return sorted(response, key=lambda x: x['launch_date_unix'])
+        return response
 
     def get_launch_by_id(self, flight_id):
         flight_api_uri = r'https://api.spacexdata.com/v2/launches/all?flight_number=%s'
@@ -58,10 +58,10 @@ class spacex_launches(plugin):
 
         for next_launch in next_launches:
             flight_id = next_launch['flight_number']
-            next_launch_time = datetime.fromtimestamp(next_launch['launch_date_unix'])
+            next_launch_time = datetime.fromtimestamp(next_launch['launch_date_unix']) if next_launch['launch_date_unix'] else None
 
             if flight_id in self.upcoming_launches_timers:
-                if self.upcoming_launches_timers[flight_id].launch_datetime != next_launch_time:
+                if not next_launch_time or (self.upcoming_launches_timers[flight_id].launch_datetime != next_launch_time):
                     self.logger.info(f'launch {flight_id} was postponed, setting new timers')
                     self.upcoming_launches_timers[flight_id].timers.clear()
                     users_to_call = self.get_users_to_call()
@@ -70,7 +70,7 @@ class spacex_launches(plugin):
                         if self.config['call_users_for_postponed_launches']: prefix = ', '.join(users_to_call) + ': '
                         else: prefix = ''
                         old_time = color.green(self.upcoming_launches_timers[flight_id].launch_datetime.strftime('%Y-%m-%d %H:%M'))
-                        new_time = color.green(next_launch_time.strftime('%Y-%m-%d %H:%M'))
+                        new_time = color.green(next_launch_time.strftime('%Y-%m-%d %H:%M') if next_launch_time else '<unknown>')
                         suffix = f'{color.cyan(next_launch["rocket"]["rocket_name"])} launch {color.orange(flight_id)} was just postponed: {old_time} -> {new_time}'
                         self.bot.say(f'{prefix}{suffix}')
                         self.bot.say(self.get_launch_info_str(next_launch))
@@ -78,6 +78,8 @@ class spacex_launches(plugin):
                 else:  # timers already set
                     self.logger.debug(f'timers for {flight_id} launch already set')
                     return
+
+            if not next_launch_time: continue
 
             self.add_reminder_at(next_launch_time - timedelta(hours=24), flight_id, next_launch_time)
             self.add_reminder_at(next_launch_time - timedelta(hours=1), flight_id, next_launch_time)
@@ -102,7 +104,7 @@ class spacex_launches(plugin):
         if not to_call: return
 
         launch = self.get_launch_by_id(flight_id)
-        if launch['launch_success'] is not None or datetime.fromtimestamp(launch['launch_date_unix']) < datetime.now():
+        if launch['launch_success'] is not None or not launch['launch_date_unix'] or (datetime.fromtimestamp(launch['launch_date_unix']) < datetime.now()):
             self.logger.warning(f'launch {flight_id} probably canceled / postponed, skipping...')
             return
 
@@ -123,11 +125,17 @@ class spacex_launches(plugin):
             self.bot.say(self.get_launch_info_str(launch))
 
     def get_launch_info_str(self, launch):
-        past = datetime.fromtimestamp(launch['launch_date_unix']) < datetime.now()
-        include_video_uri = (datetime.fromtimestamp(launch['launch_date_unix']) < datetime.now() + timedelta(hours=2)) or (past and launch['links']['video_link'])
+        if not launch['launch_date_unix']:
+            past = False
+            include_video_uri = False
+            time = ''
+        else:
+            past = datetime.fromtimestamp(launch['launch_date_unix']) < datetime.now()
+            include_video_uri = (datetime.fromtimestamp(launch['launch_date_unix']) < datetime.now() + timedelta(hours=2)) or (past and launch['links']['video_link'])
+            time = datetime.fromtimestamp(launch['launch_date_unix'])
+            time = ' on ' + color.green(time.strftime('%Y-%m-%d')) + ' at ' + color.green(time.strftime('%H:%M')) + utils.get_str_utc_offset()
+
         flight_id = color.orange(f'[{launch["flight_number"]}]')
-        time = datetime.fromtimestamp(launch['launch_date_unix'])
-        time = 'on ' + color.green(time.strftime('%Y-%m-%d')) + ' at ' + color.green(time.strftime('%H:%M'))
         rocket_name = color.cyan(launch['rocket']['rocket_name'])
         reused = launch['reuse']['core'] or launch['reuse']['side_core1'] or launch['reuse']['side_core2']
         reused = 'Reused' if reused else 'Unused'
@@ -146,7 +154,7 @@ class spacex_launches(plugin):
         payload_info = f'{payload_weight}{orbits}'
 
         result = f'{flight_id} ' if self.config['include_flight_id'] else ''
-        result += f'{reused} {rocket_name} {"launched" if past else "launches"} {time}{utils.get_str_utc_offset()} from {launch_site}{payload_info}'
+        result += f'{reused} {rocket_name} {"launched" if past else "launches"}{time} from {launch_site}{payload_info}'
         result += f': {uri}' if include_video_uri else ''
         return result
 
