@@ -331,8 +331,8 @@ class builtins(plugin):
 
         self.logger.warning(f'updated {repo.head.orig_head().commit} -> {repo.head.commit}')
         diff = [x.a_path for x in repo.head.commit.diff(repo.head.orig_head().commit)]
-        plugins_diff = [x[len('plugins/'):] for x in diff if x.startswith('plugins/')]
-        if len(plugins_diff) == len(diff): diff_str = f', you should update {", ".join(plugins_diff)} plugins'
+        plugins_diff = [x[len('plugins/'):-len('.py')] for x in diff if x.startswith('plugins/') and x.endswith('.py')]
+        if len(plugins_diff) == len(diff): diff_str = f', you should update {", ".join(plugins_diff)} {"plugins" if len(plugins_diff) > 1 else "plugin"}'
         else: diff_str = ', probably you should restart bot now'
 
         try:
