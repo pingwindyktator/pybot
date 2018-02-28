@@ -63,7 +63,10 @@ class spacex_launches(plugin):
             if flight_id in self.upcoming_launches_timers:
                 if not next_launch_time or (self.upcoming_launches_timers[flight_id].launch_datetime != next_launch_time):
                     self.logger.info(f'launch {flight_id} was postponed, setting new timers')
-                    self.upcoming_launches_timers[flight_id].timers.clear()
+
+                    for timer in self.upcoming_launches_timers[flight_id].timers:
+                        timer.cancel()
+
                     users_to_call = self.get_users_to_call()
 
                     if self.config['inform_about_postponed_launches'] and users_to_call:
@@ -75,9 +78,10 @@ class spacex_launches(plugin):
                         self.bot.say(f'{prefix}{suffix}')
                         self.bot.say(self.get_launch_info_str(next_launch))
 
-                else:  # timers already set
-                    self.logger.debug(f'timers for {flight_id} launch already set')
-                    return
+                    if next_launch_time:
+                        self.upcoming_launches_timers[flight_id].timers.clear()
+                    else:
+                        del self.upcoming_launches_timers[flight_id]
 
             if not next_launch_time: continue
 
