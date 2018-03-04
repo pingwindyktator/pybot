@@ -26,7 +26,7 @@ class movie(plugin):
     def movie(self, sender_nick, msg, **kwargs):
         if not msg: return
         self.logger.info(f'{sender_nick} asked omdbapi about {msg}')
-        response, error = self.get_movie_info(msg)
+        response = self.get_movie_info(msg)
         if not response:
             self.bot.say_err()
             return
@@ -50,9 +50,9 @@ class movie(plugin):
     def imdb(self, sender_nick, msg, **kwargs):
         if not msg: return
         self.logger.info(f'{sender_nick} asked omdbapi about imdb of {msg}')
-        response, error = self.get_movie_info(msg)
+        response = self.get_movie_info(msg)
         if not response or not self.api_response_contains(response, 'imdbID'):
-            self.bot.say(f'omdbapi error: {error}')
+            self.bot.say_err()
             return
 
         rating = f' ({response["imdbRating"]}/10 out of {response["imdbVotes"]} voters)' if self.api_response_contains(response, 'imdbRating') and 'imdbVotes' in response else ''
@@ -62,10 +62,12 @@ class movie(plugin):
         ask = urllib.parse.quote(movie)
         raw_response = requests.get(self.omdbapi_url % (ask, self.config['api_key'])).content.decode('utf-8')
         response = json.loads(raw_response)
-        if response['Response'] == 'True' and self.api_response_contains(response, 'Title'): return response, None
+        if response['Response'] == 'True' and self.api_response_contains(response, 'Title'): return response
         else:
-            self.logger.warning(f'omdbapi returned error: {response}')
-            return None, response['Error']
+            if 'not found' not in response['Error'].casefold():
+                self.logger.warning(f'omdbapi returned error: {response}')
+
+            return None
 
     def build_prefix(self, movie_info):
         year = f' ({movie_info["Year"]})' if self.api_response_contains(movie_info, 'Year') else ''
