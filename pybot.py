@@ -257,7 +257,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         self._call_plugins_methods('part', raw_msg=raw_msg, source=raw_msg.source)
 
     def on_ctcp(self, _, raw_msg):
-        """ called by super() when ctcp arrives (/me ...) """
+        """ called by super() when ctcp arrives """
         self._call_plugins_methods('ctcp', raw_msg=raw_msg, source=raw_msg.source, msg=raw_msg.arguments[1] if len(raw_msg.arguments) > 1 else '')
 
     def on_namreply(self, _, raw_msg):
