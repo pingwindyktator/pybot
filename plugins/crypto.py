@@ -36,7 +36,7 @@ class crypto(plugin):
         return result
 
     def update_known_crypto_currencies(self):
-        self.logger.info('updating known cryptocurrencies...')
+        self.logger.debug('updating known cryptocurrencies...')
         res = self.get_known_crypto_currencies()
         with self.crypto_currencies_lock:
             self.known_crypto_currencies = res

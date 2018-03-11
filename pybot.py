@@ -17,7 +17,7 @@ import utils
 import sys
 
 from queue import Queue
-from threading import Thread, Lock
+from threading import Thread, Lock, RLock
 from color import color
 from utils import irc_nickname
 from fuzzywuzzy import process, fuzz
@@ -42,7 +42,8 @@ class pybot(irc.bot.SingleServerIRCBot):
         self._dying = False
         self._debug_mode = debug_mode
         self._fixed_command = None
-        self._fixed_command_lock = Lock()
+        self._fixed_command_lock = RLock()
+        self._use_fix_tip_given = False
 
         os.makedirs(os.path.dirname(os.path.realpath(self.config['db_location'])), exist_ok=True)
         self._db_ops_tablename = 'ops'
@@ -183,6 +184,13 @@ class pybot(irc.bot.SingleServerIRCBot):
                 self.register_fixed_command(None)
                 raw_msg = None
                 full_msg = None
+        else:
+            with self._fixed_command_lock:
+                fixed_command = self._get_fixed_command()
+                if not self._use_fix_tip_given and fixed_command and self.get_command_prefix() + fixed_command.strip() == full_msg.strip():
+                    self._use_fix_tip_given = True
+                    use_fix_responses = ['%s: why u no %s?', 'hey, %s, use %s!', '%s: use %s to fix your previous command', "%s: you're making %s feature sad"]
+                    self.say(random.choice(use_fix_responses) % (sender_nick, f'{self.get_command_prefix()}fix'))
 
         args_list = args.split()
         cmd = args_list[0].strip() if args_list else ''
@@ -190,9 +198,9 @@ class pybot(irc.bot.SingleServerIRCBot):
         assert args.startswith(cmd)
         args = args[len(cmd):].strip()
 
-        # .set entry some msg
+        # !set entry some msg
         # cmd       == "set"
-        # full_msg  == ".set entry some msg"
+        # full_msg  == "!set entry some msg"
         # args      == "entry some msg"
         # args_list == ["some", "msg"]
         # raw_msg   == IRC Event class
@@ -536,6 +544,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         """
         self._logger.debug(f'saving fixed command: {fixed_command}')
         with self._fixed_command_lock:
+            self._use_fix_tip_given = False
             self._fixed_command = fixed_command
 
     def ignore_user(self, nickname):

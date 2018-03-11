@@ -50,7 +50,7 @@ class spacex_launches(plugin):
         return json.loads(raw_response)
 
     def check_upcoming_launches(self):
-        self.logger.info('checking upcoming launches...')
+        self.logger.debug('checking upcoming launches...')
         next_launches = self.get_upcoming_launches()
 
         for next_launch in next_launches:
