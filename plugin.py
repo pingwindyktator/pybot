@@ -218,6 +218,20 @@ def admin(function):
     return admin_impl
 
 
+def channel_op(function):
+    @wraps(function)
+    def admin_impl(self, sender_nick, **kwargs):
+        sender_nick = irc_nickname(sender_nick)
+        if sender_nick in self.bot.get_channel().mode_users['o']:
+            function(self, sender_nick=sender_nick, **kwargs)
+        else:
+            self.logger.info(f'{sender_nick} is not channel operator, skipping command')
+            self.bot.say(f"{sender_nick}: you're not channel operator, sorry!")
+
+    admin_impl.__channel_op = True
+    return admin_impl
+
+
 def superadmin(function):
     @wraps(function)
     def admin_impl(self, sender_nick, **kwargs):
@@ -226,7 +240,8 @@ def superadmin(function):
             function(self, sender_nick=sender_nick, **kwargs)
         else:
             self.logger.info(f'{sender_nick} is not superop, skipping command')
-            self.bot.say(f"{sender_nick}: you're not super bot operator, sorry!")
+            self.bot.say(f"{sender_nick}: you're not bot owner, sorry!")
 
     admin_impl.__admin = True
+    admin_impl.__superadmin = True
     return admin_impl
