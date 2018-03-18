@@ -173,7 +173,7 @@ class pybot(irc.bot.SingleServerIRCBot):
             fixed_command = self._get_fixed_command()
             if 'builtins' not in self.get_plugins_names() or 'fix' not in self.get_plugin_commands('builtins'):
                 pass
-            elif hasattr(self.get_commands()['fix'], '__admin') and not self.is_user_op(sender_nick):
+            elif not self._can_user_call_command(sender_nick, 'fix'):
                 pass
             elif not fixed_command:
                 self.say('no fix available')
@@ -301,7 +301,7 @@ class pybot(irc.bot.SingleServerIRCBot):
             self.die('Interrupted by OS')
 
     def _get_best_command_match(self, command, sender_nick):
-        choices = [c.replace('_', ' ') for c in self.get_commands() if not (hasattr(self.get_commands()[c], '__admin') and not self.is_user_op(sender_nick))]
+        choices = [c.replace('_', ' ') for c in self.get_commands() if self._can_user_call_command(sender_nick, c)]
         if 'fix' in choices and not self._get_fixed_command(): choices.remove('fix')
         command = command.replace('_', ' ')
         result = process.extract(command, choices, scorer=fuzz.token_sort_ratio)
@@ -408,6 +408,14 @@ class pybot(irc.bot.SingleServerIRCBot):
     def _get_fixed_command(self):
         with self._fixed_command_lock:
             return self._fixed_command
+
+    def _can_user_call_command(self, nickname, command_name):
+        nickname = irc_nickname(nickname)
+        func = self.get_commands()[command_name]
+        if hasattr(func, '__admin') and not self.is_user_op(nickname): return False
+        if hasattr(func, '__superadmin') and nickname != self.config['superop']: return False
+        if hasattr(func, '__channel_op') and nickname not in self.get_channel().mode_users['o']: return False
+        return True
 
     # API funcs
 
