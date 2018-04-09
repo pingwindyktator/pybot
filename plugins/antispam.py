@@ -169,7 +169,7 @@ class antispam(plugin):
     def is_whitelisted(self, sender_nick):
         if self.bot.is_user_op(sender_nick): return True
         if sender_nick in self.bot.get_channel().mode_users['o']: return True
-        if sender_nick in self.bot.get_channel().mode_users['+']: return True
+        if sender_nick in self.bot.get_channel().mode_users['v']: return True
 
         return False
 
