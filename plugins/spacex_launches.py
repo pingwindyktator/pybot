@@ -95,8 +95,8 @@ class spacex_launches(plugin):
         new_launch_time = datetime.fromtimestamp(launch['launch_date_unix']) if launch['launch_date_unix'] else None
         assert new_launch_time != old_launch_time
 
-        old_time_str = color.green(old_launch_time.strftime('%Y-%m-%d %H:%M') + utils.get_str_utc_offset() if old_launch_time else '<unknown>')
-        new_time_str = color.green(new_launch_time.strftime('%Y-%m-%d %H:%M') + utils.get_str_utc_offset() if new_launch_time else '<unknown>')
+        old_time_str = color.green(old_launch_time.strftime('%Y-%m-%d %H:%M')) + utils.get_str_utc_offset() if old_launch_time else '<unknown>'
+        new_time_str = color.green(new_launch_time.strftime('%Y-%m-%d %H:%M')) + utils.get_str_utc_offset() if new_launch_time else '<unknown>'
         self.logger.info(f'launch {flight_id} was just postponed: {old_time_str} -> {new_time_str}')
 
         if self.config['inform_about_postponed_launches'] and users_to_call:
