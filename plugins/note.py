@@ -19,7 +19,7 @@ class note(plugin):
         self.db_mutex = Lock()
 
     def on_pubmsg(self, source, **kwargs):
-        notes = self.get_notes_for_user(source.nick, remove=True)
+        notes = self.get_notes_for_user(source.nick, remove=True, exact=not self.config['search_for_possible_notes'])
         if not notes: return
 
         self.bot.say(f'{source.nick}, you have notes!')

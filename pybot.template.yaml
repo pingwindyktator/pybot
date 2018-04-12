@@ -41,6 +41,7 @@ get:
 
 note:
   db_location: db/note.db
+  search_for_possible_notes: true
 
 seen:
   db_location: db/seen.db
