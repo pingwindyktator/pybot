@@ -185,12 +185,13 @@ class pybot(irc.bot.SingleServerIRCBot):
                 raw_msg = None
                 full_msg = None
         else:
-            with self._fixed_command_lock:
-                fixed_command = self._get_fixed_command()
-                if not self._use_fix_tip_given and fixed_command and self.get_command_prefix() + fixed_command.strip() == full_msg.strip():
-                    self._use_fix_tip_given = True
-                    use_fix_responses = ['%s: why u no %s?', 'hey, %s, use %s!', '%s: use %s to fix your previous command', "%s: you're making %s feature sad"]
-                    self.say(random.choice(use_fix_responses) % (sender_nick, f'{self.get_command_prefix()}fix'))
+            if self.config['use_fix_tip']:
+                with self._fixed_command_lock:
+                    fixed_command = self._get_fixed_command()
+                    if not self._use_fix_tip_given and fixed_command and self.get_command_prefix() + fixed_command.strip() == full_msg.strip():
+                        self._use_fix_tip_given = True
+                        use_fix_responses = ['%s: why u no %s?', 'hey, %s, use %s!', '%s: use %s to fix your previous command', "%s: you're making %s feature sad"]
+                        self.say(random.choice(use_fix_responses) % (sender_nick, f'{self.get_command_prefix()}fix'))
 
         args_list = args.split()
         cmd = args_list[0].strip() if args_list else ''

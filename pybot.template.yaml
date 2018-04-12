@@ -18,6 +18,7 @@ wrap_too_long_msgs: true
 health_check: false
 health_check_interval_s: 100
 db_location: db/pybot.db
+use_fix_tip: true
 
 plugin_remote_manager:
   try_autocorrect: true

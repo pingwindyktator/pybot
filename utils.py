@@ -126,6 +126,7 @@ def ensure_config_is_ok(config, assert_unknown_keys=False):
         'health_check_interval_s': config_key_info(True, int),
         'db_location': config_key_info(True, str),
         'superop': config_key_info(True, str),
+        'use_fix_tip': config_key_info(True, bool),
 
         'password': config_key_info(False, list),
         'disabled_plugins': config_key_info(False, list),
