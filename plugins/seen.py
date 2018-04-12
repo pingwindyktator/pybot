@@ -132,8 +132,10 @@ class seen(plugin):
         with self.db_mutex:
             self.db_cursor.execute(f"SELECT nickname, data FROM '{self.db_name}' WHERE nickname = ? COLLATE NOCASE", (nickname,))
             exact_results = self.db_cursor.fetchall()
-            self.db_cursor.execute(f"SELECT nickname, data FROM '{self.db_name}' WHERE nickname LIKE ? COLLATE NOCASE", (f'%{nickname}%',))
-            possible_results = self.db_cursor.fetchall()
+            if self.config['show_possible_results']:
+                self.db_cursor.execute(f"SELECT nickname, data FROM '{self.db_name}' WHERE nickname LIKE ? COLLATE NOCASE", (f'%{nickname}%',))
+                possible_results = self.db_cursor.fetchall()
+            else: possible_results = []
 
         exact_result = None
         possible_results = list(filter(lambda x: x[0] != sender_nick and x[0] != self.bot.get_nickname(), possible_results))
