@@ -79,7 +79,7 @@ Then follow those tips:
 - You can safely assume that config won't change at runtime
 - You can safely assume that channel, server won't change at runtime
 - All your `on_*` funcs will be called even when sender is ignored - you should handle this by yourself
-- You should keep bot's local time equal to channel users' local time. Currently it's not possible to handle multiple timezones. Bot will interpret all times as its local ones.
+- You should keep bot's local time equal to channel users' local time. Currently it's not possible to handle multiple timezones. Bot will interpret all times as its local ones
 - Every `.py` file in `plugins/` is treated like a pybot plugin
 
 See [example_plugin.py](example_plugin.py) and [plugin.py](plugin.py) also!
