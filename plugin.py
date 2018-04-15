@@ -21,122 +21,132 @@ class plugin:
     def _get_class_name(self):
         return self.__class__.__name__
 
+    # see https://www.alien.net.au/irc/irc2numerics.html
+    # for deep explanation
+
     def on_welcome(self, raw_msg, server, port, nickname, **kwargs):
         """
         called by bot when connected to server
-        :param raw_msg  - raw IRC msg
-        :param server   - server address
-        :param port     - server's port
-        :param nickname - bot's nickname
+        :param raw_msg  : raw IRC msg
+        :param server   : server address
+        :param port     : server's port
+        :param nickname : bot's nickname
         """
 
     def on_disconnect(self, raw_msg, server, port, **kwargs):
         """
         called by bot when disconnected from server
-        :param raw_msg - raw IRC msg
-        :param server  - server address
-        :param port    - server's port
+        :param raw_msg : raw IRC msg
+        :param server  : server address
+        :param port    : server's port
         """
 
     def on_join(self, raw_msg, source, **kwargs):
         """
         called by bot when somebody joins channel
-        :param raw_msg - raw IRC msg
-        :param source  - source of joined user
+        :param raw_msg : raw IRC msg
+        :param source  : source of joined user
         """
 
     def on_me_joined(self, raw_msg, **kwargs):
         """
         called by bot when joined channel
-        :param raw_msg - raw IRC msg
+        :param raw_msg : raw IRC msg
+        """
+
+    def on_mode(self, raw_msg, source, who, mode_change, **kwargs):
+        """
+        called by bot when someone's mode changed
+        :param raw_msg         : raw IRC msg
+        :param source          : changer's source
+        :param who             : nickname of user whose mode has changed
+        :param mode_change     : e.g. '+o', '-v'
         """
 
     def on_pubmsg(self, raw_msg, source, msg, **kwargs):
         """
         called by bot when public msg received
-        :param raw_msg - raw IRC msg
-        :param source  - pubmsg source
-        :param msg     - full message
+        :param raw_msg : raw IRC msg
+        :param source  : pubmsg source
+        :param msg     : full message
         """
 
     def on_kick(self, raw_msg, who, source, **kwargs):
         """
         called by bot when somebody got kicked
-        :param raw_msg - raw IRC msg
-        :param who     - person who gets kicked
-        :param source  - kicker's source
+        :param raw_msg : raw IRC msg
+        :param who     : user who gets kicked
+        :param source  : kicker's source
         """
 
     def on_me_kicked(self, raw_msg, source, **kwargs):
         """
         called by bot when kicked from channel
-        :param raw_msg - raw IRC msg
-        :param source  - kicker's source
+        :param raw_msg : raw IRC msg
+        :param source  : kicker's source
         """
         pass
 
     def on_privmsg(self, raw_msg, msg, source, **kwargs):
         """
         called by bot when private msg received
-        :param raw_msg - raw IRC msg
-        :param msg     - full message
-        :param source  - primsg source
+        :param raw_msg : raw IRC msg
+        :param msg     : full message
+        :param source  : primsg source
         """
 
-    # see https://www.alien.net.au/irc/irc2numerics.html
-    # for deep explanation
     def on_whoisuser(self, raw_msg, nick, user, host, **kwargs):
         """
         called by bot when /whois response received
-        :param raw_msg - raw IRC msg
-        :param nick    - requested nickname
-        :param user    - requested username
-        :param host    - requested hostname
+        :param raw_msg : raw IRC msg
+        :param nick    : requested nickname
+        :param user    : requested username
+        :param host    : requested hostname
         """
 
     def on_nicknameinuse(self, raw_msg, busy_nickname, **kwargs):
         """
         called by bot when given nickname is reserved
-        :param raw_msg       - raw IRC msg
-        :param busy_nickname - nickname bot was trying to use
+        :param raw_msg       : raw IRC msg
+        :param busy_nickname : nickname bot was trying to use
         """
 
     def on_nick(self, raw_msg, source, old_nickname, new_nickname, **kwargs):
         """
         called by bot when somebody changes nickname
-        :param raw_msg      - raw IRC msg
-        :param source       - changer's source (with old nickname!)
-        :param old_nickname - old nickname
-        :param new_nickname - new nickname
+        :param raw_msg      : raw IRC msg
+        :param source       : changer's source (with old nickname!)
+        :param old_nickname : old nickname
+        :param new_nickname : new nickname
         """
 
     def on_part(self, raw_msg, source, **kwargs):
         """
         called by bot when somebody lefts channel
-        :param raw_msg - raw IRC msg
-        :param source  - source of left user
+        :param raw_msg : raw IRC msg
+        :param source  : source of left user
         """
 
     def on_quit(self, raw_msg, source, **kwargs):
         """
         called by bot when somebody disconnects from IRC server
-        :param raw_msg - raw IRC msg
-        :param source  - source of disconnected user
+        :param raw_msg : raw IRC msg
+        :param source  : source of disconnected user
         """
 
     def on_ctcp(self, raw_msg, source, msg, **kwargs):
         """
         called by bot when ctcp arrives (/me ...)
-        :param raw_msg - raw IRC msg
-        :param source  - source of ctcped user
-        :param msg     - ctcp message
+        :param raw_msg : raw IRC msg
+        :param source  : source of ctcped user
+        :param msg     : ctcp message
         """
 
     def on_namreply(self, raw_msg, nicknames, **kwargs):
         """
         called by bot when names response arrives
-        :param raw_msg   - raw IRC msg
-        :param nicknames - nicknames in channel
+        :param raw_msg   : raw IRC msg
+        :param nicknames : nicknames in channel
         """
         pass
 

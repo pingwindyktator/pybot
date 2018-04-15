@@ -106,6 +106,10 @@ class pybot(irc.bot.SingleServerIRCBot):
         self._call_plugins_methods('nicknameinuse', raw_msg=raw_msg, busy_nickname=old_nickname)
         self.connection.nick(new_nickname)
 
+    def on_mode(self, _, raw_msg):
+        """ called by super() when someone's mode changed """
+        self._call_plugins_methods('mode', raw_msg=raw_msg, source=raw_msg.source, who=irc_nickname(raw_msg.arguments[1]), mode_change=raw_msg.arguments[0])
+
     def on_welcome(self, _, raw_msg):
         """ called by super() when connected to server """
         self._ping_ponger.start()

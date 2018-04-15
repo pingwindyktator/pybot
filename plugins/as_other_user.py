@@ -17,8 +17,7 @@ class as_other_user(plugin):
 
     def on_whoisuser(self, nick, user, host, **kwargs):
         cmds = self.commands_as_other_user_to_send
-        try:
-            args = next(x for x in cmds if x.hacked_nick == nick)
+        try: args = next(x for x in cmds if x.hacked_nick == nick)
         except StopIteration: return
 
         hacked_source = NickMask.from_params(args.hacked_nick, user, host)
