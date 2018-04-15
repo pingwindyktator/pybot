@@ -30,6 +30,7 @@ class seen(plugin):
         kicked = 4
         quit = 5
         ctcp = 6
+        mode_changed = 7
 
     class seen_data:
         def __init__(self, timestamp, activity, data):
@@ -71,9 +72,11 @@ class seen(plugin):
             if self.activity == seen.activity_type.nick_changed:
                 return f'{nickname} was last seen {delta_time} ago changing nickname to {self.data[0]}'
             if self.activity == seen.activity_type.kicked:
-                return f'{nickname} was last seen {delta_time} ago kicked by {self.data[0]}'
+                return f'{nickname} was last seen {delta_time} ago kicking {self.data[0]}'
             if self.activity == seen.activity_type.quit:
                 return f'{nickname} was last seen {delta_time} ago disconnecting from server'
+            if self.activity == seen.activity_type.mode_changed:
+                return f'{nickname} was last seen {delta_time} ago setting mode {self.data[1]} {self.data[0]}'
             else:
                 raise RuntimeError(f"seen_data: ups, you didn't implemented case for activity_type={self.activity}")
 
@@ -99,9 +102,13 @@ class seen(plugin):
         if not self.config['register_pubmsg_only']:
             self.update_database(irc_nickname(old_nickname), [new_nickname], self.activity_type.nick_changed)
 
+    def on_mode(self, source, who, mode_change, **kwargs):
+        if not self.config['register_pubmsg_only']:
+            self.update_database(irc_nickname(source.nick), [who, mode_change], self.activity_type.mode_changed)
+
     def on_kick(self, who, source, **kwargs):
         if not self.config['register_pubmsg_only']:
-            self.update_database(irc_nickname(who), [source.nick], self.activity_type.kicked)
+            self.update_database(irc_nickname(source.nick), [who], self.activity_type.kicked)
 
     def update_database(self, nickname, data, activity):
         nickname = irc_nickname(nickname)
