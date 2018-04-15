@@ -5,8 +5,7 @@ class bot_operators(plugin):
     def __init__(self, bot):
         super().__init__(bot)
 
-    @command
-    @admin
+    @command(admin=True)
     @doc('add_op <nickname>: add bot operator')
     def add_op(self, sender_nick, args, **kwargs):
         if not args: return
@@ -24,8 +23,7 @@ class bot_operators(plugin):
         self.bot.say(f'{nickname} is now bot operator')
         self.logger.warning(f'{sender_nick} added bot operator: {nickname}')
 
-    @command
-    @admin
+    @command(admin=True)
     @doc('rm_op <nickname>: remove bot operator')
     def rm_op(self, sender_nick, args, **kwargs):
         if not args: return
@@ -48,7 +46,6 @@ class bot_operators(plugin):
         self.logger.warning(f'{sender_nick} removed bot operator: {nickname}')
 
     @command
-    @admin
     @doc('get bot operators')
     def ops(self, sender_nick, **kwargs):
         ops = self.bot.get_ops()

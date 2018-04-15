@@ -32,8 +32,7 @@ class plugin_remote_manager(plugin):
         result = [(r[0].replace(' ', '_'), r[1]) for r in result]
         return result[0][0] if result[0][1] > 65 else None
 
-    @command
-    @admin
+    @command(admin=True)
     @doc('enable_plugin <name>: enable <name> plugin from loaded module')
     def enable_plugin(self, sender_nick, args, **kwargs):
         if not args: return
@@ -58,8 +57,7 @@ class plugin_remote_manager(plugin):
             self.bot.say(f'cannot enable {plugin_name}: unexpected exception thrown')
             if self.bot.is_debug_mode_enabled(): raise
 
-    @command
-    @admin
+    @command(admin=True)
     @doc('disable_plugin <name>: unload and disable enabled <name> plugin')
     def disable_plugin(self, sender_nick, args, **kwargs):
         if not args: return
@@ -104,8 +102,7 @@ class plugin_remote_manager(plugin):
         self.bot.remove_plugin(plugin_instance)
         self.logger.warning(f'plugin {name} disabled')
 
-    @command
-    @admin
+    @command(admin=True)
     @doc('load_plugin <name>: load new plugin or reload existing one')
     def load_plugin(self, sender_nick, args, **kwargs):
         if not args: return

@@ -25,8 +25,7 @@ class ignore(plugin):
 
         return True, None
 
-    @command
-    @admin
+    @command(admin=True)
     @doc("ignore <nickname>: ignore user's messages")
     def ignore(self, sender_nick, args, **kwargs):
         if not args: return
@@ -41,8 +40,7 @@ class ignore(plugin):
         self.bot.say(f'{nickname} is now ignored')
         self.logger.warning(f'{sender_nick} ignored {nickname}')
 
-    @command
-    @admin
+    @command(admin=True)
     @doc("""ignore_for <nickname> <time>: ignore user's messages for <time> time. <time> should be %H %M  (eg.  1h 42m)
             ignore_for <time> <nickname>: ignore user's messages for <time> time. <time> should be %H %M  (eg.  1h 42m)""")
     def ignore_for(self, sender_nick, msg, **kwargs):
@@ -88,8 +86,7 @@ class ignore(plugin):
         self.logger.warning(f'time passed, {nickname} is no longer ignored')
         self.bot.unignore_user(nickname)
 
-    @command
-    @admin
+    @command(admin=True)
     @doc("unignore <nickname>: unignore user's messages")
     def unignore(self, sender_nick, args, **kwargs):
         if not args: return
@@ -103,8 +100,7 @@ class ignore(plugin):
         self.bot.say(f'{nickname} is no longer ignored')
         self.logger.warning(f'{sender_nick} unignored: {nickname}')
 
-    @command
-    @admin
+    @command(admin=True)
     @doc('get ignored users')
     def ignored_users(self, sender_nick, **kwargs):
         ignored = self.bot.get_ignored_users()

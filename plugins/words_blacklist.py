@@ -17,8 +17,7 @@ class words_blacklist(plugin):
                 else:
                     self.logger.warning(f'{source.nick} cannot be kicked [{word}], operator privileges needed')
 
-    @command
-    @admin
+    @command(admin=True)
     @doc('ban_word <word>...: ban <word> words. when one of them appears on chat, bot will kick its sender')
     def ban_word(self, sender_nick, args, **kwargs):
         if not args: return
@@ -27,8 +26,7 @@ class words_blacklist(plugin):
         self.bot.say(f'{args} banned{suffix}')
         self.logger.info(f'words {args} banned by {sender_nick}')
 
-    @command
-    @admin
+    @command(admin=True)
     @doc('unban_word <word>...: unban <word> words')
     def unban_word(self, sender_nick, args, **kwargs):
         to_unban = [arg for arg in args if arg in self.blacklist]

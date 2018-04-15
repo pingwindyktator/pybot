@@ -39,8 +39,7 @@ class as_other_user(plugin):
                 self.logger.info(f'removing {x.sender_nick} command ({x.raw_msg.arguments[0]}) as {x.hacked_nick}')
                 self.commands_as_other_user_to_send.remove(x)
 
-    @command
-    @admin
+    @command(admin=True)
     @doc('as_other_user <username> <message>: emulate sending <message> as <username>, requires <username> to be online')
     def as_other_user(self, sender_nick, msg, raw_msg, **kwargs):
         if not msg: return

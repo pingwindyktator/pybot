@@ -155,22 +155,48 @@ class plugin:
         pass
 
 
-def command(function):
-    @wraps(function)
-    def command_impl(self, **kwargs):
-        try:
-            function(self, **kwargs)
-        except Exception as e:
-            self.logger.error(f'exception caught calling {function.__qualname__}: {type(e).__name__}: {e}')
-            self.bot.say('internal error, sorry :(')
-            if self.bot.is_debug_mode_enabled(): raise
+def command(_cls=None, admin=False, superadmin=False, channel_op=False):
+    def command_decorator(function):
+        @wraps(function)
+        def command_impl(self, sender_nick, **kwargs):
+            sender_nick = irc_nickname(sender_nick)
 
-    if hasattr(command_impl, '__regex'):
-        print(f'function {function.__qualname__} already registered as regex handler')
-        sys.exit(8)
+            if hasattr(command_impl, '__superadmin') and sender_nick != self.bot.config['superop']:
+                self.logger.info(f'{sender_nick} is not superop, skipping command')
+                self.bot.say(f"{sender_nick}: you're not bot owner, sorry!")
+                return
 
-    command_impl.__command = True
-    return command_impl
+            if hasattr(command_impl, '__admin') and not self.bot.is_user_op(sender_nick):
+                self.logger.info(f'{sender_nick} is not op, skipping command')
+                self.bot.say(f"{sender_nick}: you're not bot operator, sorry!")
+                return
+
+            if hasattr(command_impl, '__channel_op') and not self.bot.get_channel().is_oper(sender_nick):
+                self.logger.info(f'{sender_nick} is not channel operator, skipping command')
+                self.bot.say(f"{sender_nick}: you're not channel operator, sorry!")
+                return
+
+            try:
+                function(self, sender_nick=sender_nick, **kwargs)
+            except Exception as e:
+                self.logger.error(f'exception caught calling {function.__qualname__}: {type(e).__name__}: {e}')
+                self.bot.say('internal error, sorry :(')
+                if self.bot.is_debug_mode_enabled(): raise
+
+        if hasattr(command_impl, '__regex'):
+            print(f'function {function.__qualname__} already registered as regex handler')
+            sys.exit(8)
+
+        command_impl.__command = True
+        if admin: command_impl.__admin = True
+        if superadmin: command_impl.__admin = command_impl.__superadmin = True
+        if channel_op: command_impl.__channel_op = True
+        return command_impl
+
+    if _cls is None:
+        return command_decorator
+    else:
+        return command_decorator(_cls)
 
 
 def on_message(regex_str):
@@ -202,46 +228,3 @@ def doc(doc_string):
         return obj
 
     return doc_impl
-
-
-def admin(function):
-    @wraps(function)
-    def admin_impl(self, sender_nick, **kwargs):
-        sender_nick = irc_nickname(sender_nick)
-        if self.bot.is_user_op(sender_nick):
-            function(self, sender_nick=sender_nick, **kwargs)
-        else:
-            self.logger.info(f'{sender_nick} is not op, skipping command')
-            self.bot.say(f"{sender_nick}: you're not bot operator, sorry!")
-
-    admin_impl.__admin = True
-    return admin_impl
-
-
-def channel_op(function):
-    @wraps(function)
-    def admin_impl(self, sender_nick, **kwargs):
-        sender_nick = irc_nickname(sender_nick)
-        if sender_nick in self.bot.get_channel().mode_users['o']:
-            function(self, sender_nick=sender_nick, **kwargs)
-        else:
-            self.logger.info(f'{sender_nick} is not channel operator, skipping command')
-            self.bot.say(f"{sender_nick}: you're not channel operator, sorry!")
-
-    admin_impl.__channel_op = True
-    return admin_impl
-
-
-def superadmin(function):
-    @wraps(function)
-    def admin_impl(self, sender_nick, **kwargs):
-        sender_nick = irc_nickname(sender_nick)
-        if sender_nick == self.bot.config['superop']:
-            function(self, sender_nick=sender_nick, **kwargs)
-        else:
-            self.logger.info(f'{sender_nick} is not superop, skipping command')
-            self.bot.say(f"{sender_nick}: you're not bot owner, sorry!")
-
-    admin_impl.__admin = True
-    admin_impl.__superadmin = True
-    return admin_impl

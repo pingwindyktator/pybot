@@ -40,16 +40,19 @@ class example_plugin(plugin):
         # see plugin base class for possible positional arguments
         pass
 
-    @command
-    @admin
+    @command(admin=True)
     def example_admin_command(self, sender_nick, **kwargs):
         # you need admin privileges to call this command
         pass
 
-    @command
-    @superadmin
+    @command(superadmin=True)
     def example_admin_command(self, sender_nick, **kwargs):
         # you need superadmin privileges to call this command
+        pass
+
+    @command(channel_op=True)
+    def example_admin_command(self, sender_nick, **kwargs):
+        # you need to be channel operator to call this command
         pass
 
     @command

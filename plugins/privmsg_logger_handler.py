@@ -50,8 +50,7 @@ class privmsg_logger_handler(plugin):
             result = {irc_nickname(r[0]): int(r[1]) for r in result}
             return result
 
-    @command
-    @admin
+    @command(admin=True)
     @doc('add_plh <level>: add privmsg logger handler at <level> level. bot will send you app logs in a private message')
     def add_plh(self, sender_nick, args, **kwargs):
         if not args: return
@@ -71,8 +70,7 @@ class privmsg_logger_handler(plugin):
 
         self.bot.say(f'plh added: {sender_nick} at {utils.int_to_logging_level_str[level]}')
 
-    @command
-    @admin
+    @command(admin=True)
     @doc('remove saved privmsg logger handler')
     def rm_plh(self, sender_nick, **kwargs):
         if sender_nick not in self.get_plhs_impl(): return

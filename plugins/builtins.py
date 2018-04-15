@@ -69,40 +69,35 @@ class builtins(plugin):
         self.logger.info(f'source {self.config["source"]} given to {sender_nick}')
         self.bot.say(f'Patches are welcome! {self.config["source"]}')
 
-    @command
-    @admin
+    @command(admin=True)
     @doc('enable colorful answers')
     def enable_colors(self, sender_nick, **kwargs):
         color.enable_colors()
         self.logger.info(f'{sender_nick} enables colors')
         self.bot.say_ok()
 
-    @command
-    @admin
+    @command(admin=True)
     @doc('disable colorful answers')
     def disable_colors(self, sender_nick, **kwargs):
         color.disable_colors()
         self.logger.info(f'{sender_nick} disables colors')
         self.bot.say_ok()
 
-    @command
-    @superadmin
+    @command(superadmin=True)
     @doc('enable debug mode')
     def enable_debug_mode(self, sender_nick, **kwargs):
         self.bot.set_debug_mode(True)
         self.logger.warning(f'{sender_nick} enables debug mode')
         self.bot.say_ok()
 
-    @command
-    @superadmin
+    @command(superadmin=True)
     @doc('disable debug mode')
     def disable_debug_mode(self, sender_nick, **kwargs):
         self.bot.set_debug_mode(False)
         self.logger.warning(f'{sender_nick} disables debug mode')
         self.bot.say_ok()
 
-    @command
-    @admin
+    @command(admin=True)
     @doc('change_log_level <file|stdout> <level>: change logging level')
     def change_log_level(self, sender_nick, args, **kwargs):
         if len(args) < 2: return
@@ -148,8 +143,7 @@ class builtins(plugin):
 
         return None
 
-    @command
-    @admin
+    @command(admin=True)
     @doc('restart [<force>]: restart pybot app, use force to disable consistency checks')
     def restart(self, sender_nick, args, **kwargs):
         reason = self.is_restart_unsafe()
@@ -271,8 +265,7 @@ class builtins(plugin):
         self.logger.warning('config file updated')
         return True
 
-    @command
-    @superadmin
+    @command(superadmin=True)
     @doc('update config with config template defaults and ** restarts **, should be used with caution!')
     def update_config(self, sender_nick, **kwargs):
         shutil.copyfile('pybot.yaml', '..pybot.yaml')
@@ -296,8 +289,7 @@ class builtins(plugin):
             shutil.copyfile('..pybot.yaml', 'pybot.yaml')
             if self.bot.is_debug_mode_enabled(): raise
 
-    @command
-    @superadmin
+    @command(superadmin=True)
     @doc('self_update [<force>]: pull changes from git remote ref and update config file, use [<force>] to discard local changes')
     def self_update(self, sender_nick, args, **kwargs):
         # TODO pip requirements update
@@ -349,8 +341,7 @@ class builtins(plugin):
         self.bot.say(f'updated, now at "{str(repo.head.commit)[:6]}: {repo.head.commit.message.strip()}"{config_updated_str}{force_str}{diff_str}')
         repo.head.orig_head().set_commit(repo.head)
 
-    @command
-    @superadmin
+    @command(superadmin=True)
     @doc('change_config <entry> <value>: change, save, apply bot config file and ** restart **. use ":" to separate config nesting (eg. "a:b:c" means config["a"]["b"]["c"])')
     def change_config(self, msg, sender_nick, **kwargs):
         if not msg: return
@@ -415,8 +406,7 @@ class builtins(plugin):
                 self.bot.say(response['link'], sender_nick)
                 self.logger.info(f'{filename} uploaded to file.io for {sender_nick}: {response["link"]}')
 
-    @command
-    @admin
+    @command(admin=True)
     @doc('uploads error logs to file.io')
     def upload_errors(self, sender_nick, **kwargs):
         self.upload_file_impl(sender_nick, r'pybot.error')
@@ -426,8 +416,7 @@ class builtins(plugin):
     def time(self, **kwargs):
         self.bot.say(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + utils.get_str_utc_offset())
 
-    @command
-    @admin
+    @command(admin=True)
     @doc('uploads log file to file.io')
     def upload_logs(self, sender_nick, **kwargs):
         self.upload_file_impl(sender_nick, r'pybot.log')

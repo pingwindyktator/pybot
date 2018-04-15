@@ -51,9 +51,8 @@ class get(plugin):
     def get_all(self, **kwargs):
         return self.get_list(**kwargs)
 
-    @command
+    @command(admin=True)
     @doc('unset <entry>: remove <entry> entry')
-    @admin
     def unset(self, sender_nick, msg, **kwargs):
         if not msg: return
         entry = self.prepare_entry(msg)
@@ -64,9 +63,8 @@ class get(plugin):
         self.bot.say_ok()
         self.logger.info(f'{sender_nick} removes {entry}')
 
-    @command
+    @command(admin=True)
     @doc('set <entry> <message>: save <message> for <entry>')
-    @admin
     def set(self, sender_nick, msg, **kwargs):
         if not msg: return
         entry = msg.split()[0]

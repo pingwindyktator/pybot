@@ -5,15 +5,13 @@ class connection_remote_manager(plugin):
     def __init__(self, bot):
         super().__init__(bot)
 
-    @command
-    @admin
+    @command(superadmin=True)
     @doc('kill pybot')
     def die(self, sender_nick, **kwargs):
         self.logger.warning(f'die by {sender_nick}')
         self.bot.die('[die]')
 
-    @command
-    @admin
+    @command(admin=True)
     @doc('cycle the channel')
     def cycle(self, sender_nick, **kwargs):
         self.logger.warning(f'cycle by {sender_nick}')

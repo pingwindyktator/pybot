@@ -32,8 +32,7 @@ class echo(plugin):
     def lifeislife(self, **kwargs):
         self.bot.say('la la la la la!')
    
-    @command
-    @admin
+    @command(admin=True)
     def server_uptime(self, sender_nick, **kwargs):
         with open('/proc/uptime', 'r') as f:
             uptime_seconds = float(f.readline().split()[0])
