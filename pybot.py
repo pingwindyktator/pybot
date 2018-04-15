@@ -16,6 +16,7 @@ import irc.client
 import utils
 import sys
 
+from typing import Optional
 from queue import Queue
 from threading import Thread, Lock, RLock
 from color import color
@@ -284,10 +285,6 @@ class pybot(irc.bot.SingleServerIRCBot):
     # don't touch this
 
     def _login(self):
-        # TODO add more login ways
-        # TODO plugin
-        # TODO if freenode...
-
         if 'password' in self.config and self._nickname_id < len(self.config['password']):
             password = self.config['password'][self._nickname_id]
             if password is not None and password != '':
@@ -469,7 +466,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         self._msg_regexps = msg_regexps_copy
         self._plugins.remove(plugin_instance)
 
-    def get_commands_by_plugin(self):
+    def get_commands_by_plugin(self) -> dict:
         """
         :return: dict {plugin_name1: [command1, command2, ...], plugin_name2: [command3, command4, ...], ...}
         """
@@ -479,7 +476,7 @@ class pybot(irc.bot.SingleServerIRCBot):
 
         return result
 
-    def get_plugin_commands(self, plugin_name):
+    def get_plugin_commands(self, plugin_name) -> Optional[list]:
         """
         :return: commands registered by plugin plugin_name
         """
@@ -497,31 +494,31 @@ class pybot(irc.bot.SingleServerIRCBot):
         except StopIteration:
             return None
 
-    def get_plugins(self):
+    def get_plugins(self) -> set:
         """
         :return: registered plugins instances
         """
         return self._plugins
 
-    def get_commands(self):
+    def get_commands(self) -> map:
         """
         :return: registered commands: map {command -> func}
         """
         return self._commands
 
-    def get_msg_regexps(self):
+    def get_msg_regexps(self) -> dict:
         """
         :return: registered msg regexps: map {regex -> [funcs]}
         """
         return self._msg_regexps
 
-    def get_plugins_names(self):
+    def get_plugins_names(self) -> list:
         """
         :return: names of registered plugins
         """
         return [type(p).__name__ for p in self.get_plugins()]
 
-    def get_usernames_on_channel(self):
+    def get_usernames_on_channel(self) -> list:
         """
         :return: names of users in channel
         """
@@ -568,7 +565,7 @@ class pybot(irc.bot.SingleServerIRCBot):
             self._db_cursor.execute(f"DELETE FROM '{self._db_ignored_users_tablename}' WHERE nickname = ? COLLATE NOCASE", (nickname,))
             self._db_connection.commit()
 
-    def get_ignored_users(self):
+    def get_ignored_users(self) -> list:
         with self._db_mutex:
             self._db_cursor.execute(f"SELECT nickname FROM '{self._db_ignored_users_tablename}'")
             result = self._db_cursor.fetchall()
@@ -597,7 +594,7 @@ class pybot(irc.bot.SingleServerIRCBot):
             self._db_cursor.execute(f"DELETE FROM '{self._db_ops_tablename}' WHERE nickname = ? COLLATE NOCASE", (nickname,))
             self._db_connection.commit()
 
-    def get_ops(self):
+    def get_ops(self) -> list:
         with self._db_mutex:
             self._db_cursor.execute(f"SELECT nickname FROM '{self._db_ops_tablename}'")
             result = self._db_cursor.fetchall()
@@ -625,7 +622,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         self._msg_regexps.clear()
         self.disconnect(msg)
 
-    def get_command_prefix(self):
+    def get_command_prefix(self) -> str:
         return self.config['command_prefix']
 
     # connection API funcs
@@ -712,12 +709,14 @@ class pybot(irc.bot.SingleServerIRCBot):
     def is_connected(self):
         return self.connection.is_connected()
 
-    def get_channel(self):
+    def get_channel(self) -> irc.bot.Channel:
         return list(self.channels.items())[0][1] if list(self.channels.items()) else None
 
     def get_channel_name(self):
         return list(self.channels.items())[0][0] if list(self.channels.items()) else self.config['channel']
 
     def get_server_name(self):
-        try: return self.connection.server
-        except AttributeError: return self.config['server']
+        try:
+            return self.connection.server
+        except AttributeError:
+            return self.config['server']
