@@ -19,13 +19,27 @@ class note(plugin):
         self.db_mutex = Lock()
 
     def on_pubmsg(self, source, **kwargs):
-        notes = self.get_notes_for_user(source.nick, remove=True, exact=not self.config['search_for_possible_notes'])
+        self.give_notes(source.nick)
+
+    def on_ctcp(self, source, **kwargs):
+        self.give_notes(source.nick)
+
+    def on_mode(self, source, **kwargs):
+        self.give_notes(source.nick)
+
+    def on_kick(self, source, **kwargs):
+        self.give_notes(source.nick)
+
+    def give_notes(self, nickname):
+        nickname = irc_nickname(nickname)
+
+        notes = self.get_notes_for_user(nickname, remove=True, exact=not self.config['search_for_possible_notes'])
         if not notes: return
 
-        self.bot.say(f'{source.nick}, you have notes!')
+        self.bot.say(f'{nickname}, you have notes!')
         for _note in notes: self.bot.say(_note)
 
-        self.logger.info(f'notes given to {source.nick}')
+        self.logger.info(f'notes given to {nickname}')
 
     @command
     @doc('note <nickname> <message>: store <message> for <nickname>')
