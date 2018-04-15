@@ -307,7 +307,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         command = command.replace('_', ' ')
         result = process.extract(command, choices, scorer=fuzz.token_sort_ratio)
         result = [(r[0].replace(' ', '_'), r[1]) for r in result]
-        return result[0][0] if result[0][1] > 65 else None
+        return result[0][0] if result and len(result[0]) > 1 and result[0][1] > 65 else None
 
     def _call_plugins_methods(self, func_name, **kwargs):
         func_name = f'on_{func_name.strip()}'
@@ -415,7 +415,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         func = self.get_commands()[command_name]
         if hasattr(func, '__admin') and not self.is_user_op(nickname): return False
         if hasattr(func, '__superadmin') and nickname != self.config['superop']: return False
-        if hasattr(func, '__channel_op') and nickname not in self.get_channel().mode_users['o']: return False
+        if hasattr(func, '__channel_op') and not self.get_channel().is_oper(nickname): return False
         return True
 
     # API funcs

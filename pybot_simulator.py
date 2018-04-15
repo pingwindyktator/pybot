@@ -98,6 +98,7 @@ class raw_msg_t:
 class chobj_t:
     def __init__(self, bot_nickname):
         self.bot_nickname = bot_nickname
+        self.mode_users = {'o': self.opers(), 'v': self.voiced()}
 
     def users(self):
         return list(set(['user1', 'user2', 'user3'] + self.opers() + self.voiced() + [self.bot_nickname]))
@@ -107,6 +108,12 @@ class chobj_t:
 
     def opers(self):
         return ['op1', 'op2', 'op3', 'pingwindyktator']
+
+    def is_oper(self, nick):
+        return nick in self.mode_users['o']
+
+    def is_voiced(self, nick):
+        return nick in self.mode_users['v']
 
 
 class SingleServerIRCBot_mock:
