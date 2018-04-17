@@ -123,14 +123,14 @@ class crypto(plugin):
         self.bot.say(color.orange(f'[{curr_info.id.name}]') + price_usd + self.generate_curr_price_change_output(curr_info))
 
     @command
-    @doc('get information about Bitcoin (updated every 1 hour from coinmarketcap')
+    @doc('get information about Bitcoin (updated every 1 hour from coinmarketcap)')
     def btc(self, sender_nick, **kwargs):
         curr = 'btc'
         self.logger.info(f'{sender_nick} asked coinmarketcap about {curr}')
         self.crypto_impl(curr)
 
     @command
-    @doc('get information about Ethereum (updated every 1 hour from coinmarketcap')
+    @doc('get information about Ethereum (updated every 1 hour from coinmarketcap)')
     def eth(self, sender_nick, **kwargs):
         curr = 'eth'
         self.logger.info(f'{sender_nick} asked coinmarketcap about {curr}')

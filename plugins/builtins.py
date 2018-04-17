@@ -22,7 +22,8 @@ class builtins(plugin):
         self.pybot_dir = os.path.abspath(os.path.join(self.pybot_dir, os.pardir))
 
     @command
-    @doc('help <entry>: give doc msg for <entry> command / plugin or get supported commands if <entry> is empty')
+    @doc("""help <entry>: get doc msg for <entry> command / plugin
+            get general help""")
     def help(self, sender_nick, args, **kwargs):
         if args and args[0]:
             entry = args[0].strip()
@@ -38,12 +39,15 @@ class builtins(plugin):
             self.logger.info(f'help given for {sender_nick}')
 
     def help_general(self, sender_nick):
-        commands = self.bot.get_commands_by_plugin()
-        commands = collections.OrderedDict(sorted(commands.items()))
-        self.bot.say(f'{sender_nick}: check your privmsg!')
+        if 'help' in self.config and self.config['help']:
+            self.bot.say(f'Here you go: {self.config["help"]}')
+        else:
+            commands = self.bot.get_commands_by_plugin()
+            commands = collections.OrderedDict(sorted(commands.items()))
+            self.bot.say(f'{sender_nick}: check your privmsg!')
 
-        for reply in [cmd for cmd in commands if commands[cmd]]:
-            self.bot.say(f'available commands for {reply}: {", ".join(commands[reply])}', sender_nick)
+            for reply in [cmd for cmd in commands if commands[cmd]]:
+                self.bot.say(f'available commands for {color.blue(reply)}: {", ".join(sorted(commands[reply]))}', sender_nick)
 
     def help_for_command(self, entry):
         obj = self.bot.get_commands()[entry]
@@ -66,8 +70,11 @@ class builtins(plugin):
     @command
     @doc('give pybot source code URL')
     def source(self, sender_nick, **kwargs):
-        self.logger.info(f'source {self.config["source"]} given to {sender_nick}')
-        self.bot.say(f'Patches are welcome! {self.config["source"]}')
+        self.logger.info(f'source given to {sender_nick}')
+        if 'source' in self.config and self.config['source']:
+            self.bot.say(f'Patches are welcome! {self.config["source"]}')
+        else:
+            self.bot.say('no source URL provided :(')
 
     @command(admin=True)
     @doc('enable colorful answers')

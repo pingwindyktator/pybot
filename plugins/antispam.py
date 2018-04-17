@@ -132,6 +132,7 @@ class same_msg_too_many_times:
         return smi.count > 4
 
 
+@doc('will detect and kick spamers')
 class antispam(plugin):
     def __init__(self, bot):
         super().__init__(bot)

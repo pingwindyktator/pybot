@@ -25,6 +25,7 @@ plugin_remote_manager:
 
 builtins:
   source: https://github.com/pingwindyktator/pybot/tree/develop
+  help: https://github.com/pingwindyktator/pybot/wiki/features
 
 stalker:
   db_location: db/stalker.db

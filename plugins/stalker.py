@@ -7,7 +7,6 @@ from threading import Thread, Lock
 from plugin import *
 
 
-@doc('track users to detect multiple nicknames used')
 class stalker(plugin):
     def __init__(self, bot):
         super().__init__(bot)

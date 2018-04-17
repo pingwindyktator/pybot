@@ -4,7 +4,7 @@ Yet another dumb IRC bot
 
 ## Features
 
-TODO
+See [wiki/features](https://github.com/pingwindyktator/pybot/wiki/features)!
 
 ## Getting started
 
