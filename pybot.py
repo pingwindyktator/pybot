@@ -36,6 +36,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         self._nickname_id = 0
         self._autorejoin_attempts = 0
         self._plugins = set()
+        self._plugins_lock = RLock()
         self._commands = {}  # command -> func
         self._msg_regexps = {}  # regex -> [funcs]
         self._say_queue = Queue()
@@ -224,12 +225,13 @@ class pybot(irc.bot.SingleServerIRCBot):
             else:
                 self.say(f'no such command: {cmd}')
 
-        for reg in self._msg_regexps:
-            regex_search_result = reg.findall(reg_full_msg)
-            if regex_search_result:
-                for func in self._msg_regexps[reg]:
-                    self._logger.debug(f'calling message regex handler  {func.__qualname__}(sender_nick={sender_nick}, msg=\'{reg_full_msg}\', reg_res={regex_search_result}, raw_msg=...)...')
-                    func(sender_nick=sender_nick, msg=reg_full_msg, reg_res=regex_search_result, raw_msg=reg_raw_msg)
+        with self._plugins_lock:
+            for reg in self._msg_regexps:
+                regex_search_result = reg.findall(reg_full_msg)
+                if regex_search_result:
+                    for func in self._msg_regexps[reg]:
+                        self._logger.debug(f'calling message regex handler  {func.__qualname__}(sender_nick={sender_nick}, msg=\'{reg_full_msg}\', reg_res={regex_search_result}, raw_msg=...)...')
+                        func(sender_nick=sender_nick, msg=reg_full_msg, reg_res=regex_search_result, raw_msg=reg_raw_msg)
 
     def on_kick(self, _, raw_msg):
         """ called by super() when somebody gets kicked """
@@ -383,6 +385,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         self._logger.debug('no more msgs to send, exiting...')
 
     def _register_plugin_handlers(self, plugin_instance):
+        """ not thread safe """
         if plugin_instance not in self._plugins:
             self._logger.error(f'plugin {type(plugin_instance).__name__} not registered, aborting...')
             raise RuntimeError(f'plugin {type(plugin_instance).__name__} not registered!')
@@ -436,8 +439,9 @@ class pybot(irc.bot.SingleServerIRCBot):
             self._logger.warning(f'plugin {plugin_name} already registered, skipping...')
             return
 
-        self._plugins.add(plugin_instance)
-        self._register_plugin_handlers(plugin_instance)
+        with self._plugins_lock:
+            self._plugins.add(plugin_instance)
+            self._register_plugin_handlers(plugin_instance)
 
     def remove_plugin(self, plugin_instance):
         """
@@ -466,37 +470,41 @@ class pybot(irc.bot.SingleServerIRCBot):
             __regex = getattr(func, '__regex')
             if __regex and (__regex in msg_regexps_copy) and (func in msg_regexps_copy[__regex]): msg_regexps_copy[__regex].remove(func)
 
-        self._commands = commands_copy
-        self._msg_regexps = msg_regexps_copy
-        self._plugins.remove(plugin_instance)
+        with self._plugins_lock:
+            self._commands = commands_copy
+            self._msg_regexps = msg_regexps_copy
+            self._plugins.remove(plugin_instance)
 
     def get_commands_by_plugin(self) -> dict:
         """
         :return: dict {plugin_name1: [command1, command2, ...], plugin_name2: [command3, command4, ...], ...}
         """
         result = {}
-        for plugin_name in self.get_plugins_names():
-            result[plugin_name] = self.get_plugin_commands(plugin_name)
+        with self._plugins_lock:
+            for plugin_name in self.get_plugins_names():
+                result[plugin_name] = self.get_plugin_commands(plugin_name)
 
-        return result
+            return result
 
     def get_plugin_commands(self, plugin_name) -> Optional[list]:
         """
         :return: commands registered by plugin plugin_name
         """
-        if plugin_name in self.get_plugins_names():
-            return [x for x in self.get_commands() if type(self.get_commands()[x].__self__).__name__ == plugin_name]
-        else:
-            return None
+        with self._plugins_lock:
+            if plugin_name in self.get_plugins_names():
+                return [x for x in self.get_commands() if type(self.get_commands()[x].__self__).__name__ == plugin_name]
+            else:
+                return None
 
     def get_plugin(self, plugin_name):
         """
         :return: registered plugin instance with name plugin_name or None
         """
-        try:
-            return next(x for x in self.get_plugins() if x.__class__.__name__ == plugin_name)
-        except StopIteration:
-            return None
+        with self._plugins_lock:
+            try:
+                return next(x for x in self.get_plugins() if x.__class__.__name__ == plugin_name)
+            except StopIteration:
+                return None
 
     def get_plugins(self) -> set:
         """
@@ -520,7 +528,8 @@ class pybot(irc.bot.SingleServerIRCBot):
         """
         :return: names of registered plugins
         """
-        return [type(p).__name__ for p in self.get_plugins()]
+        with self._plugins_lock:
+            return [type(p).__name__ for p in self.get_plugins()]
 
     def get_usernames_on_channel(self) -> list:
         """
@@ -622,9 +631,10 @@ class pybot(irc.bot.SingleServerIRCBot):
                 self._logger.error(f'{type(plugin_instance).__name__}.unload_plugin() throws: {type(e).__name__}: {e}. continuing anyway...')
                 if self.is_debug_mode_enabled(): raise
 
-        self._commands.clear()
-        self._msg_regexps.clear()
-        self.disconnect(msg)
+        with self._plugins_lock:
+            self._commands.clear()
+            self._msg_regexps.clear()
+            self.disconnect(msg)
 
     def get_command_prefix(self) -> str:
         return self.config['command_prefix']
