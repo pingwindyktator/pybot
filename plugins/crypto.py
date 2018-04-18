@@ -193,7 +193,7 @@ class crypto(plugin):
                 convertions[2] = self.convertion(amount, from_curr, result, to_curr)
 
         self.logger.info(convertions)
-        self.bot.say(color.orange('[Result]') + f' {result} {to_curr_org}')
+        self.bot.say(color.orange('[Result]') + f' {result:.10f} {to_curr_org}')
 
     # --------------------------------------------------------------------------------------------------------------
 
