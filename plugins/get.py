@@ -42,7 +42,7 @@ class get(plugin):
     @doc("get all saved messages")
     def get_list(self, sender_nick, **kwargs):
         self.logger.info(f'{sender_nick} gets entry list')
-        result = self.get_list_impl()
+        result = sorted(self.get_list_impl())
         response = f'saved entries: {", ".join(result)}' if result else 'no saved entries'
         self.bot.say(response)
 
