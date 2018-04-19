@@ -81,3 +81,6 @@ spacex_launches:
   include_flight_id: false
   include_details: true
   next_launches: 3
+
+ignore:
+  db_location: db/ignore.db

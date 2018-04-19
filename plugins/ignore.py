@@ -1,6 +1,8 @@
-from datetime import timedelta
-from threading import Timer
+import os
+import sqlite3
 
+from datetime import timedelta, datetime
+from threading import Timer, Lock
 from plugin import *
 
 
@@ -9,6 +11,13 @@ class ignore(plugin):
         super().__init__(bot)
         self.time_delta_regex = re.compile(r'([0-9]+[Hh])?\W*([0-9]+[Mm])?(.*)')
         self.ignore_timers = []
+        self.db_name = 'ignore'
+        os.makedirs(os.path.dirname(os.path.realpath(self.config['db_location'])), exist_ok=True)
+        self.db_connection = sqlite3.connect(self.config['db_location'], check_same_thread=False)
+        self.db_cursor = self.db_connection.cursor()
+        self.db_cursor.execute(f"CREATE TABLE IF NOT EXISTS '{self.db_name}' (nickname TEXT primary key not null, timestamp TEXT)")  # nickname -> unignore_time
+        self.db_mutex = Lock()
+        self.restore_db_unignore_timers()
 
     def unload_plugin(self):
         for t in self.ignore_timers: t.cancel()
@@ -24,6 +33,21 @@ class ignore(plugin):
             return False, f'{nickname} is already ignored'
 
         return True, None
+
+    def restore_db_unignore_timers(self):
+        with self.db_mutex:
+            self.db_cursor.execute(f"SELECT nickname, timestamp FROM '{self.db_name}'")
+            result = self.db_cursor.fetchall()
+
+        for nickname, unignore_timestamp in result:
+            delta_time = datetime.fromtimestamp(float(unignore_timestamp)) - datetime.now()
+            self.logger.info(f'restored unignore timer for {nickname}: {delta_time}')
+            if delta_time < timedelta():
+                self.unignore_impl(nickname)
+
+            t = Timer(delta_time.total_seconds(), self.unignore_user_timer_ended, kwargs={'nickname': nickname})
+            self.ignore_timers.append(t)
+            t.start()
 
     @command(admin=True)
     @doc("ignore <nickname>: ignore user's messages")
@@ -74,17 +98,30 @@ class ignore(plugin):
             self.bot.say(reason)
             return
 
+        delta_time = timedelta(hours=hours, minutes=minutes)
+        unignore_timestamp = (datetime.now() + delta_time).timestamp()
+        with self.db_mutex:
+            self.db_cursor.execute(f"INSERT OR REPLACE INTO '{self.db_name}' VALUES (?, ?)", (nickname, unignore_timestamp))
+            self.db_connection.commit()
+
         self.bot.ignore_user(nickname)
-        self.logger.warning(f'{sender_nick} ignored {nickname} for {hours}H:{minutes}M')
-        delta_time = timedelta(hours=hours, minutes=minutes).total_seconds()
-        t = Timer(delta_time, self.unignore_user_timer_ended, kwargs={'nickname': nickname})
+
+        t = Timer(delta_time.total_seconds(), self.unignore_user_timer_ended, kwargs={'nickname': nickname})
         self.ignore_timers.append(t)
         t.start()
+
+        self.logger.warning(f'{sender_nick} ignored {nickname} for {hours}H:{minutes}M')
         self.bot.say(f'{nickname} ignored for {time}')
 
     def unignore_user_timer_ended(self, nickname):
         self.logger.warning(f'time passed, {nickname} is no longer ignored')
+        self.unignore_impl(nickname)
+
+    def unignore_impl(self, nickname):
         self.bot.unignore_user(nickname)
+        with self.db_mutex:
+            self.db_cursor.execute(f"DELETE FROM '{self.db_name}' WHERE nickname = ? COLLATE NOCASE", (nickname,))
+            self.db_connection.commit()
 
     @command(admin=True)
     @doc("unignore <nickname>: unignore user's messages")
@@ -96,7 +133,7 @@ class ignore(plugin):
             self.bot.say(f'{nickname} is not ignored')
             return
 
-        self.bot.unignore_user(nickname)
+        self.unignore_impl(nickname)
         self.bot.say(f'{nickname} is no longer ignored')
         self.logger.warning(f'{sender_nick} unignored: {nickname}')
 
