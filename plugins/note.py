@@ -60,7 +60,8 @@ class note(plugin):
 
         new_note = msg[len(target):].strip()
         if not new_note: return
-        self.logger.info(f'{sender_nick} notes "{new_note}" for {target}')
+        anon_str = ' anonymously' if anon else ''
+        self.logger.info(f'{sender_nick} notes{anon_str} "{new_note}" for {target}')
         new_note = self.build_msg(None if anon else sender_nick, new_note)
         self.save_note(target, new_note)
         self.bot.say_ok()
