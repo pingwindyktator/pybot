@@ -13,7 +13,7 @@ First of all, you need at least Python 3.6 to run it. You can use pyenv to get i
 ```shell
 sudo apt-get install -y build-essential libbz2-dev libssl-dev libreadline-dev \
                         libsqlite3-dev tk-dev  # install headers needed to build CPythons
-sudo apt-get install curl && curl -L https://raw.githubusercontent.com/yyuu/pyenv-installer/master/bin/pyenv-installer \
+sudo apt-get install curl git vim && curl -L https://raw.githubusercontent.com/yyuu/pyenv-installer/master/bin/pyenv-installer \
       | bash  # run the pyenv installer script
 ```
 
