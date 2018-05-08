@@ -65,7 +65,7 @@ Go ahead and freely customize config to match your preferences. Bot will ensure 
 To create a new plugin:
 - Create new python file in `plugins` directory
 - Define a class deriving from `plugin` class (`from plugin import *`) and named as its file (i.e. in file `plugins/new_plugin.py` there should be class named `new_plugin`)
-- Create your new shiny bright plugin's constructor taking `bot` parameter and giving it to `plugin` superclass' `__init__`
+- Create your new shiny bright plugin's constructor taking `bot` as parameter and giving it to `plugin` superclass' `__init__`
   
 Then follow those tips:
 - You should run `_main.py` instead of `main.py` for development purposes
