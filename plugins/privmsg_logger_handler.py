@@ -27,18 +27,18 @@ class irc_privmsg_logger_handler(logging.StreamHandler):
 class privmsg_logger_handler(plugin):
     def __init__(self, bot):
         super().__init__(bot)
-        self.logger = logging.getLogger(__name__)
-        self.plh_handler = irc_privmsg_logger_handler(self.bot, self.get_plhs_impl)
-        self.plh_handler.setFormatter(logging.Formatter('%(levelname)-10s%(filename)s:%(funcName)-16s: %(message)s'))
-        self.plh_handler.setLevel(logging.DEBUG)
-        logging.getLogger('').addHandler(self.plh_handler)
-
         self.db_name = 'plhs'
         os.makedirs(os.path.dirname(os.path.realpath(self.config['db_location'])), exist_ok=True)
         self.db_connection = sqlite3.connect(self.config['db_location'], check_same_thread=False)
         self.db_cursor = self.db_connection.cursor()
         self.db_cursor.execute(f"CREATE TABLE IF NOT EXISTS '{self.db_name}' (nickname TEXT primary key not null, logging_level TEXT)")  # nickname -> logging_level
         self.db_mutex = Lock()
+
+        self.logger = logging.getLogger(__name__)
+        self.plh_handler = irc_privmsg_logger_handler(self.bot, self.get_plhs_impl)
+        self.plh_handler.setFormatter(logging.Formatter('%(levelname)-10s%(filename)s:%(funcName)-16s: %(message)s'))
+        self.plh_handler.setLevel(logging.DEBUG)
+        logging.getLogger('').addHandler(self.plh_handler)
 
     def unload_plugin(self):
         logging.getLogger('').removeHandler(self.plh_handler)

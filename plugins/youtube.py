@@ -10,7 +10,7 @@ class youtube(plugin):
         super().__init__(bot)
         self.yt_api_url = 'https://www.googleapis.com/youtube/v3/search' \
                           '?part=snippet' \
-                          '&order=viewcount' \
+                          '&order=%s' \
                           '&type=video' \
                           '&key=%s' \
                           '&q=%s'
@@ -38,7 +38,7 @@ class youtube(plugin):
 
     def get_yt_data(self, ask):
         ask = urllib.parse.quote(ask)
-        raw_response = requests.get(self.yt_api_url % (self.config['api_key'], ask)).content.decode('utf-8')
+        raw_response = requests.get(self.yt_api_url % (self.config['order_by'], self.config['api_key'], ask)).content.decode('utf-8')
         response = json.loads(raw_response)
         if 'error' not in response and 'items' in response: return response
         else:
