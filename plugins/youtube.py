@@ -18,7 +18,7 @@ class youtube(plugin):
         self.yt_url = 'https://www.youtube.com/watch?v=%s'
 
     @command
-    @doc('yt <ask>: search youtube for <ask>, returns videos ordered by viewcount')
+    @doc('yt <ask>: search youtube for <ask>')
     def yt(self, msg, sender_nick, **kwargs):
         if not msg: return
         self.logger.info(f'{sender_nick} asked youtube about {msg}')
