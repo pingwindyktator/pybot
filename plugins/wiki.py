@@ -3,10 +3,10 @@ import wikipedia
 from plugin import *
 
 
-# TODO set language
 class wiki(plugin):
     def __init__(self, bot):
         super().__init__(bot)
+        wikipedia.set_lang(self.config['language'])
 
     @command
     @doc('wiki <ask>: search wikipedia for <ask>')
@@ -22,10 +22,10 @@ class wiki(plugin):
             ask = ask[0]
             page = wikipedia.page(ask)
             summary = wikipedia.summary(ask, sentences=1)
-            summary = summary.replace('( listen); ', '').replace('(; ', '(').replace('(; ', '(').replace('  ', ' ').replace('( ', '(')
+            summary = summary.replace('( listen); ', '').replace('(; ', '(').replace('(; ', '(').replace('( ', '(').replace('  ', ' ')
             prefix = color.orange(f'[{page.title}]')
             self.bot.say(f'{prefix} {summary} {page.url}')
         except wikipedia.exceptions.PageError:
             self.bot.say_err()
-        except wikipedia.exceptions.DisambiguationError:
-            pass  # TODO
+        except wikipedia.exceptions.DisambiguationError as e:
+            self.bot.say(f'{e.title} may refer to {", ".join(e.options)}')

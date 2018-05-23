@@ -85,3 +85,6 @@ spacex_launches:
 
 ignore:
   db_location: db/ignore.db
+
+wiki:
+  language: en
