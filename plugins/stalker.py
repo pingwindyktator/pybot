@@ -43,12 +43,12 @@ class stalker(plugin):
             self.updating_thread.start()
 
     def update_all(self, nicknames):
-        self.logger.info("updating whole stalker's database started...")
+        self.logger.debug("updating whole stalker's database started...")
         for nick in nicknames:
             self.bot.whois(nick)
             time.sleep(1)  # to not get kicked because of Excess Flood
 
-        self.logger.info("updating whole stalker's database finished")
+        self.logger.debug("updating whole stalker's database finished")
 
     def update_database(self, nick, host):
         result = self.get_nicknames_from_database(host)
