@@ -22,7 +22,7 @@ class wiki(plugin):
             ask = ask[0]
             page = wikipedia.page(ask)
             summary = wikipedia.summary(ask, sentences=1)
-            summary = summary.replace('( listen); ', '').replace('(; ', '(').replace('(; ', '(').replace('( ', '(').replace('  ', ' ')
+            summary = summary.replace('( listen); ', '').replace('(; ', '(').replace('( ', '(').replace('  ', ' ')
             prefix = color.orange(f'[{page.title}]')
             result = f'{prefix} {summary} {page.url}'
             if self.bot.is_msg_too_long(result): self.bot.say(f'{prefix} {page.url}')
