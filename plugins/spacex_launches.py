@@ -72,7 +72,7 @@ class spacex_launches(plugin):
                 self.logger.debug(f'timers for {flight_id} already set')
                 return
 
-        self.logger.info(f'setting launch time for {flight_id}: {next_launch_time}')
+        self.logger.info(f'setting launch time for flight {flight_id}: {next_launch_time}')
         self.upcoming_launches_timers[flight_id] = self.upcoming_launch_info(next_launch_time, [])
 
         if next_launch_time:
@@ -91,7 +91,7 @@ class spacex_launches(plugin):
             timer = Timer(total_seconds, self.remind_upcoming_launch, kwargs={'flight_id': flight_id})
             self.upcoming_launches_timers[flight_id].timers.append(timer)
             timer.start()
-            self.logger.info(f'reminder at {time} set for upcoming launch: {flight_id}')
+            self.logger.debug(f'reminder at {time} set for upcoming launch: {flight_id}')
 
         self.upcoming_launches_timers[flight_id].launch_datetime = launch_time
 
