@@ -21,7 +21,7 @@ class worldcup2018(plugin):
             self.date = date
 
         def to_response(self):
-            return f'{color.green(self.home_team)} - {color.green(self.away_team)} starts at {self.date}'
+            return f'{color.cyan(self.home_team)} - {color.cyan(self.away_team)} starts at {color.green(self.date)}'
 
     def unload_plugin(self):
         for t in self.match_timers:
@@ -66,5 +66,5 @@ class worldcup2018(plugin):
 
     def remind_upcoming_match(self, match_desc):
         prefix = '[2018 FIFA World Cup]'
-        prefix = color.blue(prefix)
+        prefix = color.orange(prefix)
         self.bot.say(f'{prefix} {match_desc.to_response()}')
