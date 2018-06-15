@@ -39,19 +39,36 @@ class worldcup2018(plugin):
                 return f'{color.cyan(self.home_team)} {self.goals_home_team} - {self.goals_away_team} {color.cyan(self.away_team)}'
 
             elif self.status == 'IN_PLAY':
-                time_delta = datetime.now() - self.date
-
-                if time_delta < timedelta(minutes=0):
-                    time_delta = timedelta(minutes=0)
-
-                elif timedelta(minutes=45) < time_delta < timedelta(minutes=60):
-                    time_delta = timedelta(minutes=45)
-
-                elif timedelta(minutes=105) < time_delta < timedelta(minutes=110):
-                    time_delta = timedelta(minutes=105)
-
-                min = int(time_delta.total_seconds() / 60)
-                return f"{color.cyan(self.home_team)} {self.goals_home_team} - {self.goals_away_team} {color.cyan(self.away_team)}, {min}'"
+                return f'{color.cyan(self.home_team)} {self.goals_home_team} - {self.goals_away_team} {color.cyan(self.away_team)}'
+            #     time_delta = datetime.now() - self.date
+            #
+            #     if time_delta < timedelta(minutes=0):  # before match
+            #         time_delta = "0'"
+            #
+            #     elif timedelta(minutes=0) < time_delta <= timedelta(minutes=45):  # first half
+            #         time_delta = int(time_delta.total_seconds() / 60)
+            #         time_delta = f"{time_delta}'"
+            #
+            #     elif timedelta(minutes=45) < time_delta <= timedelta(minutes=60):  # half time break
+            #         time_delta = "45'"
+            #
+            #     elif timedelta(minutes=60) < time_delta <= timedelta(minutes=105):  # second half
+            #         time_delta -= timedelta(minutes=15)
+            #         time_delta = int(time_delta.total_seconds() / 60)
+            #         time_delta = f"{time_delta}'"
+            #
+            #     elif timedelta(minutes=105) < time_delta <= timedelta(minutes=110):  # full time break
+            #         time_delta = "90'"
+            #
+            #     elif timedelta(minutes=110) < time_delta <= timedelta(minutes=140):  # extra time
+            #         time_delta -= timedelta(minutes=20)
+            #         time_delta = int(time_delta.total_seconds() / 60)
+            #         time_delta = f"{time_delta}'"
+            #
+            #     elif time_delta > timedelta(minutes=140):  # after match
+            #         time_delta = "120'"
+            #
+            #     return f"{color.cyan(self.home_team)} {self.goals_home_team} - {self.goals_away_team} {color.cyan(self.away_team)}, {time_delta}"
 
             else:
                 raise RuntimeError('something really wrong happen, unknown match status')
