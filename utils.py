@@ -4,10 +4,8 @@ import unidecode
 import tzlocal
 
 from threading import Timer
-from contextlib import suppress
 from datetime import datetime
 from functools import total_ordering
-from ruamel.yaml.comments import CommentedMap
 
 logging_level_str_to_int = {
     'disabled': sys.maxsize,
@@ -57,8 +55,11 @@ class repeated_timer(Timer):
     """
     def run(self):
         while not self.finished.is_set():
-            with suppress(Exception):
+            try:
                 self.function(*self.args, **self.kwargs)
+            except Exception as e:
+                logger = logging.getLogger(__name__)
+                logger.warning(f'exception caught inside repeated_timer: {e}, continuing...')
 
             self.finished.wait(self.interval)
 

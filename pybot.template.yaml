@@ -88,3 +88,6 @@ ignore:
 
 wiki:
   language: en
+
+worldcup2018:
+  remind_before_match: true
