@@ -142,6 +142,10 @@ class worldcup2018(plugin):
         self.update_match_data()
 
         with self.update_data_lock:
+            if not self.in_play_matches_info:
+                self.bot.say('no matches in progress')
+                return
+            
             for md in self.in_play_matches_info:
                 self.bot.say(md.to_response())
 
