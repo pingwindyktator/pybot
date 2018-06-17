@@ -1,7 +1,6 @@
 import pythonwhois
 
 from contextlib import suppress
-from pythonwhois.shared import WhoisException
 from plugin import *
 
 
@@ -10,14 +9,15 @@ class whois(plugin):
         super().__init__(bot)
 
     @command
-    @doc('gets whois info')
+    @doc('get whois info')
     def whois(self, sender_nick, msg, **kwargs):
         domain = msg.strip().lower()
         self.logger.info(f'{sender_nick} whoised {domain}')
 
         try:
             data = pythonwhois.get_whois(domain, normalized=True)
-        except Exception:
+        except Exception as e:
+            self.logger.warning(f'unable to get whois info: {e}')
             self.bot.say_err()
             return
 

@@ -5,11 +5,6 @@ from threading import Timer, RLock
 from datetime import datetime, timedelta, timezone
 from plugin import *
 
-# TODO features wiki update
-# TODO logging
-# TODO wc_remind
-# TODO docs
-
 
 class worldcup2018(plugin):
     def __init__(self, bot):
@@ -19,8 +14,6 @@ class worldcup2018(plugin):
         self.last_matches_info = []
         self.in_play_matches_info = []
         self.update_data_lock = RLock()
-        self.update_match_timer = utils.repeated_timer(timedelta(minutes=60).total_seconds(), self.update_match_data)
-        self.update_match_timer.start()
 
     class match_desc:
         def __init__(self, home_team, away_team, date, goals_home_team, goals_away_team, status):
@@ -39,36 +32,8 @@ class worldcup2018(plugin):
                 return f'{color.cyan(self.home_team)} {self.goals_home_team} - {self.goals_away_team} {color.cyan(self.away_team)}'
 
             elif self.status == 'IN_PLAY':
-                return f'{color.cyan(self.home_team)} {self.goals_home_team} - {self.goals_away_team} {color.cyan(self.away_team)}'
-            #     time_delta = datetime.now() - self.date
-            #
-            #     if time_delta < timedelta(minutes=0):  # before match
-            #         time_delta = "0'"
-            #
-            #     elif timedelta(minutes=0) < time_delta <= timedelta(minutes=45):  # first half
-            #         time_delta = int(time_delta.total_seconds() / 60)
-            #         time_delta = f"{time_delta}'"
-            #
-            #     elif timedelta(minutes=45) < time_delta <= timedelta(minutes=60):  # half time break
-            #         time_delta = "45'"
-            #
-            #     elif timedelta(minutes=60) < time_delta <= timedelta(minutes=105):  # second half
-            #         time_delta -= timedelta(minutes=15)
-            #         time_delta = int(time_delta.total_seconds() / 60)
-            #         time_delta = f"{time_delta}'"
-            #
-            #     elif timedelta(minutes=105) < time_delta <= timedelta(minutes=110):  # full time break
-            #         time_delta = "90'"
-            #
-            #     elif timedelta(minutes=110) < time_delta <= timedelta(minutes=140):  # extra time
-            #         time_delta -= timedelta(minutes=20)
-            #         time_delta = int(time_delta.total_seconds() / 60)
-            #         time_delta = f"{time_delta}'"
-            #
-            #     elif time_delta > timedelta(minutes=140):  # after match
-            #         time_delta = "120'"
-            #
-            #     return f"{color.cyan(self.home_team)} {self.goals_home_team} - {self.goals_away_team} {color.cyan(self.away_team)}, {time_delta}"
+                time_delta = (datetime.now() - self.date).total_seconds() // 60
+                return f'{color.cyan(self.home_team)} {self.goals_home_team} - {self.goals_away_team} {color.cyan(self.away_team)} started {time_delta} minutes ago'
 
             else:
                 raise RuntimeError('something really wrong happen, unknown match status')
@@ -126,19 +91,29 @@ class worldcup2018(plugin):
             self.in_play_matches_info = in_play_matches_info
 
     @command
-    def wc_next(self, **kwargs):
+    @doc('get upcoming 2018 FIFA World Cup matches')
+    def wc_next(self, sender_nick, **kwargs):
+        self.logger.info(f'{sender_nick} asks about next matches')
+        self.update_match_data()
+
         with self.update_data_lock:
             for md in self.next_matches_info[:3]:
                 self.bot.say(md.to_response())
 
     @command
-    def wc_last(self, **kwargs):
+    @doc('get last 2018 FIFA World Cup matches')
+    def wc_last(self, sender_nick, **kwargs):
+        self.logger.info(f'{sender_nick} asks about last matches')
+        self.update_match_data()
+
         with self.update_data_lock:
             for md in self.last_matches_info[:3]:
                 self.bot.say(md.to_response())
 
     @command
-    def wc_now(self, **kwargs):
+    @doc('get 2018 FIFA World Cup matches in play')
+    def wc_now(self, sender_nick, **kwargs):
+        self.logger.info(f'{sender_nick} asks about in play matches')
         self.update_match_data()
 
         with self.update_data_lock:

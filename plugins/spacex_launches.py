@@ -72,7 +72,7 @@ class spacex_launches(plugin):
                 self.logger.debug(f'timers for {flight_id} already set')
                 return
 
-        self.logger.info(f'setting launch time for flight {flight_id}: {next_launch_time}')
+        self.logger.debug(f'setting launch time for flight {flight_id}: {next_launch_time}')
         self.upcoming_launches_timers[flight_id] = self.upcoming_launch_info(next_launch_time, [])
 
         if next_launch_time:
