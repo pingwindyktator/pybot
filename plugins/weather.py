@@ -93,7 +93,7 @@ class weather(plugin):
 
     def get_weather_info_impl(self, city_name):
         ask = urllib.parse.quote(city_name)
-        raw_response = requests.get(self.weather_url % (ask, self.config['api_key'])).content.decode('utf-8')
+        raw_response = requests.get(self.weather_url % (ask, self.config['openweathermap_api_key'])).content.decode('utf-8')
         response = json.loads(raw_response)
         if 'cod' not in response or int(response['cod']) != 200:
             if 'cod' not in response or int(response['cod']) != 404:
@@ -116,7 +116,7 @@ class weather(plugin):
     # openweathermap API is really fucked up, I know there's ugly code duplication here...
     def get_forecast_info_impl(self, city_name):
         ask = urllib.parse.quote(city_name)
-        raw_response = requests.get(self.forecast_url % (ask, self.config['api_key'])).content.decode('utf-8')
+        raw_response = requests.get(self.forecast_url % (ask, self.config['openweathermap_api_key'])).content.decode('utf-8')
         response = json.loads(raw_response)
         if 'cod' not in response or int(response['cod']) != 200:
             if 'cod' not in response or int(response['cod']) != 404:

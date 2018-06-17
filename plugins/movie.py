@@ -60,7 +60,7 @@ class movie(plugin):
 
     def get_movie_info(self, movie):
         ask = urllib.parse.quote(movie)
-        raw_response = requests.get(self.omdbapi_url % (ask, self.config['api_key'])).content.decode('utf-8')
+        raw_response = requests.get(self.omdbapi_url % (ask, self.config['omdb_api_key'])).content.decode('utf-8')
         response = json.loads(raw_response)
         if response['Response'] == 'True' and self.api_response_contains(response, 'Title'): return response
         else:

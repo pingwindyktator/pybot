@@ -54,10 +54,10 @@ privmsg_logger_handler:
   db_location: db/plh.db
   
 movie:
-  api_key: 270b7488
+  omdb_api_key: 270b7488
 
 weather:
-  api_key: 42477cb64dced06bef9e59df50c48ca8
+  openweathermap_api_key: 42477cb64dced06bef9e59df50c48ca8
 
 youtube:
   api_key: AIzaSyCoO8Jm9Cc3L-O_y-QH0VZRG5LifKmq4io
@@ -65,7 +65,7 @@ youtube:
   order_by: relevance
 
 book:
-  api_key: ''
+  goodreads_api_key: ''
 
 antispam:
   kick_if_too_colorful_msg: true

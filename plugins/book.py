@@ -17,7 +17,7 @@ class book(plugin):
         msg = msg.strip()
         ask = urllib.parse.quote(msg)
         self.logger.info(f'{sender_nick} asked goodreads.com "{msg}"')
-        raw_response = requests.get(self.goodreads_api_uri % (self.config['api_key'], ask)).content.decode('utf-8')
+        raw_response = requests.get(self.goodreads_api_uri % (self.config['goodreads_api_key'], ask)).content.decode('utf-8')
         xml_root = xml.etree.ElementTree.fromstring(raw_response)
 
         result = xml_root.find('search').find('results')
