@@ -59,7 +59,7 @@ class repeated_timer(Timer):
                 self.function(*self.args, **self.kwargs)
             except Exception as e:
                 logger = logging.getLogger(__name__)
-                logger.warning(f'exception caught inside repeated_timer: {e}, continuing...')
+                logger.warning(f'exception caught calling {self.function.__qualname__}: {type(e).__name__}: {e}, continuing...')
 
             self.finished.wait(self.interval)
 
