@@ -4,8 +4,8 @@ import unidecode
 import tzlocal
 
 from threading import Timer
-from datetime import datetime
-from functools import total_ordering
+from datetime import datetime, timedelta
+from functools import total_ordering, wraps
 
 logging_level_str_to_int = {
     'disabled': sys.maxsize,
@@ -49,6 +49,56 @@ class null_object:
     def __delattr__(self, name): return self
 
 
+def cache(delta_time=timedelta.max, typed=True):
+    """
+    decorator that caches a function's return value each time it is called
+    cache is automatically invalidated after :param delta_time time
+    :param delta_time: timedelta object
+    :param typed: treat function calls with different arguments as distinct
+    """
+
+    def cache_impl(function):
+        class __magic_separator:
+            pass
+
+        function.__cache = {}
+        function.__cache_logger = logging.getLogger(function.__qualname__)
+
+        @wraps(function)
+        def cache_impl_impl(*args, **kwargs):
+            if typed:
+                call_args = args
+                if kwargs:
+                    call_args += (__magic_separator,) + tuple(sorted(kwargs.items()))
+            else:
+                call_args = None
+
+            call_repr = f'{function.__qualname__}({", ".join([repr(x) for x in args] + [str(k) + "=" + repr(v) for k, v in kwargs.items()])})'
+            now = datetime.now()
+
+            try:
+                hash(call_args)
+            except TypeError:
+                function.__cache_logger.debug(f'not hashable: {call_repr}')
+                return function(*args, **kwargs)
+
+            if call_args not in function.__cache:
+                function.__cache[call_args] = (function(*args, **kwargs), now)
+                function.__cache_logger.debug(f'cached function result: {call_repr}')
+            else:
+                if now - function.__cache[call_args][1] > delta_time:
+                    function.__cache[call_args] = (function(*args, **kwargs), now)
+                    function.__cache_logger.debug(f'cache expired: {call_repr}')
+                else:
+                    function.__cache_logger.debug(f'returned cached result: {call_repr}')
+
+            return function.__cache[call_args][0]
+
+        return cache_impl_impl
+
+    return cache_impl
+
+
 class repeated_timer(Timer):
     """
     exception safe, repeating timer
@@ -58,8 +108,7 @@ class repeated_timer(Timer):
             try:
                 self.function(*self.args, **self.kwargs)
             except Exception as e:
-                logger = logging.getLogger(__name__)
-                logger.warning(f'exception caught calling {self.function.__qualname__}: {type(e).__name__}: {e}, continuing...')
+                logging.getLogger(__name__).warning(f'exception caught calling {self.function.__qualname__}: {type(e).__name__}: {e}, continuing...')
 
             self.finished.wait(self.interval)
 
