@@ -166,6 +166,7 @@ class antispam(plugin):
 
         return reason
 
+    @utils.timed_lru_cache(expiration=timedelta(seconds=5), typed=True)
     def is_whitelisted(self, sender_nick):
         if self.bot.is_user_op(sender_nick): return True
         if self.bot.get_channel().is_oper(sender_nick): return True
@@ -173,5 +174,6 @@ class antispam(plugin):
 
         return False
 
+    @utils.timed_lru_cache(expiration=timedelta(seconds=5))
     def am_i_channel_operator(self):
         return self.bot.get_channel().is_oper(self.bot.get_nickname())

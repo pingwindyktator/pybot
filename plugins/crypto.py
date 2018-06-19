@@ -16,16 +16,14 @@ class crypto(plugin):
         self.fixer_url = r'http://api.fixer.io/latest?base=%s'
         self.watch_timers = {}  # {curr -> watch_desc}
         self.crypto_currencies_lock = Lock()
-        self.update_timer = utils.repeated_timer(timedelta(hours=1).total_seconds(), self.update_known_crypto_currencies)
-        self.update_timer.start()
 
     def unload_plugin(self):
-        self.update_timer.cancel()
-
         for t in self.watch_timers.values():
             t.timer_object.cancel()
 
-    def get_known_crypto_currencies(self):
+    @utils.timed_lru_cache(expiration=timedelta(hours=1))
+    def update_known_crypto_currencies(self):
+        self.logger.debug('updating known cryptocurrencies...')
         url = r'https://api.coinmarketcap.com/v1/ticker/?limit=0'
         content = requests.get(url, timeout=10).content.decode('utf-8')
         raw_result = json.loads(content)
@@ -33,13 +31,9 @@ class crypto(plugin):
         for entry in raw_result:
             result.append(self.currency_id(entry['id'], entry['name'], entry['symbol']))
 
-        return result
-
-    def update_known_crypto_currencies(self):
-        self.logger.debug('updating known cryptocurrencies...')
-        res = self.get_known_crypto_currencies()
         with self.crypto_currencies_lock:
-            self.known_crypto_currencies = res
+            self.known_crypto_currencies = result
+            self.get_crypto_currency_id.clear_cache()
 
     class watch_desc:
         def __init__(self, timer_object, timedelta):
@@ -62,6 +56,7 @@ class crypto(plugin):
             self.week_change = float(raw_result['percent_change_7d']) if raw_result['percent_change_7d'] else None
             self.marker_cap_usd = float(raw_result['market_cap_usd']) if raw_result['market_cap_usd'] else None
 
+    @utils.timed_lru_cache(typed=True)
     def get_crypto_currency_id(self, alias):
         alias = alias.casefold()
         with self.crypto_currencies_lock:
@@ -72,6 +67,7 @@ class crypto(plugin):
         return None
 
     def get_crypto_curr_info(self, curr):
+        self.update_known_crypto_currencies()
         curr_id = self.get_crypto_currency_id(curr)
         if not curr_id: return None
 
@@ -176,7 +172,8 @@ class crypto(plugin):
         result = amount
 
         if not (_from_curr and _to_curr) and from_curr.upper() != to_curr.upper():
-            content = requests.get(self.fixer_url % from_curr, timeout=5).content.decode('utf-8')
+            # TODO fix fixer.io
+            content = requests.get(self.fixer_url % from_curr, timeout=10).content.decode('utf-8')
             raw_result = json.loads(content)
             if 'error' in raw_result:
                 if raw_result['error'] == 'Invalid base':

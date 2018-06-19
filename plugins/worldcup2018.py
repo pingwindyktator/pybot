@@ -45,6 +45,7 @@ class worldcup2018(plugin):
     def get_api_response(self):
         return json.loads(requests.get(r'http://api.football-data.org/v1/competitions/467/fixtures').content.decode())
 
+    @utils.timed_lru_cache(expiration=timedelta(minutes=3))
     def update_match_data(self):
         api_response = self.get_api_response()
         now = datetime.now()
