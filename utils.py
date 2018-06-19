@@ -3,7 +3,7 @@ import logging
 import unidecode
 import tzlocal
 
-from threading import Timer
+from threading import Timer, RLock
 from datetime import datetime, timedelta
 from functools import total_ordering, wraps
 
@@ -49,11 +49,11 @@ class null_object:
     def __delattr__(self, name): return self
 
 
-def cache(delta_time=timedelta.max, typed=True):
+def timed_lru_cache(_cls=None, expiration=timedelta.max, typed=True):
     """
     decorator that caches a function's return value each time it is called
-    cache is automatically invalidated after :param delta_time time
-    :param delta_time: timedelta object
+    cache is automatically invalidated after :param expiration time
+    :param expiration: timedelta object
     :param typed: treat function calls with different arguments as distinct
     """
 
@@ -62,7 +62,21 @@ def cache(delta_time=timedelta.max, typed=True):
             pass
 
         function.__cache = {}
+        function.__cache_lock = RLock()
         function.__cache_logger = logging.getLogger(function.__qualname__)
+
+        def clear_cache():
+            with function.__cache_lock:
+                function.__cache = {}
+
+            function.__cache_logger.debug(f'cache cleared: {function.__qualname__}')
+
+        def force_call(*args, **kwargs):
+            # TODO
+            return cache_impl_impl(args, kwargs)
+
+        function.clear_cache = clear_cache
+        function.force_call = force_call
 
         @wraps(function)
         def cache_impl_impl(*args, **kwargs):
@@ -79,30 +93,35 @@ def cache(delta_time=timedelta.max, typed=True):
             try:
                 hash(call_args)
             except TypeError:
-                function.__cache_logger.debug(f'not hashable: {call_repr}')
+                function.__cache_logger.warning(f'not hashable: {call_repr}')
                 return function(*args, **kwargs)
 
-            if call_args not in function.__cache:
-                function.__cache[call_args] = (function(*args, **kwargs), now)
-                function.__cache_logger.debug(f'cached function result: {call_repr}')
-            else:
-                if now - function.__cache[call_args][1] > delta_time:
+            with function.__cache_lock:
+                if call_args not in function.__cache:
                     function.__cache[call_args] = (function(*args, **kwargs), now)
-                    function.__cache_logger.debug(f'cache expired: {call_repr}')
+                    function.__cache_logger.debug(f'cached function result: {call_repr} -> {function.__cache[call_args][0]}')
                 else:
-                    function.__cache_logger.debug(f'returned cached result: {call_repr}')
+                    if now - function.__cache[call_args][1] > expiration:
+                        function.__cache_logger.debug(f'cache expired: {call_repr}')
+                        function.__cache[call_args] = (function(*args, **kwargs), now)
+                    else:
+                        function.__cache_logger.debug(f'returned cached result: {call_repr} -> {function.__cache[call_args][0]}')
 
-            return function.__cache[call_args][0]
+                return function.__cache[call_args][0]
 
         return cache_impl_impl
 
-    return cache_impl
+    if _cls is None:
+        return cache_impl
+    else:
+        return cache_impl(_cls)
 
 
 class repeated_timer(Timer):
     """
     exception safe, repeating timer
     """
+
     def run(self):
         while not self.finished.is_set():
             try:
