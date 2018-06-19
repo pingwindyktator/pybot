@@ -58,6 +58,7 @@ def timed_lru_cache(_cls=None, expiration=timedelta.max, typed=True):
     """
 
     def cache_impl(function):
+        # TODO make this class
         class __magic_separator:
             pass
 
