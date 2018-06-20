@@ -5,7 +5,7 @@ import tzlocal
 
 from threading import Timer, RLock
 from datetime import datetime, timedelta
-from functools import total_ordering, wraps
+from functools import total_ordering, wraps, update_wrapper
 
 logging_level_str_to_int = {
     'disabled': sys.maxsize,
@@ -49,73 +49,71 @@ class null_object:
     def __delattr__(self, name): return self
 
 
-def timed_lru_cache(_cls=None, expiration=timedelta.max, typed=True):
+class timed_lru_cache:
     """
     decorator that caches a function's return value each time it is called
-    cache is automatically invalidated after :param expiration time
-    :param expiration: timedelta object
-    :param typed: treat function calls with different arguments as distinct
+    cache is automatically invalidated after given expiration time
     """
+    def __init__(self, expiration=timedelta.max, typed=True):
+        """
+        :param expiration: timedelta object
+        :param typed: treat function calls with different arguments as distinct
+        """
+        self.expiration = expiration
+        self.typed = typed
+        self.cache = {}
+        self.cache_lock = RLock()
+        self.logger = logging.getLogger(__name__)
 
-    def cache_impl(function):
-        # TODO make this class
-        class __magic_separator:
-            pass
-
-        function.__cache = {}
-        function.__cache_lock = RLock()
-        function.__cache_logger = logging.getLogger(function.__qualname__)
-
-        def clear_cache():
-            with function.__cache_lock:
-                function.__cache = {}
-
-            function.__cache_logger.debug(f'cache cleared: {function.__qualname__}')
-
-        def force_call(*args, **kwargs):
-            # TODO
-            return cache_impl_impl(args, kwargs)
-
-        function.clear_cache = clear_cache
-        function.force_call = force_call
-
-        @wraps(function)
-        def cache_impl_impl(*args, **kwargs):
-            if typed:
-                call_args = args
-                if kwargs:
-                    call_args += (__magic_separator,) + tuple(sorted(kwargs.items()))
-            else:
-                call_args = None
-
-            call_repr = f'{function.__qualname__}({", ".join([repr(x) for x in args] + [str(k) + "=" + repr(v) for k, v in kwargs.items()])})'
+    def __call__(self, function):
+        def timed_lru_cache_impl(*args, **kwargs):
+            call_args = self.__concat_args(*args, **kwargs)
+            call_repr = self.__get_call_repr(function, *args, **kwargs)
             now = datetime.now()
 
             try:
                 hash(call_args)
             except TypeError:
-                function.__cache_logger.warning(f'not hashable: {call_repr}')
+                self.logger.warning(f'not hashable: {call_repr}')
                 return function(*args, **kwargs)
 
-            with function.__cache_lock:
-                if call_args not in function.__cache:
-                    function.__cache[call_args] = (function(*args, **kwargs), now)
-                    function.__cache_logger.debug(f'cached function result: {call_repr} -> {function.__cache[call_args][0]}')
+            with self.cache_lock:
+                if call_args not in self.cache:
+                    self.cache[call_args] = (function(*args, **kwargs), now)
+                    self.logger.debug(f'cached function result: {call_repr} -> {self.cache[call_args][0]}')
                 else:
-                    if now - function.__cache[call_args][1] > expiration:
-                        function.__cache_logger.debug(f'cache expired: {call_repr}')
-                        function.__cache[call_args] = (function(*args, **kwargs), now)
+                    if now - self.cache[call_args][1] > self.expiration:
+                        self.logger.debug(f'cache expired, cached function result: {call_repr} -> {self.cache[call_args][0]}')
+                        self.cache[call_args] = (function(*args, **kwargs), now)
                     else:
-                        function.__cache_logger.debug(f'returned cached result: {call_repr} -> {function.__cache[call_args][0]}')
+                        self.logger.debug(f'returned cached result: {call_repr} -> {self.cache[call_args][0]}')
 
-                return function.__cache[call_args][0]
+                return self.cache[call_args][0]
 
-        return cache_impl_impl
+        return update_wrapper(timed_lru_cache_impl, function)
 
-    if _cls is None:
-        return cache_impl
-    else:
-        return cache_impl(_cls)
+    def __concat_args(self, *args, **kwargs):
+        class __magic_separator: pass
+
+        if self.typed:
+            result = args
+            if kwargs: result += (__magic_separator,) + tuple(sorted(kwargs.items()))
+            return result
+
+        return None
+
+    def __get_call_repr(self, function, *args, **kwargs):
+        return f'{function.__qualname__}({", ".join([repr(x) for x in args] + [str(k) + "=" + repr(v) for k, v in kwargs.items()])})'
+
+    def clear_cache(self):
+        with self.cache_lock:
+            self.cache = {}
+
+        self.logger.debug(f'cache cleared: {function.__qualname__}')
+
+    def force_call(self, *args, **kwargs):
+        # TODO
+        pass
 
 
 class repeated_timer(Timer):
