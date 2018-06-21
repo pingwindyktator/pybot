@@ -64,11 +64,12 @@ class timed_lru_cache:
         self.cache = {}
         self.cache_lock = RLock()
         self.logger = logging.getLogger(__name__)
+        self.function = None
 
     def __call__(self, function):
         def timed_lru_cache_impl(*args, **kwargs):
             call_args = self.__concat_args(*args, **kwargs)
-            call_repr = self.__get_call_repr(function, *args, **kwargs)
+            call_repr = self.__get_call_repr(*args, **kwargs)
             now = datetime.now()
 
             try:
@@ -90,31 +91,28 @@ class timed_lru_cache:
 
                 return self.cache[call_args][0]
 
+        self.function = function
+        function.clear_cache = self.clear_cache
         return update_wrapper(timed_lru_cache_impl, function)
 
     def __concat_args(self, *args, **kwargs):
-        class __magic_separator: pass
-
         if self.typed:
             result = args
-            if kwargs: result += (__magic_separator,) + tuple(sorted(kwargs.items()))
+            if kwargs: result += (self.__magic_separator,) + tuple(sorted(kwargs.items()))
             return result
 
         return None
 
-    def __get_call_repr(self, function, *args, **kwargs):
-        return f'{function.__qualname__}({", ".join([repr(x) for x in args] + [str(k) + "=" + repr(v) for k, v in kwargs.items()])})'
+    def __get_call_repr(self, *args, **kwargs):
+        return f'{self.function.__qualname__}({", ".join([repr(x) for x in args] + [str(k) + "=" + repr(v) for k, v in kwargs.items()])})'
+
+    class __magic_separator: pass
 
     def clear_cache(self):
         with self.cache_lock:
             self.cache = {}
 
-        self.logger.debug(f'cache cleared: {function.__qualname__}')
-
-    def force_call(self, *args, **kwargs):
-        # TODO
-        pass
-
+        self.logger.debug(f'cache cleared: {self.function.__qualname__}')
 
 class repeated_timer(Timer):
     """
