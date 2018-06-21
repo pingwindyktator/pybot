@@ -14,6 +14,8 @@ class worldcup2018(plugin):
         self.last_matches_info = []
         self.in_play_matches_info = []
         self.update_data_lock = RLock()
+        self.update_match_data_timer = utils.repeated_timer(timedelta(minutes=60).total_seconds(), self.update_match_data)
+        self.update_match_data_timer.start()
 
     class match_desc:
         def __init__(self, home_team, away_team, date, goals_home_team, goals_away_team, status):
@@ -39,15 +41,13 @@ class worldcup2018(plugin):
                 raise RuntimeError('something really wrong happen, unknown match status')
 
     def unload_plugin(self):
+        self.update_match_data_timer.cancel()
         for t in self.match_timers:
             t.cancel()
 
-    def get_api_response(self):
-        return json.loads(requests.get(r'http://api.football-data.org/v1/competitions/467/fixtures').content.decode())
-
     @utils.timed_lru_cache(expiration=timedelta(minutes=3))
     def update_match_data(self):
-        api_response = self.get_api_response()
+        api_response = json.loads(requests.get(r'http://api.football-data.org/v1/competitions/467/fixtures').content.decode())
         now = datetime.now()
         match_timers = []
         next_matches_info = []
@@ -105,7 +105,6 @@ class worldcup2018(plugin):
     @doc('get last 2018 FIFA World Cup matches')
     def wc_last(self, sender_nick, **kwargs):
         self.logger.info(f'{sender_nick} asks about last matches')
-        self.update_match_data()
 
         with self.update_data_lock:
             for md in self.last_matches_info[:3]:
@@ -119,11 +118,13 @@ class worldcup2018(plugin):
 
         with self.update_data_lock:
             if not self.in_play_matches_info:
-                self.bot.say('no matches in progress')
-                return
-            
-            for md in self.in_play_matches_info:
-                self.bot.say(md.to_response())
+                self.bot.say('no matches in progress, last ones are:')
+                for md in self.last_matches_info[:3]:
+                    self.bot.say(md.to_response())
+
+            else:
+                for md in self.in_play_matches_info:
+                    self.bot.say(md.to_response())
 
     def remind_upcoming_match(self, match_desc):
         prefix = '[2018 FIFA World Cup]'

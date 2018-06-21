@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from threading import Lock, Timer
 from plugin import *
 
-# TODO if starts for < 20 minutes...
+
 class spacex_launches(plugin):
     def __init__(self, bot):
         super().__init__(bot)
@@ -28,23 +28,26 @@ class spacex_launches(plugin):
             self.timers = timers
 
     def unload_plugin(self):
+        self.check_upcoming_launches_timer.cancel()
+
         for info in self.upcoming_launches_timers.values():
             for timer in info.timers:
                 timer.cancel()
 
-        self.check_upcoming_launches_timer.cancel()
-
+    @utils.timed_lru_cache(expiration=timedelta(minutes=3))
     def get_upcoming_launches(self):
         upcoming_api_uri = r'https://api.spacexdata.com/v2/launches/upcoming'
         raw_response = requests.get(upcoming_api_uri).content.decode('utf-8')
         response = json.loads(raw_response)
         return response
 
+    @utils.timed_lru_cache(expiration=timedelta(minutes=3))
     def get_launch_by_id(self, flight_id):
         flight_api_uri = r'https://api.spacexdata.com/v2/launches/all?flight_number=%s'
         raw_response = requests.get(flight_api_uri % flight_id).content.decode('utf-8')
         return json.loads(raw_response)[0]
 
+    @utils.timed_lru_cache(expiration=timedelta(minutes=3))
     def get_latest_launch(self):
         latest_api_uri = r'https://api.spacexdata.com/v2/launches/latest'
         raw_response = requests.get(latest_api_uri).content.decode('utf-8')
@@ -52,12 +55,13 @@ class spacex_launches(plugin):
 
     def check_upcoming_launches(self):
         self.logger.debug('checking upcoming launches...')
+        self.get_upcoming_launches.clear_cache()
         next_launches = self.get_upcoming_launches()
 
         for next_launch in next_launches:
-            self.check_upcoming_launch(next_launch)
+            self.handle_upcoming_launch(next_launch)
 
-    def check_upcoming_launch(self, next_launch):
+    def handle_upcoming_launch(self, next_launch):
         flight_id = next_launch['flight_number']
         next_launch_time = datetime.fromtimestamp(next_launch['launch_date_unix']) if next_launch['launch_date_unix'] else None
 
