@@ -76,7 +76,6 @@ antispam:
 
 spacex_launches:
   db_location: db/spacex.db
-  update_every_min: 10
   inform_about_rescheduled_launches: true
   call_users_for_rescheduled_launches: true
   include_flight_id: false

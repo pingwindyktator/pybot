@@ -19,7 +19,7 @@ class spacex_launches(plugin):
         self.db_cursor.execute(f"CREATE TABLE IF NOT EXISTS '{self.db_name}' (nickname TEXT primary key not null)")
         self.db_mutex = Lock()
         self.upcoming_launches_timers = {}  # {flight_id -> upcoming_launch_info}
-        self.check_upcoming_launches_timer = utils.repeated_timer(timedelta(minutes=self.config['update_every_min']).total_seconds(), self.check_upcoming_launches)
+        self.check_upcoming_launches_timer = utils.repeated_timer(timedelta(minutes=15).total_seconds(), self.check_upcoming_launches)
         self.check_upcoming_launches_timer.start()
 
     class upcoming_launch_info:
@@ -41,7 +41,7 @@ class spacex_launches(plugin):
         response = json.loads(raw_response)
         return response
 
-    @utils.timed_lru_cache(expiration=timedelta(minutes=3))
+    @utils.timed_lru_cache(expiration=timedelta(minutes=3), typed=True)
     def get_launch_by_id(self, flight_id):
         flight_api_uri = r'https://api.spacexdata.com/v2/launches/all?flight_number=%s'
         raw_response = requests.get(flight_api_uri % flight_id).content.decode('utf-8')
@@ -55,7 +55,6 @@ class spacex_launches(plugin):
 
     def check_upcoming_launches(self):
         self.logger.debug('checking upcoming launches...')
-        self.get_upcoming_launches.clear_cache()
         next_launches = self.get_upcoming_launches()
 
         for next_launch in next_launches:
