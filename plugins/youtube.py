@@ -46,3 +46,4 @@ class youtube(plugin):
         else:
             self.logger.warning(f'youtube api returned error: {response}')
             return None
+            # TODO do not cache now

@@ -67,7 +67,8 @@ class movie(plugin):
         if response['Response'] == 'True' and self.api_response_contains(response, 'Title'): return response
         else:
             if 'not found' not in response['Error'].casefold():
-                self.logger.warning(f'omdbapi returned error: {response}')
+                self.logger.warning(f'omdbapi returned error: {response["Error"]}')
+                # TODO do not cache now
 
             return None
 
