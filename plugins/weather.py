@@ -32,7 +32,7 @@ class weather(plugin):
         self.logger.info(f'getting weather in {msg} for {sender_nick}')
         weather_info = self.get_weather_info(msg)
         if not weather_info:
-            self.bot.say(f'cannot obtain weather in {msg}')
+            self.bot.say_err()
             return
 
         prefix = color.orange(f'[Latest recorded weather for {weather_info["name"]}, {weather_info["sys"]["country"]}]')
@@ -59,14 +59,14 @@ class weather(plugin):
         self.logger.info(f'getting weather forecast in {msg} for {sender_nick}')
         weather_info = self.get_forecast_info(msg)
         if not weather_info:
-            self.bot.say(f'cannot obtain weather in {msg}')
+            self.bot.say_err()
             return
 
         forecasts = {
             'today': self.parse_forecast(weather_info, 0),
-            'next night': self.parse_forecast(weather_info, 1, True),
+            'next night': self.parse_forecast(weather_info, 1, night=True),
             'tomorrow': self.parse_forecast(weather_info, 1),
-            (datetime.date.today() + datetime.timedelta(days=2)).strftime(r'%d-%m-%Y'): self.parse_forecast(weather_info, 2)
+            (datetime.date.today() + datetime.timedelta(days=2)).strftime(r'%Y-%m-%d'): self.parse_forecast(weather_info, 2)
         }
 
         for _time, forec in forecasts.items():
@@ -81,32 +81,50 @@ class weather(plugin):
 
             self.bot.say(f'{prefix} {" :: ".join(responses)}')
 
+    def get_weather_info(self, city_name):
+        result = self.get_weather_info_impl(city_name)
+        if not result:
+            # openweathermap behaves strange, sometimes it requires national characters and sometimes not
+            city_name = utils.remove_national_chars(city_name)
+            self.logger.info(f'getting weather in {city_name}')
+            result = self.get_weather_info_impl(city_name)
+
+        return result
+
+    def get_weather_info_impl(self, city_name):
+        ask = urllib.parse.quote(city_name)
+        raw_response = requests.get(self.weather_url % (ask, self.config['openweathermap_api_key'])).content.decode('utf-8')
+        response = json.loads(raw_response)
+        if 'cod' not in response or int(response['cod']) != 200:
+            if 'cod' not in response or int(response['cod']) != 404:
+                self.logger.warning(f'openweathermap error: {raw_response}')
+                
+            return None
+
+        return response
+
+    def get_forecast_info(self, city_name):
+        result = self.get_forecast_info_impl(city_name)
+        if not result:
+            # openweathermap behaves strange, sometimes it requires national characters and sometimes not
+            city_name = utils.remove_national_chars(city_name)
+            self.logger.info(f'getting weather forecast in {city_name}')
+            result = self.get_forecast_info_impl(city_name)
+
+        return result
+
     # openweathermap API is really fucked up, I know there's ugly code duplication here...
-    def get_weather_info(self, city_name, national_chars=False):
+    def get_forecast_info_impl(self, city_name):
         ask = urllib.parse.quote(city_name)
-        raw_response = requests.get(self.weather_url % (ask, self.config['api_key'])).content.decode('utf-8')
+        raw_response = requests.get(self.forecast_url % (ask, self.config['openweathermap_api_key'])).content.decode('utf-8')
         response = json.loads(raw_response)
-        if 'cod' not in response or response['cod'] != 200:
-            self.logger.warning(f'openweathermap error: {raw_response}')
+        if 'cod' not in response or int(response['cod']) != 200:
+            if 'cod' not in response or int(response['cod']) != 404:
+                self.logger.warning(f'openweathermap error: {raw_response}')
+                
             return None
 
-        # openweathermap behaves strange, sometimes it requires national characters and sometimes not
-        if utils.remove_national_chars(response['name'].casefold()) != utils.remove_national_chars(city_name.casefold()):
-            return self.get_weather_info(utils.remove_national_chars(city_name), True) if not national_chars else None
-        else: return response
-
-    def get_forecast_info(self, city_name, national_chars=False):
-        ask = urllib.parse.quote(city_name)
-        raw_response = requests.get(self.forecast_url % (ask, self.config['api_key'])).content.decode('utf-8')
-        response = json.loads(raw_response)
-        if 'cod' not in response or response['cod'] != '200':
-            self.logger.warning(f'openweathermap error: {raw_response}')
-            return None
-
-        # openweathermap behaves strange, sometimes it requires national characters and sometimes not
-        if utils.remove_national_chars(response['city']['name'].casefold()) != utils.remove_national_chars(city_name.casefold()):
-            return self.get_forecast_info(utils.remove_national_chars(city_name), True) if not national_chars else None
-        else: return response
+        return response
 
     def parse_forecast(self, weather_info, days, night=False):
         dt_txt = (datetime.date.today() + datetime.timedelta(days=days)).strftime(r'%Y-%m-%d')

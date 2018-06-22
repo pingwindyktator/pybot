@@ -1,9 +1,11 @@
 import sys
 import logging
-import unicodedata
+import unidecode
+import tzlocal
 
+from threading import Timer
+from datetime import datetime
 from functools import total_ordering
-from ruamel.yaml.comments import CommentedMap
 
 logging_level_str_to_int = {
     'disabled': sys.maxsize,
@@ -31,11 +33,45 @@ int_to_logging_level_str = {
 }
 
 
+class null_object:
+    def __init__(self, *args, **kwargs): pass
+
+    def __call__(self, *args, **kwargs): return self
+
+    def __repr__(self): return "null_object"
+
+    def __nonzero__(self): return 0
+
+    def __getattr__(self, name): return self
+
+    def __setattr__(self, name, value): return self
+
+    def __delattr__(self, name): return self
+
+
+class repeated_timer(Timer):
+    """
+    exception safe, repeating timer
+    """
+    def run(self):
+        while not self.finished.is_set():
+            try:
+                self.function(*self.args, **self.kwargs)
+            except Exception as e:
+                logger = logging.getLogger(__name__)
+                logger.warning(f'exception caught calling {self.function.__qualname__}: {type(e).__name__}: {e}, continuing...')
+
+            self.finished.wait(self.interval)
+
+        self.finished.set()
+
+
 @total_ordering
 class irc_nickname(str):
     """
     case-insensitive string
     """
+
     def __eq__(self, other):
         return self.casefold() == other.casefold()
 
@@ -50,13 +86,26 @@ class config_error(Exception):
     pass
 
 
-class config_key_info:
-    def __init__(self, required, type):
-        self.required = required
-        self.type = type
+def remove_national_chars(s):
+    return unidecode.unidecode(s)
+
+
+def get_str_utc_offset():
+    result = tzlocal.get_localzone().utcoffset(datetime.now()).total_seconds()
+    lt = result < 0
+    result = abs(result)
+    hours = int(result // 3600)
+    mins = int((result - 3600 * hours) // 60)
+    result = f'{hours}:{str(mins).zfill(2)}'
+    return f'-{result}' if lt else f'+{result}'
 
 
 def ensure_config_is_ok(config, assert_unknown_keys=False):
+    class config_key_info:
+        def __init__(self, required, type):
+            self.required = required
+            self.type = type
+
     def c_assert_error(expr, text):
         if not expr: raise config_error(text)
 
@@ -68,20 +117,24 @@ def ensure_config_is_ok(config, assert_unknown_keys=False):
         'use_ssl': config_key_info(True, bool),
         'flood_protection': config_key_info(True, bool),
         'max_autorejoin_attempts': config_key_info(True, int),
-        'ops': config_key_info(True, list),
         'colors': config_key_info(True, bool),
         'file_logging_level': config_key_info(True, str),
         'stdout_logging_level': config_key_info(True, str),
         'command_prefix': config_key_info(True, str),
         'try_autocorrect': config_key_info(True, bool),
         'wrap_too_long_msgs': config_key_info(True, bool),
+        'health_check': config_key_info(True, bool),
+        'health_check_interval_s': config_key_info(True, int),
+        'db_location': config_key_info(True, str),
+        'superop': config_key_info(True, str),
+        'use_fix_tip': config_key_info(True, bool),
 
-        'debug': config_key_info(False, bool),
         'password': config_key_info(False, list),
         'disabled_plugins': config_key_info(False, list),
         'enabled_plugins': config_key_info(False, list),
-        'ignored_users': config_key_info(False, list),
     }
+
+    c_assert_error(config, 'config seems to be empty')
 
     for key, key_info in config_keys.items():
         if key_info.required:
@@ -90,15 +143,17 @@ def ensure_config_is_ok(config, assert_unknown_keys=False):
         if key in config:
             c_assert_error(type(config[key]) is key_info.type, f'{key} field type should be {key_info.type.__name__}')
 
-    c_assert_error(config['server'].strip(), 'you have to specify server address')
-    c_assert_error(config['port'] >= 1024, 'port should be >= 1024')
-    c_assert_error(config['port'] <= 49151, 'port should be <= 49151')
+    c_assert_error(config['server'].strip(), 'you have to specify server field')
+    c_assert_error(config['port'] > 0, 'port should be > 0')
+    c_assert_error(config['port'] <= 65535, 'port should be <= 65535')
     c_assert_error(config['channel'].startswith('#'), 'channel should start with #')
     c_assert_error(config['nickname'], 'you have to specify at least one nickname to use')
     c_assert_error(config['max_autorejoin_attempts'] >= 0, 'max_autorejoin_attempts should be >= 0')
     c_assert_error(config['file_logging_level'] in logging_level_str_to_int, f'file_logging_level can be one of: {", ".join((logging_level_str_to_int.keys()))}')
     c_assert_error(config['stdout_logging_level'] in logging_level_str_to_int, f'stdout_logging_level can be one of: {", ".join((logging_level_str_to_int.keys()))}')
-    c_assert_error(config['command_prefix'].strip(), 'you have to specify command prefix')
+    c_assert_error(config['command_prefix'].strip(), 'you have to specify command_prefix field')
+    c_assert_error(config['superop'].strip(), 'you have to specify superop field')
+    c_assert_error(config['health_check_interval_s'] >= 15, 'health_check_interval_s should be >= 15')
 
     if 'disabled_plugins' in config:
         c_assert_error('enabled_plugins' not in config, 'you cannot have both enabled_plugins and disabled_plugins specified')
@@ -111,10 +166,4 @@ def ensure_config_is_ok(config, assert_unknown_keys=False):
 
     if assert_unknown_keys:
         for key, value in config.items():
-            if type(value) is not dict:  # dict is config for plugin
-                if type(value) is not CommentedMap:  # CommentedMap is special order-aware dict from ruamel.yaml
-                    c_assert_error(key in config_keys, f'unknown config file key: {key}')
-
-
-def remove_national_chars(s):
-    return ''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn')
+            if not isinstance(value, dict): c_assert_error(key in config_keys, f'unknown config file key: {key}')

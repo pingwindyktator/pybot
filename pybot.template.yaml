@@ -5,53 +5,89 @@ nickname: [pybot, pybot_, pybot__]
 password: []
 use_ssl: true
 max_autorejoin_attempts: 5
-ops: []
+superop: ''
 file_logging_level: info
 stdout_logging_level: info
 # enabled_plugins: []
 # disabled_plugins: []
 command_prefix: '!'
-ignored_users: []
 colors: true
-debug: false
 flood_protection: true
 try_autocorrect: true
 wrap_too_long_msgs: true
+health_check: false
+health_check_interval_s: 100
+db_location: db/pybot.db
+use_fix_tip: true
 
-bot_remote_manager:
-  disconnect_msg: '[disconnect]'
-  die_msg: '[die]'
+plugin_remote_manager:
+  try_autocorrect: true
 
 builtins:
   source: https://github.com/pingwindyktator/pybot/tree/develop
+  help: https://github.com/pingwindyktator/pybot/wiki/features
 
 stalker:
   db_location: db/stalker.db
 
 wolfram_alpha:
   api_key: 4EU37Y-TX9WJG3JH3
+  nonmetric_units: false
+  warn_crypto_asks: true
 
 get:
   db_location: db/get.db
   case_sensitive: false
+  try_autocorrect: true
 
 note:
   db_location: db/note.db
+  search_for_possible_notes: true
 
 seen:
   db_location: db/seen.db
   register_pubmsg_only: false
   clear_db_at_startup: false
+  show_possible_results: true
 
 privmsg_logger_handler:
   db_location: db/plh.db
   
 movie:
-  api_key: 270b7488
+  omdb_api_key: 270b7488
 
 weather:
-  api_key: 42477cb64dced06bef9e59df50c48ca8
+  openweathermap_api_key: 42477cb64dced06bef9e59df50c48ca8
 
 youtube:
   api_key: AIzaSyCoO8Jm9Cc3L-O_y-QH0VZRG5LifKmq4io
   results: 2
+  order_by: relevance
+
+book:
+  goodreads_api_key: ''
+
+antispam:
+  kick_if_too_colorful_msg: true
+  kick_if_too_many_msgs: true
+  kick_if_too_many_users_mentioned: true
+  kick_if_too_long_msgs: true
+  kick_if_same_msg_too_many_times: true
+
+spacex_launches:
+  db_location: db/spacex.db
+  update_every_min: 10
+  inform_about_rescheduled_launches: true
+  call_users_for_rescheduled_launches: true
+  include_flight_id: false
+  include_details: true
+  next_launches: 3
+
+ignore:
+  db_location: db/ignore.db
+
+wiki:
+  language: en
+
+worldcup2018:
+  remind_before_match: true

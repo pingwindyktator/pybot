@@ -10,7 +10,7 @@ from plugin import *
 class seen(plugin):
     def __init__(self, bot):
         super().__init__(bot)
-        self.db_name = self.bot.config['channel']
+        self.db_name = self.bot.get_channel_name()
         os.makedirs(os.path.dirname(os.path.realpath(self.config['db_location'])), exist_ok=True)
         self.db_connection = sqlite3.connect(self.config['db_location'], check_same_thread=False)
         self.db_cursor = self.db_connection.cursor()
@@ -30,6 +30,7 @@ class seen(plugin):
         kicked = 4
         quit = 5
         ctcp = 6
+        mode_changed = 7
 
     class seen_data:
         def __init__(self, timestamp, activity, data):
@@ -71,9 +72,11 @@ class seen(plugin):
             if self.activity == seen.activity_type.nick_changed:
                 return f'{nickname} was last seen {delta_time} ago changing nickname to {self.data[0]}'
             if self.activity == seen.activity_type.kicked:
-                return f'{nickname} was last seen {delta_time} ago kicked by {self.data[0]}'
+                return f'{nickname} was last seen {delta_time} ago kicking {self.data[0]}'
             if self.activity == seen.activity_type.quit:
                 return f'{nickname} was last seen {delta_time} ago disconnecting from server'
+            if self.activity == seen.activity_type.mode_changed:
+                return f'{nickname} was last seen {delta_time} ago setting mode {self.data[1]} {self.data[0]}'
             else:
                 raise RuntimeError(f"seen_data: ups, you didn't implemented case for activity_type={self.activity}")
 
@@ -99,9 +102,13 @@ class seen(plugin):
         if not self.config['register_pubmsg_only']:
             self.update_database(irc_nickname(old_nickname), [new_nickname], self.activity_type.nick_changed)
 
+    def on_mode(self, source, who, mode_change, **kwargs):
+        if not self.config['register_pubmsg_only']:
+            self.update_database(irc_nickname(source.nick), [who, mode_change], self.activity_type.mode_changed)
+
     def on_kick(self, who, source, **kwargs):
         if not self.config['register_pubmsg_only']:
-            self.update_database(irc_nickname(who), [source.nick], self.activity_type.kicked)
+            self.update_database(irc_nickname(source.nick), [who], self.activity_type.kicked)
 
     def update_database(self, nickname, data, activity):
         nickname = irc_nickname(nickname)
@@ -109,7 +116,7 @@ class seen(plugin):
         serialized = self.seen_data(timestamp, activity, data).to_json()
 
         with self.db_mutex:
-            self.db_cursor.execute(f"INSERT OR REPLACE into '{self.db_name}' VALUES (?, ?)", (nickname, serialized))
+            self.db_cursor.execute(f"INSERT OR REPLACE INTO '{self.db_name}' VALUES (?, ?)", (nickname, serialized))
             self.db_connection.commit()
 
         self.logger.debug(f'new database entry: {nickname} -> {serialized}')
@@ -126,16 +133,36 @@ class seen(plugin):
             return
 
         if nickname == sender_nick:
-            self.bot.say('o rly?')
+            self.bot.say('orly?')
             return
 
         with self.db_mutex:
-            self.db_cursor.execute(f"SELECT data FROM '{self.db_name}' WHERE nickname = ? COLLATE NOCASE", (nickname,))
-            result = self.db_cursor.fetchone()
+            self.db_cursor.execute(f"SELECT nickname, data FROM '{self.db_name}' WHERE nickname = ? COLLATE NOCASE", (nickname,))
+            exact_results = self.db_cursor.fetchall()
+            if self.config['show_possible_results']:
+                self.db_cursor.execute(f"SELECT nickname, data FROM '{self.db_name}' WHERE nickname LIKE ? COLLATE NOCASE", (f'%{nickname}%',))
+                possible_results = self.db_cursor.fetchall()
+            else: possible_results = []
 
-        result = self.seen_data.from_json(result[0]) if result else None
+        exact_result = None
+        possible_results = list(filter(lambda x: x[0] != sender_nick and x[0] != self.bot.get_nickname(), possible_results))
 
-        if result:
-            self.bot.say(result.to_response(nickname))
-        else:
+        if exact_results:
+            possible_results = list(filter(lambda x: x not in exact_results, possible_results))  # remove all exact_results from possible_results
+            exact_result = self.get_best_result(exact_results)
+            self.bot.say(self.seen_data.from_json(exact_result[1]).to_response(exact_result[0]))
+
+        if possible_results:
+            possible_result = self.get_best_result(possible_results)
+            if not exact_result or self.get_strptimed_timestamp(exact_result[1]) < self.get_strptimed_timestamp(possible_result[1]):
+                # if there wasn't exact_result or possible_result is better
+                self.bot.say(self.seen_data.from_json(possible_result[1]).to_response(possible_result[0]))
+
+        if not exact_results and not possible_results:
             self.bot.say_err(nickname)
+
+    def get_best_result(self, serialized_iterable):
+        return max(serialized_iterable, key=lambda x: self.get_strptimed_timestamp(x[1]))
+
+    def get_strptimed_timestamp(self, serialized_data):
+        return datetime.strptime(self.seen_data.from_json(serialized_data).timestamp, r'%d-%m-%Y %H:%M:%S')

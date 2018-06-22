@@ -1,22 +1,45 @@
 import json
-import re
-from datetime import timedelta
-from threading import Timer
-
 import requests
 
+from datetime import timedelta
+from threading import Timer, Lock
 from plugin import *
 
 
 class crypto(plugin):
     def __init__(self, bot):
         super().__init__(bot)
-        self.known_crypto_currencies = self.get_crypto_currencies()
+        self.known_crypto_currencies = None
         self.convert_regex = re.compile(r'^([0-9]*\.?[0-9]*)\W*([A-Za-z]+)\W+(to|in)\W+([A-Za-z]+)$')
         self.time_delta_regex = re.compile(r'([0-9]+[Hh])?\W*([0-9]+[Mm])?(.*)')
         self.coinmarketcap_url = r'https://api.coinmarketcap.com/v1/ticker/%s'
         self.fixer_url = r'http://api.fixer.io/latest?base=%s'
         self.watch_timers = {}  # {curr -> watch_desc}
+        self.crypto_currencies_lock = Lock()
+        self.update_timer = utils.repeated_timer(timedelta(hours=1).total_seconds(), self.update_known_crypto_currencies)
+        self.update_timer.start()
+
+    def unload_plugin(self):
+        self.update_timer.cancel()
+
+        for t in self.watch_timers.values():
+            t.timer_object.cancel()
+
+    def get_known_crypto_currencies(self):
+        url = r'https://api.coinmarketcap.com/v1/ticker/?limit=0'
+        content = requests.get(url, timeout=10).content.decode('utf-8')
+        raw_result = json.loads(content)
+        result = []
+        for entry in raw_result:
+            result.append(self.currency_id(entry['id'], entry['name'], entry['symbol']))
+
+        return result
+
+    def update_known_crypto_currencies(self):
+        self.logger.debug('updating known cryptocurrencies...')
+        res = self.get_known_crypto_currencies()
+        with self.crypto_currencies_lock:
+            self.known_crypto_currencies = res
 
     class watch_desc:
         def __init__(self, timer_object, timedelta):
@@ -39,25 +62,12 @@ class crypto(plugin):
             self.week_change = float(raw_result['percent_change_7d']) if raw_result['percent_change_7d'] else None
             self.marker_cap_usd = float(raw_result['market_cap_usd']) if raw_result['market_cap_usd'] else None
 
-    def unload_plugin(self):
-        for t in self.watch_timers.values():
-            t.timer_object.cancel()
-
-    def get_crypto_currencies(self):
-        url = r'https://api.coinmarketcap.com/v1/ticker/'
-        content = requests.get(url, timeout=10).content.decode('utf-8')
-        raw_result = json.loads(content)
-        result = []
-        for entry in raw_result:
-            result.append(self.currency_id(entry['id'], entry['name'], entry['symbol']))
-
-        return result
-
     def get_crypto_currency_id(self, alias):
-        alias = alias.lower()
-        for entry in self.known_crypto_currencies:
-            if entry.id.lower() == alias or entry.name.lower() == alias or entry.symbol.lower() == alias:
-                return entry
+        alias = alias.casefold()
+        with self.crypto_currencies_lock:
+            for entry in self.known_crypto_currencies:
+                if entry.id.casefold() == alias or entry.name.casefold() == alias or entry.symbol.casefold() == alias:
+                    return entry
 
         return None
 
@@ -111,6 +121,20 @@ class crypto(plugin):
 
         price_usd = f' ${curr_info.price_usd} (US dollars) ' if curr_info.price_usd else ' unknown price '
         self.bot.say(color.orange(f'[{curr_info.id.name}]') + price_usd + self.generate_curr_price_change_output(curr_info))
+
+    @command
+    @doc('get information about Bitcoin (updated every 1 hour from coinmarketcap)')
+    def btc(self, sender_nick, **kwargs):
+        curr = 'btc'
+        self.logger.info(f'{sender_nick} asked coinmarketcap about {curr}')
+        self.crypto_impl(curr)
+
+    @command
+    @doc('get information about Ethereum (updated every 1 hour from coinmarketcap)')
+    def eth(self, sender_nick, **kwargs):
+        curr = 'eth'
+        self.logger.info(f'{sender_nick} asked coinmarketcap about {curr}')
+        self.crypto_impl(curr)
 
     # --------------------------------------------------------------------------------------------------------------
 
@@ -169,12 +193,12 @@ class crypto(plugin):
                 convertions[2] = self.convertion(amount, from_curr, result, to_curr)
 
         self.logger.info(convertions)
-        self.bot.say(color.orange('[Result]') + f' {result} {to_curr_org}')
+        self.bot.say(color.orange('[Result]') + f' {result:.10f} {to_curr_org}')
 
     # --------------------------------------------------------------------------------------------------------------
 
     @command
-    @doc('crypto_watch <crypto_currency> <time>: watches <crypto_currency> every <time> time. <time> should be %H:%M  (eg.  1h 42m)')
+    @doc('crypto_watch <crypto_currency> <time>: watches <crypto_currency> every <time> time. <time> should be %H %M  (eg.  1h 42m)')
     def crypto_watch(self, sender_nick, msg, **kwargs):
         if not msg: return
         curr = msg.split()[0]

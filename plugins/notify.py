@@ -6,21 +6,22 @@ from plugin import *
 class notify(plugin):
     def __init__(self, bot):
         super().__init__(bot)
-        self.database = {}  # map username -> {words to watch}
+        self.database = {}  # username -> {words to watch}
 
     def on_pubmsg(self, source, msg, **kwargs):
+        if self.bot.is_user_ignored(source.nick): return
         self.find_word(source.nick, msg)
 
     def find_word(self, sender_nick, full_msg):
         for register_nickname in self.database:
             for alias in self.database[register_nickname]:
-                if re.findall(alias.lower(), full_msg) and sender_nick != register_nickname:
+                if re.findall(alias.casefold(), full_msg) and sender_nick != register_nickname:
                     self.bot.say(register_nickname)
                     self.logger.info(f"found notify set for '{register_nickname}': {alias}")
                     break
 
     @command
-    @doc("notify <arg>...: set notify for <args>. bot will call you'r nickname when one of <arg> appears on chat. supports regular expressions")
+    @doc("notify <args>...: set notify for <args>. bot will call your nickname when one of <args> appears on chat. supports regular expressions")
     def notify(self, sender_nick, args, **kwargs):
         if len(args) == 0: return
 
@@ -33,7 +34,7 @@ class notify(plugin):
         self.logger.info(f'now notifying: {args} -> {sender_nick}')
 
     @command
-    @doc('rm_notify <arg>...: remove notify for <arg>')
+    @doc('rm_notify <args>...: remove notify for <args>')
     def rm_notify(self, sender_nick, args, **kwargs):
         if sender_nick not in self.database: return
         to_remove = [arg for arg in args if arg in self.database[sender_nick]]
@@ -45,7 +46,7 @@ class notify(plugin):
         self.logger.info(f'stop notifying: {to_remove} -> {sender_nick}')
 
     @command
-    @doc("get you'r notifies saved")
+    @doc("get your notifies saved")
     def notifies(self, sender_nick, **kwargs):
         result = self.database[sender_nick] if sender_nick in self.database else {}
         if result:

@@ -7,11 +7,10 @@ from threading import Thread, Lock
 from plugin import *
 
 
-@doc('track users to detect multiple nicknames used')
 class stalker(plugin):
     def __init__(self, bot):
         super().__init__(bot)
-        self.db_name = self.bot.config['server']
+        self.db_name = self.bot.get_server_name()
         os.makedirs(os.path.dirname(os.path.realpath(self.config['db_location'])), exist_ok=True)
 
         self.db_connection = sqlite3.connect(self.config['db_location'], check_same_thread=False)
@@ -44,15 +43,17 @@ class stalker(plugin):
             self.updating_thread.start()
 
     def update_all(self, nicknames):
-        self.logger.info("updating whole stalker's database started...")
+        self.logger.debug("updating whole stalker's database started...")
         for nick in nicknames:
             self.bot.whois(nick)
             time.sleep(1)  # to not get kicked because of Excess Flood
 
-        self.logger.info("updating whole stalker's database finished")
+        self.logger.debug("updating whole stalker's database finished")
 
     def update_database(self, nick, host):
         result = self.get_nicknames_from_database(host)
+        nick = irc_nickname(nick)
+
         if result:
             if nick not in result:
                 result.extend([nick])
@@ -109,7 +110,7 @@ class stalker(plugin):
         result = set([host for host in all_hosts if nick in self.get_nicknames_from_database(host)])
 
         if result:
-            response = f'known hosts of {nick}: {result}'
+            response = f'known hosts of {nick}: {", ".join(result)}'
             if self.bot.is_msg_too_long(response):
                 self.bot.say(f'{sender_nick}: too much data, check your privmsg')
                 self.bot.say(response, sender_nick)
@@ -131,7 +132,7 @@ class stalker(plugin):
             if nick in x: result.update(x)
 
         if result:
-            self.bot.say(f'other nicks of {nick}: {result}')
+            self.bot.say(f'other nicks of {nick}: {", ".join(result)}')
         else:
             self.bot.say_err(nick)
 
@@ -144,7 +145,7 @@ class stalker(plugin):
         host = args[0]
         nicks = self.get_nicknames_from_database(host)
         if nicks:
-            response = f'known nicks from {host}: {nicks}'
+            response = f'known nicks from {host}: {", ".join(nicks)}'
             if self.bot.is_msg_too_long(response):
                 self.bot.say(f'{sender_nick}: too much data, check your privmsg')
                 self.bot.say(response, sender_nick)

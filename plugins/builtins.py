@@ -2,13 +2,14 @@ import json
 import os
 import sys
 import shutil
+
 import git
 import copy
 import requests
 import collections
 
+from datetime import datetime
 from ruamel import yaml
-from irc.client import NickMask
 from ruamel.yaml.comments import CommentedMap
 from ruamel.yaml.parser import ParserError
 from plugin import *
@@ -19,41 +20,37 @@ class builtins(plugin):
         super().__init__(bot)
         self.pybot_dir = os.path.dirname(os.path.realpath(__file__))
         self.pybot_dir = os.path.abspath(os.path.join(self.pybot_dir, os.pardir))
-        self.commands_as_other_user_to_send = []
-
-    class as_other_user_command:
-        def __init__(self, sender_nick, hacked_nick, connection, raw_msg):
-            self.sender_nick = irc_nickname(sender_nick)
-            self.hacked_nick = irc_nickname(hacked_nick)
-            self.connection = connection
-            self.raw_msg = raw_msg
 
     @command
-    @doc('help <entry>: give doc msg for <entry> command / plugin or get supported commands if <entry> is empty')
+    @doc("""help <entry>: get doc msg for <entry> command / plugin
+            get general help""")
     def help(self, sender_nick, args, **kwargs):
         if args and args[0]:
-            self.help_entry_impl(args[0].strip())
+            entry = args[0].strip()
+            if entry in self.bot.get_commands():
+                self.help_for_command(entry)
+            elif entry in self.bot.get_plugins_names():
+                self.help_for_plugin(entry)
+            else:
+                self.bot.say(f'no such command: {entry}')
             self.logger.info(f'help of {args[0]} given for {sender_nick}')
         else:
-            self.help_impl(sender_nick)
+            self.help_general(sender_nick)
             self.logger.info(f'help given for {sender_nick}')
 
-    def help_impl(self, sender_nick):
-        commands = self.bot.get_commands_by_plugin()
-        commands = collections.OrderedDict(sorted(commands.items()))
-        self.bot.say(f'{sender_nick}: check your privmsg!')
-        for reply in [cmd for cmd in commands if commands[cmd]]:
-            self.bot.say(f'available commands for {reply}: {", ".join(commands[reply])}', sender_nick)
-
-    def help_entry_impl(self, entry):
-        if entry not in self.bot.commands:
-            if entry not in self.bot.get_plugins_names():
-                self.bot.say(f'no such command: {entry}')
-                return
-            else:
-                obj = (x for x in self.bot.get_plugins() if x.__class__.__name__ == entry).__next__()
+    def help_general(self, sender_nick):
+        if 'help' in self.config and self.config['help']:
+            self.bot.say(f'Here you go: {self.config["help"]}')
         else:
-            obj = self.bot.commands[entry]
+            commands = self.bot.get_commands_by_plugin()
+            commands = collections.OrderedDict(sorted(commands.items()))
+            self.bot.say(f'{sender_nick}: check your privmsg!')
+
+            for reply in [cmd for cmd in commands if commands[cmd]]:
+                self.bot.say(f'available commands for {color.blue(reply)}: {", ".join(sorted(commands[reply]))}', sender_nick)
+
+    def help_for_command(self, entry):
+        obj = self.bot.get_commands()[entry]
 
         if hasattr(obj, '__doc_string'):
             for reply in getattr(obj, "__doc_string").split('\n'):
@@ -61,118 +58,60 @@ class builtins(plugin):
         else:
             self.bot.say(f'no help for {entry}')
 
+    def help_for_plugin(self, entry):
+        plugin = self.bot.get_plugin(entry)
+
+        if hasattr(plugin, '__doc_string'):
+            for reply in getattr(plugin, "__doc_string").split('\n'):
+                self.bot.say(color.orange(f'[{entry}] ') + reply.strip())
+        else:
+            self.bot.say(color.orange(f'[{entry}] ') + f'available commands: {", ".join(self.bot.get_plugin_commands(entry))}')
+
     @command
     @doc('give pybot source code URL')
     def source(self, sender_nick, **kwargs):
-        self.logger.info(f'source {self.config["source"]} given to {sender_nick}')
-        self.bot.say(f'Patches are welcome! {self.config["source"]}')
-
-    @command
-    @admin
-    @doc('add_op <nickname>...: add bot operator')
-    def add_op(self, sender_nick, args, **kwargs):
-        if not args: return
-        to_add = [irc_nickname(arg) for arg in args]
-        self.bot.config['ops'].extend(to_add)
-        reply = f'{to_add[0]} is now op' if len(to_add) == 1 else f'{to_add} are now ops'
-        self.bot.say(reply)
-        self.logger.warning(f'{sender_nick} added new ops: {to_add}')
-
-    @command
-    @admin
-    @doc('rm_op <nickname>...: remove bot operator')
-    def rm_op(self, sender_nick, args, **kwargs):
-        to_remove = [irc_nickname(arg) for arg in args]
-        to_remove = [arg for arg in to_remove if arg in self.bot.config['ops']]
-        if not to_remove: return
-        for arg in to_remove:
-            self.bot.config['ops'].remove(arg)
-
-        reply = f'{to_remove[0]} is no longer op' if len(to_remove) == 1 else f'{to_remove} are no longer ops'
-        self.bot.say(reply)
-        self.logger.warning(f'{sender_nick} removed ops: {to_remove}')
-
-    @command
-    @admin
-    @doc('get bot operators')
-    def ops(self, sender_nick, **kwargs):
-        if len(self.bot.config['ops']) == 0:
-            reply = 'no bot operators'
+        self.logger.info(f'source given to {sender_nick}')
+        if 'source' in self.config and self.config['source']:
+            self.bot.say(f'Patches are welcome! {self.config["source"]}')
         else:
-            reply = f'bot operators: {self.bot.config["ops"]}'
+            self.bot.say('no source URL provided :(')
 
-        self.bot.say(reply)
-        self.logger.info(f'{sender_nick} asked for ops: {self.bot.config["ops"]}')
-
-    @command
-    @admin
-    @doc("ignore_user <username>...: ignore user's messages")
-    def ignore_user(self, sender_nick, args, **kwargs):
-        if not args: return
-        to_ignore = [irc_nickname(arg) for arg in args]
-        if 'ignored_users' not in self.bot.config:
-            self.bot.config['ignored_users'] = to_ignore
-        else:
-            self.bot.config['ignored_users'].extend(to_ignore)
-
-        reply = f'{to_ignore[0]} is now ignored' if len(to_ignore) == 1 else f'{to_ignore} are now ignored'
-        self.bot.say(reply)
-        self.logger.warning(f'{sender_nick} ignored {to_ignore}')
-
-    @command
-    @admin
-    @doc("unignore_user <username>...: unignore user messages")
-    def unignore_user(self, sender_nick, args, **kwargs):
-        if 'ignored_users' not in self.bot.config: return
-        to_unignore = [irc_nickname(arg) for arg in args]
-        to_unignore = [arg for arg in to_unignore if arg in self.bot.config['ignored_users']]
-        if not to_unignore: return
-        for arg in to_unignore:
-            self.bot.config['ignored_users'].remove(arg)
-
-        reply = f'{to_unignore[0]} is no longer ignored' if len(to_unignore) == 1 else f'{to_unignore} are no longer ignored'
-        self.bot.say(reply)
-        self.logger.warning(f'{sender_nick} unignored {to_unignore}')
-
-    @command
-    @admin
-    @doc('get ignored users')
-    def ignored_users(self, sender_nick, **kwargs):
-        ignored = self.bot.config['ignored_users'] if 'ignored_users' in self.bot.config else []
-
-        if len(ignored) == 0:
-            reply = 'no ignored users'
-        else:
-            reply = f'ignored users: {ignored}'
-
-        self.bot.say(reply)
-        self.logger.info(f'{sender_nick} asked for ignored users: {ignored}')
-
-    @command
-    @admin
+    @command(admin=True)
     @doc('enable colorful answers')
     def enable_colors(self, sender_nick, **kwargs):
         color.enable_colors()
         self.logger.info(f'{sender_nick} enables colors')
         self.bot.say_ok()
 
-    @command
-    @admin
+    @command(admin=True)
     @doc('disable colorful answers')
     def disable_colors(self, sender_nick, **kwargs):
         color.disable_colors()
         self.logger.info(f'{sender_nick} disables colors')
         self.bot.say_ok()
 
-    @command
-    @admin
+    @command(superadmin=True)
+    @doc('enable debug mode')
+    def enable_debug_mode(self, sender_nick, **kwargs):
+        self.bot.set_debug_mode(True)
+        self.logger.warning(f'{sender_nick} enables debug mode')
+        self.bot.say_ok()
+
+    @command(superadmin=True)
+    @doc('disable debug mode')
+    def disable_debug_mode(self, sender_nick, **kwargs):
+        self.bot.set_debug_mode(False)
+        self.logger.warning(f'{sender_nick} disables debug mode')
+        self.bot.say_ok()
+
+    @command(admin=True)
     @doc('change_log_level <file|stdout> <level>: change logging level')
     def change_log_level(self, sender_nick, args, **kwargs):
         if len(args) < 2: return
-        handler_name = args[0].lower()
-        level_name = args[1].lower()
+        handler_name = args[0].casefold()
+        level_name = args[1].casefold()
 
-        if level_name.lower() not in utils.logging_level_str_to_int:
+        if level_name not in utils.logging_level_str_to_int:
             self.bot.say(f'unknown level: {level_name}, supported levels: {", ".join(utils.logging_level_str_to_int.keys())}')
             return
 
@@ -180,9 +119,9 @@ class builtins(plugin):
         level = utils.logging_level_str_to_int[level_name]
         try:
             if handler_name == 'stdout':
-                (x for x in root_logger.handlers if type(x) is logging.StreamHandler).__next__().setLevel(level)
+                next((x for x in root_logger.handlers if type(x) is logging.StreamHandler)).setLevel(level)
             elif handler_name == 'file':
-                (x for x in root_logger.handlers if type(x) is logging.FileHandler).__next__().setLevel(level)
+                next((x for x in root_logger.handlers if type(x) is logging.FileHandler)).setLevel(level)
             else:
                 self.bot.say(f'unknown handler: {handler_name}, supported handlers: stdout, file')
                 return
@@ -206,45 +145,78 @@ class builtins(plugin):
             return f'invalid config value: {e}'
         except Exception as e:
             self.logger.error(f'unexpected exception: {e}')
+            if self.bot.is_debug_mode_enabled(): raise
             return 'internal error occurred'
 
         return None
 
-    @command
-    @admin
+    @command(admin=True)
     @doc('restart [<force>]: restart pybot app, use force to disable consistency checks')
     def restart(self, sender_nick, args, **kwargs):
         reason = self.is_restart_unsafe()
-        if reason and not (args and args[0].strip().lower() == 'force'):
-            self.bot.say(f'{reason}, aborting restart, use \'{self.bot.config["command_prefix"]}restart force\' to ignore it')
+        if reason and not (args and args[0].strip().casefold() == 'force'):
+            self.bot.say(f'{reason}, aborting restart, use \'{self.bot.get_command_prefix()}restart force\' to ignore it')
             return
 
-        self.bot.say("I'll be back soon...")
+        self.bot.say("I'll be back soon...", force=True)
         self.restart_impl(sender_nick)
 
-    def restart_impl(self, sender_nick=None):
+    def restart_impl(self, sender_nick):
         args = sys.argv[:]
         args.insert(0, sys.executable)
         if sys.platform == 'win32':
             args = [f'"{arg}"' for arg in args]
 
-        sender_nick = f' by {sender_nick}' if sender_nick else ''
-        self.logger.warning(f"re-spawning '{' '.join(args)}'{sender_nick}")
+        self.bot.die()
+        self.logger.warning(f"re-spawning '{' '.join(args)}' by {sender_nick}")
         os.chdir(os.getcwd())
         os.execv(sys.executable, args)
 
-    def update_config_key(self, key, value, config):
+    def insert_to_config(self, key, value, config):
+        """
+        inserts :param key -> :param value entry into :param config
+        supports dicts nesting (subconfig in config)
+        """
+
         if key not in config:
             config[key] = value
             self.logger.info(f'inserting {key}: {value} to config file')
-        elif type(value) is dict:  # do not override non-dict values
+        elif isinstance(value, dict):  # do not override non-dict values
             for v_key, v_value in value.items():
-                self.update_config_key(v_key, v_value, config[key])
+                self.insert_to_config(v_key, v_value, config[key])
+
+    def remove_obsolete_key_from_config_impl(self, key, config, config_template):
+        """
+        removes :param key from :param config if it's not present in :param config_template
+        supports dicts nesting (subconfig in config)
+        """
+
+        if key in config_template:
+            if isinstance(config[key], dict):
+                config[key] = self.remove_obsolete_key_from_config(config[key], config_template[key])
+        else:
+            self.logger.info(f'removing {key} from config file')
+            del config[key]
+
+    def remove_obsolete_key_from_config(self, config, config_template):
+        """
+        :return :param config without keys not present in :param config_template
+        """
+
+        # TODO fix me!
+        return config
+
+        new_config = copy.deepcopy(config)
+        for key in config.keys():
+            self.remove_obsolete_key_from_config_impl(key, new_config, config_template)
+
+        return new_config
 
     def write_config_file(self, config, outfilename):
         """
         tries to write formatted :param config to :param outfilename
         """
+
         config = copy.deepcopy(config)
         global_config = CommentedMap()
         plugins_config = CommentedMap()
@@ -281,9 +253,12 @@ class builtins(plugin):
         """
 
         config = yaml.load(open('pybot.yaml'), Loader=yaml.RoundTripLoader)
+        config_template = yaml.load(open("pybot.template.yaml"), Loader=yaml.Loader)
         if not config: config = {}
-        for key, value in yaml.load(open("pybot.template.yaml"), Loader=yaml.Loader).items():
-            self.update_config_key(key, value, config)
+        for key, value in config_template.items():
+            self.insert_to_config(key, value, config)
+
+        config = self.remove_obsolete_key_from_config(config, config_template)
 
         if config == self.bot.config: return False
 
@@ -297,9 +272,8 @@ class builtins(plugin):
         self.logger.warning('config file updated')
         return True
 
-    @command
-    @admin
-    @doc('updated config with config template defaults and ** restarts **, should be used with caution!')
+    @command(superadmin=True)
+    @doc('update config with config template defaults and ** restarts **, should be used with caution!')
     def update_config(self, sender_nick, **kwargs):
         shutil.copyfile('pybot.yaml', '..pybot.yaml')
 
@@ -311,18 +285,18 @@ class builtins(plugin):
                 shutil.copyfile('..pybot.yaml', 'pybot.yaml')
                 return
 
-            self.bot.say('config updated, restarting...')
+            self.bot.say('config updated, restarting...', force=True)
             self.restart_impl(sender_nick)
         except utils.config_error as e:
             self.bot.say(f'invalid config value: {e}, aborting...')
             shutil.copyfile('..pybot.yaml', 'pybot.yaml')
         except Exception as e:
+            self.logger.error(f'exception caught while updating config file: {e}')
             self.bot.say('cannot update config file, aborting...')
             shutil.copyfile('..pybot.yaml', 'pybot.yaml')
             if self.bot.is_debug_mode_enabled(): raise
 
-    @command
-    @admin
+    @command(superadmin=True)
     @doc('self_update [<force>]: pull changes from git remote ref and update config file, use [<force>] to discard local changes')
     def self_update(self, sender_nick, args, **kwargs):
         # TODO pip requirements update
@@ -333,12 +307,12 @@ class builtins(plugin):
         force_str = ''
 
         if repo.head.commit.diff(None):  # will not count files added to working tree
-            if args and args[0].strip().lower() == 'force':
+            if args and args[0].strip().casefold() == 'force':
                 self.logger.warning(f'discarding local changes: {[x.a_path for x in repo.head.commit.diff(None)]}')
                 repo.head.reset(commit=repo.head.commit, index=True, working_tree=True)
                 force_str = ', local changes discarded'
             else:
-                self.bot.say(f'local changes prevents me from update, use \'{self.bot.config["command_prefix"]}self_update force\' to discard them')
+                self.bot.say(f'local changes prevents me from update, use \'{self.bot.get_command_prefix()}self_update force\' to discard them')
                 self.logger.info(f'cannot self-update, local changes: {[x.a_path for x in repo.head.commit.diff(None)]}')
                 return
 
@@ -355,7 +329,10 @@ class builtins(plugin):
             return
 
         self.logger.warning(f'updated {repo.head.orig_head().commit} -> {repo.head.commit}')
-        diff_str = f', diffs in {", ".join([x.a_path for x in repo.head.commit.diff(repo.head.orig_head().commit)])}'
+        diff = [x.a_path for x in repo.head.commit.diff(repo.head.orig_head().commit)]
+        plugins_diff = [x[len('plugins/'):-len('.py')] for x in diff if x.startswith('plugins/') and x.endswith('.py')]
+        if len(plugins_diff) == len(diff): diff_str = f', you should reload {", ".join(plugins_diff)} {"plugins" if len(plugins_diff) > 1 else "plugin"} now'
+        else: diff_str = ', probably you should restart bot now'
 
         try:
             if self.update_config_file(): config_updated_str = ', config file updated'
@@ -368,53 +345,10 @@ class builtins(plugin):
             if self.bot.is_debug_mode_enabled(): raise
             return
 
-        self.bot.say(f'updated, now at "{str(repo.head.commit)[:6]}: {repo.head.commit.message.strip()}"{config_updated_str}{diff_str}{force_str}')
+        self.bot.say(f'updated, now at "{str(repo.head.commit)[:6]}: {repo.head.commit.message.strip()}"{config_updated_str}{force_str}{diff_str}')
         repo.head.orig_head().set_commit(repo.head)
 
-    def on_whoisuser(self, nick, user, host, **kwargs):
-        cmds = self.commands_as_other_user_to_send
-        try:
-            args = (x for x in cmds if
-                    x.hacked_nick == nick).__next__()
-        except StopIteration: return
-
-        hacked_source = NickMask.from_params(args.hacked_nick, user, host)
-        hacked_raw_msg = args.raw_msg
-        hacked_raw_msg.source = hacked_source
-        hacked_raw_msg.arguments = (hacked_raw_msg.arguments[0],)
-
-        self.logger.warning(f'{args.sender_nick} runs command ({hacked_raw_msg.arguments[0]}) as {args.hacked_nick}')
-        self.commands_as_other_user_to_send.remove(args)
-
-        self.bot.on_pubmsg(args.connection, hacked_raw_msg)
-
-    def clean_commands_as_other_user_to_send(self):
-        users = list(self.bot.channel.users())
-
-        for x in self.commands_as_other_user_to_send:
-            if x.hacked_nick not in users:
-                self.logger.info(f'removing {x.sender_nick} command ({x.raw_msg.arguments[0]}) as {x.hacked_nick}')
-                self.commands_as_other_user_to_send.remove(x)
-
-    @command
-    @admin
-    @doc('as_other_user <username> <message>: emulate sending <message> as <username>, requires <username> to be online')
-    def as_other_user(self, sender_nick, msg, raw_msg, **kwargs):
-        if not msg: return
-        hacked_nick = irc_nickname(msg.split()[0])
-        new_msg = msg[len(hacked_nick):].strip()
-        raw_msg.arguments = (new_msg, raw_msg.arguments[1:])
-        self.logger.info(f'{sender_nick} queued command ({new_msg}) as {hacked_nick}')
-        self.commands_as_other_user_to_send.append(self.as_other_user_command(sender_nick, hacked_nick, self.bot.connection, raw_msg))
-
-        # now we don't know ho to set raw_msg fields (user and host)
-        # that's why we are queuing this call, then calling /whois hacked_user
-        # when /whois response received, we've got needed user and host so we can do appropriate call
-        self.clean_commands_as_other_user_to_send()
-        self.bot.whois(hacked_nick)
-
-    @command
-    @admin
+    @command(superadmin=True)
     @doc('change_config <entry> <value>: change, save, apply bot config file and ** restart **. use ":" to separate config nesting (eg. "a:b:c" means config["a"]["b"]["c"])')
     def change_config(self, msg, sender_nick, **kwargs):
         if not msg: return
@@ -426,6 +360,7 @@ class builtins(plugin):
             value = yaml.load(value, Loader=yaml.RoundTripLoader)
         except ParserError:
             self.bot.say(f'cannot parse value: {value}')
+            if self.bot.is_debug_mode_enabled(): raise
             return
 
         config = yaml.load(open('pybot.yaml'), Loader=yaml.RoundTripLoader)
@@ -459,7 +394,7 @@ class builtins(plugin):
 
         shutil.copyfile('.pybot.yaml', 'pybot.yaml')
         self.logger.warning(f'{sender_nick} changed config entry {keys} = {value}')
-        self.bot.say('config entry applied, restarting...')
+        self.bot.say('config entry applied, restarting...', force=True)
         self.restart_impl(sender_nick)
 
     def upload_file_impl(self, sender_nick, filename):
@@ -478,14 +413,24 @@ class builtins(plugin):
                 self.bot.say(response['link'], sender_nick)
                 self.logger.info(f'{filename} uploaded to file.io for {sender_nick}: {response["link"]}')
 
-    @command
-    @admin
+    @command(admin=True)
     @doc('uploads error logs to file.io')
     def upload_errors(self, sender_nick, **kwargs):
         self.upload_file_impl(sender_nick, r'pybot.error')
 
     @command
-    @admin
+    @doc("get bot's local time")
+    def time(self, **kwargs):
+        self.bot.say(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + utils.get_str_utc_offset())
+
+    @command(admin=True)
     @doc('uploads log file to file.io')
     def upload_logs(self, sender_nick, **kwargs):
         self.upload_file_impl(sender_nick, r'pybot.log')
+
+    @command
+    @doc("fix your previous command")
+    def fix(self, **kwargs):
+        """
+        just a placeholder for fix functionality. Its implementation has to be placed in pybot.on_pubmsg
+        """

@@ -17,7 +17,9 @@ class webtitle_parser(plugin):
             r'(?::\d+)?'  # optional port
             r'(?:/?|[/?]\S+)$', re.IGNORECASE)
 
-    def on_pubmsg(self, msg, **kwargs):
+    def on_pubmsg(self, msg, source, **kwargs):
+        if self.bot.is_user_ignored(source.nick): return
+
         urls = msg.strip().split()
         for url in urls: self.parse_url(url.strip())
 
@@ -25,7 +27,7 @@ class webtitle_parser(plugin):
         try:
             if self.regex.findall(url):
                 req = requests.get(url, timeout=5)
-                tree = fromstring(req.content)
+                tree = fromstring(req.content.decode())
                 title = tree.findtext('.//title').strip()
                 if title is not None and title != '':
                     self.bot.say(color.light_green(title))
