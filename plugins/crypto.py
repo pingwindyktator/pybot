@@ -66,6 +66,7 @@ class crypto(plugin):
 
         return None
 
+    @utils.timed_lru_cache(expiration=timedelta(minutes=3), typed=True)
     def get_crypto_curr_info(self, curr):
         self.update_known_crypto_currencies()
         curr_id = self.get_crypto_currency_id(curr)

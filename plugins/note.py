@@ -66,7 +66,6 @@ class note(plugin):
         self.save_note(target, new_note)
         self.bot.say_ok()
 
-    @utils.timed_lru_cache(typed=True)
     def get_notes_for_user(self, nickname, remove=False, exact=False):
         with self.db_mutex:
             if not exact:
@@ -105,14 +104,11 @@ class note(plugin):
     def save_note(self, target, new_note):
         saved_notes = self.get_notes_for_user(target, exact=True, remove=False)
 
-        if saved_notes:
-            saved_notes.extend([new_note])
-            with self.db_mutex:
+        with self.db_mutex:
+            if saved_notes:
+                saved_notes.extend([new_note])
                 self.db_cursor.execute(f"UPDATE '{self.db_name}' SET notes = ? WHERE nickname = ?", (json.dumps(saved_notes), target.casefold()))
-                self.db_connection.commit()
-        else:
-            with self.db_mutex:
+            else:
                 self.db_cursor.execute(f"INSERT INTO '{self.db_name}' VALUES (?, ?)", (target.casefold(), json.dumps([new_note])))
-                self.db_connection.commit()
 
-        self.get_notes_for_user.clear_cache()
+            self.db_connection.commit()

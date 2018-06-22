@@ -81,6 +81,7 @@ class weather(plugin):
 
             self.bot.say(f'{prefix} {" :: ".join(responses)}')
 
+    @utils.timed_lru_cache(expiration=datetime.timedelta(minutes=3), typed=True)
     def get_weather_info(self, city_name):
         result = self.get_weather_info_impl(city_name)
         if not result:
@@ -103,6 +104,7 @@ class weather(plugin):
 
         return response
 
+    @utils.timed_lru_cache(expiration=datetime.timedelta(minutes=3), typed=True)
     def get_forecast_info(self, city_name):
         result = self.get_forecast_info_impl(city_name)
         if not result:

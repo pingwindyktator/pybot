@@ -3,8 +3,8 @@ import requests
 import urllib.parse
 import xml.etree.ElementTree
 
+from threading import RLock
 from datetime import timedelta
-from threading import Lock
 from plugin import *
 
 
@@ -12,19 +12,18 @@ class crypto_wa_warner:
     def __init__(self, bot):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.bot = bot
-        self.crypto_currencies_lock = Lock()
-        self.known_crypto_currencies = None
         self.convert_regex = re.compile(r'^([0-9]*\.?[0-9]*)\W*([A-Za-z]+)\W+(to|in)\W+([A-Za-z]+)$')
-        self.update_timer = utils.repeated_timer(timedelta(hours=1).total_seconds(), self.update_known_crypto_currencies)
-        self.update_timer.start()
+        self.known_cryptocurrencies = []
+        self.known_cryptocurrencies_lock = RLock()
 
     def handle_msg(self, msg):
+        self._update_known_cryptocurrencies()
         msg = msg.strip()
         c = self.convert_regex.findall(msg)
         c = c[0] if c else []
         _from = c[1] if len(c) > 1 else ''
         to = c[3] if len(c) > 3 else ''
-        if self.is_any_currency_known([_from, to, msg]):
+        if self._is_any_currency_known((_from, to, msg)):
             prefix = color.orange("[WARNING] ")
             suffix = ''
 
@@ -38,32 +37,31 @@ class crypto_wa_warner:
 
         return False
 
-    def get_known_crypto_currencies(self):
+    @utils.timed_lru_cache(expiration=timedelta(hours=1))
+    def _update_known_cryptocurrencies(self):
+        self.logger.debug('updating known cryptocurrencies...')
         url = r'https://api.coinmarketcap.com/v1/ticker/?limit=0'
         content = requests.get(url, timeout=10).content.decode('utf-8')
         raw_result = json.loads(content)
-        result = []
+        known_crypto_currencies = []
         for entry in raw_result:
-            result.append(self.currency_id(entry['id'], entry['name'], entry['symbol']))
+            known_crypto_currencies.append(self.currency_id(entry['id'], entry['name'], entry['symbol']))
 
-        return result
+        with self.known_cryptocurrencies_lock:
+            self.known_cryptocurrencies = known_crypto_currencies
+            self._is_any_currency_known.clear_cache()
 
-    def update_known_crypto_currencies(self):
-        self.logger.debug('updating known cryptocurrencies...')
-        res = self.get_known_crypto_currencies()
-        with self.crypto_currencies_lock:
-            self.known_crypto_currencies = res
+    @utils.timed_lru_cache(typed=True)
+    def _is_any_currency_known(self, _aliases):
+        aliases = [a.casefold() for a in _aliases]
 
-    def is_any_currency_known(self, aliases):
-        aliases = [a.casefold() for a in aliases]
-
-        with self.crypto_currencies_lock:
+        with self.known_cryptocurrencies_lock:
             for alias in aliases:
-                for entry in self.known_crypto_currencies:
+                for entry in self.known_cryptocurrencies:
                     if entry.id.casefold() == alias or entry.name.casefold() == alias or entry.symbol.casefold() == alias:
                         return True
 
-        return False
+            return False
 
     class currency_id:
         def __init__(self, id, name, symbol):
@@ -95,9 +93,6 @@ class wolfram_alpha(plugin):
                         r'&excludepodid=Input' \
                         r'&excludepodid=Sequence'
 
-    def unload_plugin(self):
-        self.crypto_warner.update_timer.cancel()
-
     @doc('wa <ask>: ask Wolfram|Alpha about <ask>')
     @command
     def wa(self, msg, sender_nick, **kwargs):
@@ -105,10 +100,14 @@ class wolfram_alpha(plugin):
         self.logger.info(f'{sender_nick} asked wolfram alpha "{msg}"')
         if self.config['warn_crypto_asks']: self.crypto_warner.handle_msg(msg)
         ask = urllib.parse.quote(msg)
-        raw_response = requests.get(self.full_req % (ask, self.config['api_key'])).content.decode('utf-8')
-        self.manage_api_response(raw_response, msg)
+        raw_response = self.get_api_response(ask)
+        self.manage_api_response(raw_response)
 
-    def manage_api_response(self, raw_response, ask):
+    @utils.timed_lru_cache(expiration=timedelta(hours=1), typed=True)
+    def get_api_response(self, ask):
+        return requests.get(self.full_req % (ask, self.config['api_key'])).content.decode('utf-8')
+
+    def manage_api_response(self, raw_response):
         xml_root = xml.etree.ElementTree.fromstring(raw_response)
         answers = []
 

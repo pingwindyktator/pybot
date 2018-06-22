@@ -2,6 +2,7 @@ import urllib.parse
 import requests
 import xml.etree.ElementTree
 
+from datetime import timedelta
 from plugin import *
 
 
@@ -10,6 +11,11 @@ class book(plugin):
         super().__init__(bot)
         self.goodreads_api_uri = r'https://www.goodreads.com/search.xml?key=%s&q=%s'
 
+    @utils.timed_lru_cache(expiration=timedelta(hours=1), typed=True)
+    def get_api_response(self, ask):
+        raw_response = requests.get(self.goodreads_api_uri % (self.config['goodreads_api_key'], ask)).content.decode('utf-8')
+        return xml.etree.ElementTree.fromstring(raw_response)
+
     @command
     @doc('get book info from goodreads.com')
     def book(self, sender_nick, msg, **kwargs):
@@ -17,8 +23,7 @@ class book(plugin):
         msg = msg.strip()
         ask = urllib.parse.quote(msg)
         self.logger.info(f'{sender_nick} asked goodreads.com "{msg}"')
-        raw_response = requests.get(self.goodreads_api_uri % (self.config['goodreads_api_key'], ask)).content.decode('utf-8')
-        xml_root = xml.etree.ElementTree.fromstring(raw_response)
+        xml_root = self.get_api_response(ask)
 
         result = xml_root.find('search').find('results')
         if len(result) == 0:
