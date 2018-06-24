@@ -50,7 +50,6 @@ class null_object:
 
 
 class timed_lru_cache:
-    # TODO do_not_cache
     """
     decorator that caches a function's return value each time it is called
     cache is automatically invalidated after given expiration time
@@ -66,6 +65,7 @@ class timed_lru_cache:
         self.cache_lock = RLock()
         self.logger = logging.getLogger(__name__)
         self.function = None
+        self.do_not_cache = False
 
     def __call__(self, function):
         def timed_lru_cache_impl(*args, **kwargs):
@@ -86,18 +86,26 @@ class timed_lru_cache:
 
                 if call_args not in self.cache:
                     try:
-                        self.cache[call_args] = (function(*args, **kwargs), now)
-                        self.logger.debug(f'cached function result: {call_repr} -> {self.cache[call_args][0]}')
+                        func_result = function(*args, **kwargs)
+                        if self.do_not_cache:
+                            self.do_not_cache = False
+                            self.logger.debug(f'not cached on demand: {call_repr}')
+                        else:
+                            self.cache[call_args] = (func_result, now)
+                            self.logger.debug(f'cached function result: {call_repr} -> {func_result}')
+
+                        return func_result
+
                     except Exception:
                         self.logger.warning(f'exception caught calling: {call_repr}, no result cached')
                         raise
                 else:
                     self.logger.debug(f'returned cached result: {call_repr} -> {self.cache[call_args][0]}')
-
-                return self.cache[call_args][0]
+                    return self.cache[call_args][0]
 
         self.function = function
         function.clear_cache = self._clear_cache
+        function.do_not_cache = self._do_not_cache
         return update_wrapper(timed_lru_cache_impl, function)
 
     def _concat_args(self, *args, **kwargs):
@@ -118,6 +126,10 @@ class timed_lru_cache:
             self.cache = {}
 
         self.logger.debug(f'cache cleared: {self.function.__qualname__}')
+
+    def _do_not_cache(self):
+        with self.cache_lock:
+            self.do_not_cache = True
 
 
 class repeated_timer(Timer):

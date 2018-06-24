@@ -68,7 +68,7 @@ class movie(plugin):
         else:
             if 'not found' not in response['Error'].casefold():
                 self.logger.warning(f'omdbapi returned error: {response["Error"]}')
-                # TODO do not cache now
+                self.get_movie_info.do_not_cache()
 
             return None
 

@@ -45,5 +45,5 @@ class youtube(plugin):
         if 'error' not in response and 'items' in response: return response
         else:
             self.logger.warning(f'youtube api returned error: {response}')
+            self.get_yt_data.do_not_cache()
             return None
-            # TODO do not cache now

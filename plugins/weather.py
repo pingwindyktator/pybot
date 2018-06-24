@@ -81,7 +81,6 @@ class weather(plugin):
 
             self.bot.say(f'{prefix} {" :: ".join(responses)}')
 
-    @utils.timed_lru_cache(expiration=datetime.timedelta(minutes=3), typed=True)
     def get_weather_info(self, city_name):
         result = self.get_weather_info_impl(city_name)
         if not result:
@@ -92,6 +91,7 @@ class weather(plugin):
 
         return result
 
+    @utils.timed_lru_cache(expiration=datetime.timedelta(minutes=3), typed=True)
     def get_weather_info_impl(self, city_name):
         ask = urllib.parse.quote(city_name)
         raw_response = requests.get(self.weather_url % (ask, self.config['openweathermap_api_key'])).content.decode('utf-8')
@@ -99,13 +99,12 @@ class weather(plugin):
         if 'cod' not in response or int(response['cod']) != 200:
             if 'cod' not in response or int(response['cod']) != 404:
                 self.logger.warning(f'openweathermap error: {raw_response}')
-                # TODO do not cache now
+                self.get_weather_info_impl.do_not_cache()
                 
             return None
 
         return response
 
-    @utils.timed_lru_cache(expiration=datetime.timedelta(minutes=3), typed=True)
     def get_forecast_info(self, city_name):
         result = self.get_forecast_info_impl(city_name)
         if not result:
@@ -117,6 +116,7 @@ class weather(plugin):
         return result
 
     # openweathermap API is really fucked up, I know there's ugly code duplication here...
+    @utils.timed_lru_cache(expiration=datetime.timedelta(minutes=3), typed=True)
     def get_forecast_info_impl(self, city_name):
         ask = urllib.parse.quote(city_name)
         raw_response = requests.get(self.forecast_url % (ask, self.config['openweathermap_api_key'])).content.decode('utf-8')
@@ -124,7 +124,7 @@ class weather(plugin):
         if 'cod' not in response or int(response['cod']) != 200:
             if 'cod' not in response or int(response['cod']) != 404:
                 self.logger.warning(f'openweathermap error: {raw_response}')
-                # TODO do not cache now
+                self.get_forecast_info_impl.do_not_cache()
                 
             return None
 

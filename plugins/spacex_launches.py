@@ -137,7 +137,7 @@ class spacex_launches(plugin):
             self.logger.warning(f'launch {flight_id} probably canceled / rescheduled, skipping...')
             return
 
-        self.bot.say(', '.join(to_call))  # TODO if too long...
+        self.bot.say(', '.join(to_call))
         self.bot.say(self.get_launch_info_str(launch))
 
     @command
