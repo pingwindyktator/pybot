@@ -144,7 +144,7 @@ class builtins(plugin):
         except utils.config_error as e:
             return f'invalid config value: {e}'
         except Exception as e:
-            self.logger.error(f'unexpected exception: {e}')
+            self.logger.error(f'unexpected exception: {type(e).__name__}: {e}')
             if self.bot.is_debug_mode_enabled(): raise
             return 'internal error occurred'
 
@@ -291,7 +291,7 @@ class builtins(plugin):
             self.bot.say(f'invalid config value: {e}, aborting...')
             shutil.copyfile('..pybot.yaml', 'pybot.yaml')
         except Exception as e:
-            self.logger.error(f'exception caught while updating config file: {e}')
+            self.logger.error(f'exception caught while updating config file: {type(e).__name__}: {e}')
             self.bot.say('cannot update config file, aborting...')
             shutil.copyfile('..pybot.yaml', 'pybot.yaml')
             if self.bot.is_debug_mode_enabled(): raise
@@ -339,7 +339,7 @@ class builtins(plugin):
             else: config_updated_str = ''
 
         except Exception as e:
-            self.logger.error(f'exception caught while updating config file: {e}. getting back to {repo.head.orig_head().commit}')
+            self.logger.error(f'exception caught while updating config file: {type(e).__name__}: {e}. getting back to {repo.head.orig_head().commit}')
             self.bot.say('cannot update config file, aborting...')
             repo.head.reset(commit=repo.head.orig_head().commit, index=True, working_tree=True)
             if self.bot.is_debug_mode_enabled(): raise

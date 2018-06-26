@@ -35,19 +35,19 @@ def main(debug_mode=False):
             print("pybot.yaml config file not found. Its template was created but you probably want to edit it before next run.")
             sys.exit(0)
     except Exception as e:
-        print(f'Cannot create config file: {e}')
+        print(f'Cannot create config file: {type(e).__name__}: {e}')
         sys.exit(1)
 
     try:
         config = yaml.load(open("pybot.yaml"), Loader=yaml.Loader)
     except Exception as e:
-        print(f'Cannot read config file: {e}')
+        print(f'Cannot read config file: {type(e).__name__}: {e}')
         sys.exit(6)
 
     try:
         utils.ensure_config_is_ok(config, assert_unknown_keys=True)
     except utils.config_error as e:
-        print(f'Invalid config file: {e}')
+        print(f'Invalid config file: {type(e).__name__}: {e}')
         sys.exit(3)
 
     configure_logger(config)
