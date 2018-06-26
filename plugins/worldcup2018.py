@@ -27,18 +27,14 @@ class worldcup2018(plugin):
             self.status = status
 
         def to_response(self):
-            if self.status == 'TIMED' or self.status == 'SCHEDULED':
+            if self.status == 'future':
                 return f'{color.cyan(self.home_team)} - {color.cyan(self.away_team)} starts at {color.green(self.date)}'
 
-            elif self.status == 'FINISHED':
+            elif self.status == 'completed':
                 return f'{color.cyan(self.home_team)} {self.goals_home_team} - {self.goals_away_team} {color.cyan(self.away_team)}'
 
-            elif self.status == 'IN_PLAY':
-                time_delta = (datetime.now() - self.date).total_seconds() // 60
-                return f'{color.cyan(self.home_team)} {self.goals_home_team} - {self.goals_away_team} {color.cyan(self.away_team)} started {time_delta} minutes ago'
-
-            else:
-                raise RuntimeError('something really wrong happen, unknown match status')
+            elif self.status == 'in progress':
+                return f'{color.cyan(self.home_team)} {self.goals_home_team} - {self.goals_away_team} {color.cyan(self.away_team)}'
 
     def unload_plugin(self):
         self.update_match_data_timer.cancel()
@@ -47,39 +43,43 @@ class worldcup2018(plugin):
 
     @utils.timed_lru_cache(expiration=timedelta(minutes=3))
     def update_match_data(self):
-        api_response = json.loads(requests.get(r'http://api.football-data.org/v1/competitions/467/fixtures').content.decode())
+        api_response = json.loads(requests.get(r'https://worldcup.sfg.io/matches').content.decode())
         now = datetime.now()
         match_timers = []
         next_matches_info = []
         last_matches_info = []
         in_play_matches_info = []
 
-        for match in api_response['fixtures']:
-            home_team = match['homeTeamName']
-            away_team = match['awayTeamName']
-            goals_home_team = match['result']['goalsHomeTeam'] if match['result'] and 'goalsHomeTeam' in match['result'] else None
-            goals_away_team = match['result']['goalsAwayTeam'] if match['result'] and 'goalsAwayTeam' in match['result'] else None
+        for match in api_response:
+            home_team = match['home_team_country']
+            away_team = match['away_team_country']
+            if not home_team or not away_team: continue
+            goals_home_team = match['home_team']['goals'] if 'goals' in match['home_team'] else None
+            goals_away_team = match['away_team']['goals'] if 'goals' in match['away_team'] else None
 
-            assert match['date'][-1] == 'Z'
-            match_date = datetime.strptime(match['date'][:-1], "%Y-%m-%dT%H:%M:%S")
+            assert match['datetime'][-1] == 'Z'
+            match_date = datetime.strptime(match['datetime'][:-1], "%Y-%m-%dT%H:%M:%S")
             match_date = match_date.replace(tzinfo=timezone.utc).astimezone(tz=None).replace(tzinfo=None)
             match_desc = self.match_desc(home_team, away_team, match_date, goals_home_team, goals_away_team, match['status'])
 
             remind_at = match_date - timedelta(minutes=15)
-            if self.config['remind_before_match'] and remind_at > now and match['status'] == 'TIMED':
+            if self.config['remind_before_match'] and remind_at > now and match['status'] == 'future':
                 self.logger.debug(f'setting match reminder for {home_team} - {away_team}: {remind_at}')
                 t = Timer((remind_at - now).total_seconds(), self.remind_upcoming_match, kwargs={'match_desc': match_desc})
                 match_timers.append(t)
                 t.start()
 
-            if match['status'] == 'TIMED':
+            if match['status'] == 'future':
                 next_matches_info.append(match_desc)
 
-            elif match['status'] == 'FINISHED':
+            elif match['status'] == 'completed':
                 last_matches_info.append(match_desc)
 
-            elif match['status'] == 'IN_PLAY':
+            elif match['status'] == 'in progress':
                 in_play_matches_info.append(match_desc)
+
+            else:
+                self.logger.warning(f'something really wrong happen, unknown match status: {match["status"]}')
 
         next_matches_info.sort(key=lambda md: md.date)
         last_matches_info.sort(key=lambda md: md.date, reverse=True)
