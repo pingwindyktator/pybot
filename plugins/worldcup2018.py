@@ -122,7 +122,6 @@ class worldcup2018(plugin):
     @doc('get upcoming 2018 FIFA World Cup matches')
     def wc_next(self, sender_nick, **kwargs):
         self.logger.info(f'{sender_nick} asks about next matches')
-        self.update_match_data()
 
         with self.update_data_lock:
             for md in self.next_matches_info[:3]:
@@ -141,7 +140,6 @@ class worldcup2018(plugin):
     @doc('get 2018 FIFA World Cup matches in play')
     def wc_now(self, sender_nick, **kwargs):
         self.logger.info(f'{sender_nick} asks about in play matches')
-        self.update_match_data()
 
         with self.update_data_lock:
             if not self.in_play_matches_info:
