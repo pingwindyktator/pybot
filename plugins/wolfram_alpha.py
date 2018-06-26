@@ -100,15 +100,18 @@ class wolfram_alpha(plugin):
         self.logger.info(f'{sender_nick} asked wolfram alpha "{msg}"')
         if self.config['warn_crypto_asks']: self.crypto_warner.handle_msg(msg)
         ask = urllib.parse.quote(msg)
-        raw_response = self.get_api_response(ask)
-        self.manage_api_response(raw_response)
+        self.manage_api_response(self.get_api_response(ask))
 
     @utils.timed_lru_cache(expiration=timedelta(hours=1), typed=True)
     def get_api_response(self, ask):
-        return requests.get(self.full_req % (ask, self.config['api_key'])).content.decode('utf-8')
-
-    def manage_api_response(self, raw_response):
+        raw_response = requests.get(self.full_req % (ask, self.config['api_key'])).content.decode('utf-8')
         xml_root = xml.etree.ElementTree.fromstring(raw_response)
+        if xml_root.attrib['error'] == 'true' or xml_root.attrib['success'] == 'false':
+            self.get_api_response.do_not_cache()
+        
+        return xml_root
+
+    def manage_api_response(self, xml_root):
         answers = []
 
         if xml_root.attrib['error'] == 'true':  # wa error
