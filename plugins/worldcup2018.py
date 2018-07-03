@@ -67,7 +67,9 @@ class worldcup2018(plugin):
         goals = match[team]['goals'] if 'goals' in match[team] else None
         pens = match[team]['penalties'] if 'penalties' in match[team] else None
         if goals is not None and pens:
-            goals = f'{goals} ({pens})'
+            if team == 'home_team': goals = f'{goals} ({pens})'
+            elif team == 'away_team': goals = f'({pens}) {goals}'
+            else: raise Exception(f'unknown team: {team}')
 
         return goals
 
