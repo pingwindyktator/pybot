@@ -1,7 +1,7 @@
 import json
 import requests
 
-from threading import Timer, RLock, Lock
+from threading import Timer, Lock
 from datetime import datetime, timedelta, timezone
 from plugin import *
 
@@ -13,12 +13,9 @@ class worldcup2018(plugin):
         self.next_matches_info = []
         self.last_matches_info = []
         self.in_play_matches_info = []
-        self.update_data_lock = RLock()
-        self.update_timers_lock = Lock()
+        self.update_data_lock = Lock()
         self.update_match_data_timer = utils.repeated_timer(timedelta(minutes=1).total_seconds(), self.update_match_data)
         self.update_match_data_timer.start()
-        self.update_match_timers_timer = utils.repeated_timer(timedelta(days=1).total_seconds(), self.update_match_timers)
-        self.update_match_timers_timer.start()
 
     class match_desc:
         def __init__(self, home_team, away_team, date, goals_home_team, goals_away_team, status, city, stadium, time, id):
@@ -43,16 +40,19 @@ class worldcup2018(plugin):
             elif self.status == 'in progress':
                 return f'{color.cyan(self.home_team)} {self.goals_home_team} - {self.goals_away_team} {color.cyan(self.away_team)}, {self.time}'
 
+            elif self.status == 'pending_correction':
+                raise Exception(f'unable to serialize match with {self.status} status')
+
         @staticmethod
         def from_api_response(match):
-            if match['status'] not in ['future', 'completed', 'in progress']:
+            if match['status'] not in ['future', 'completed', 'in progress', 'pending_correction']:
                 raise Exception(f'unknown match status: {match["status"]}')
 
             if match['datetime'][-1] != 'Z':
                 raise Exception(f'invalid match datetime: {match["datetime"]}')
 
-            goals_home_team = match['home_team']['goals'] if 'goals' in match['home_team'] else None
-            goals_away_team = match['away_team']['goals'] if 'goals' in match['away_team'] else None
+            goals_home_team = worldcup2018.prepare_match_goals_str(match, 'home_team')
+            goals_away_team = worldcup2018.prepare_match_goals_str(match, 'away_team')
             match_date = worldcup2018.match_datetime_to_local(match['datetime'])
             return worldcup2018.match_desc(match['home_team_country'], match['away_team_country'], match_date, goals_home_team,
                                            goals_away_team, match['status'], match['venue'], match['location'], match['time'], match['fifa_id'])
@@ -62,18 +62,28 @@ class worldcup2018(plugin):
         assert match_datetime[-1] == 'Z'
         return datetime.strptime(match_datetime[:-1], "%Y-%m-%dT%H:%M:%S").replace(tzinfo=timezone.utc).astimezone(tz=None).replace(tzinfo=None)
 
+    @staticmethod
+    def prepare_match_goals_str(match, team):
+        goals = match[team]['goals'] if 'goals' in match[team] else None
+        pens = match[team]['penalties'] if 'penalties' in match[team] else None
+        if goals is not None and pens:
+            goals = f'{goals} ({pens})'
+
+        return goals
+
     def unload_plugin(self):
-        self.update_match_data_timer.cancel()
-        self.update_match_timers_timer.cancel()
-        for t in self.match_timers: t.cancel()
+        with self.update_data_lock:
+            self.update_match_data_timer.cancel()
+            for t in self.match_timers: t.cancel()
 
     def get_api_response(self):
         return json.loads(requests.get(r'https://worldcup.sfg.io/matches').content.decode())
 
-    def update_match_timers(self):
+    @utils.timed_lru_cache(expiration=timedelta(hours=1), typed=False)
+    def update_match_timers(self, api_response):
+        # not thread safe
         if not self.config['remind_before_match']: return
         now = datetime.now()
-        api_response = self.get_api_response()
         match_timers = []
 
         for match in api_response:
@@ -86,12 +96,16 @@ class worldcup2018(plugin):
                 match_timers.append(t)
                 t.start()
 
-        with self.update_timers_lock:
-            for t in self.match_timers: t.cancel()
-            self.match_timers = match_timers
+        for t in self.match_timers: t.cancel()
+        self.match_timers = match_timers
 
     def update_match_data(self):
-        api_response = self.get_api_response()
+        try:
+            api_response = self.get_api_response()
+        except Exception as e:
+            self.logger.debug(f'unable to get matches data: {type(e).__name__}: {e}')
+            return
+
         next_matches_info = []
         last_matches_info = []
         in_play_matches_info = []
@@ -117,6 +131,7 @@ class worldcup2018(plugin):
             self.next_matches_info = next_matches_info
             self.last_matches_info = last_matches_info
             self.in_play_matches_info = in_play_matches_info
+            self.update_match_timers(api_response)
 
     @command
     @doc('get upcoming 2018 FIFA World Cup matches')
