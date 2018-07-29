@@ -122,7 +122,6 @@ class wolfram_alpha(plugin):
 
         if xml_root.attrib['success'] == 'false':  # no response
             self.logger.debug('******* NO DATA PARSED FROM WA RESPONSE *******')
-            self.logger.debug(raw_response)
             self.logger.debug('***********************************************')
             self.bot.say_err()
             return
