@@ -263,7 +263,7 @@ class builtins(plugin):
         if config == self.bot.config: return False
 
         # seems to be more safe to first save config, then load it and check consistency
-        self.write_config_file(config, '.pybot.yaml')
+        self.write_config_file(config, '.pybot.yaml')  # TODO temp file
 
         config = yaml.load(open('.pybot.yaml'), Loader=yaml.Loader)
         utils.ensure_config_is_ok(config)
