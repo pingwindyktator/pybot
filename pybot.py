@@ -291,6 +291,7 @@ class pybot(irc.bot.SingleServerIRCBot):
     # don't touch this
 
     def _login(self):
+        # TODO move to plugin, add other login ways
         if 'password' in self.config and self._nickname_id < len(self.config['password']):
             password = self.config['password'][self._nickname_id]
             if password is not None and password != '':

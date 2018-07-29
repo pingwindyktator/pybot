@@ -252,6 +252,9 @@ class builtins(plugin):
         :return: True if config was updated, False otherwise
         """
 
+        # TODO fail safety
+        # TODO config file backup
+
         config = yaml.load(open('pybot.yaml'), Loader=yaml.RoundTripLoader)
         config_template = yaml.load(open("pybot.template.yaml"), Loader=yaml.Loader)
         if not config: config = {}
