@@ -1,5 +1,6 @@
 import re
 
+from datetime import timedelta
 from plugin import *
 
 
@@ -10,7 +11,7 @@ class words_blacklist(plugin):
 
     def on_pubmsg(self, source, msg, **kwargs):
         for word in self.blacklist:
-            if re.findall(word, msg) and not self.bot.is_user_op(source.nick):
+            if re.findall(word, msg) and not self.is_whitelisted(source.nick):
                 if self.am_i_channel_operator():
                     self.bot.kick(source.nick, 'watch your language!')
                     self.logger.warning(f'{source.nick} kicked [{word}]')
@@ -43,3 +44,11 @@ class words_blacklist(plugin):
 
     def am_i_channel_operator(self):
         return self.bot.get_channel().is_oper(self.bot.get_nickname())
+
+    @utils.timed_lru_cache(expiration=timedelta(seconds=5), typed=True)
+    def is_whitelisted(self, sender_nick):
+        if self.bot.is_user_op(sender_nick): return True
+        if self.bot.get_channel().is_oper(sender_nick): return True
+        if self.bot.get_channel().is_voiced(sender_nick): return True
+
+        return False
