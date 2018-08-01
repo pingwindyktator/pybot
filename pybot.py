@@ -108,8 +108,16 @@ class pybot(irc.bot.SingleServerIRCBot):
         self.connection.nick(new_nickname)
 
     def on_mode(self, _, raw_msg):
+        # TODO fix me!
+        # check what if +f some_channel (same for user's mode changed?)
+        # update plugin.py docs
+        # update usages
+
         """ called by super() when someone's mode changed """
-        self._call_plugins_methods('mode', raw_msg=raw_msg, source=raw_msg.source, who=irc_nickname(raw_msg.arguments[1]), mode_change=raw_msg.arguments[0])
+        if len(raw_msg.arguments) > 1:
+            self._call_plugins_methods('mode', raw_msg=raw_msg, source=raw_msg.source, who=irc_nickname(raw_msg.arguments[1]), mode_change=raw_msg.arguments[0])
+        else:
+            self._call_plugins_methods('channel_mode', raw_msg=raw_msg, source=raw_msg.source, mode_change=raw_msg.arguments[0])
 
     def on_welcome(self, _, raw_msg):
         """ called by super() when connected to server """
