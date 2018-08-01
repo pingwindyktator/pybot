@@ -6,8 +6,7 @@ from plugin import *
 class notify(plugin):
     def __init__(self, bot):
         super().__init__(bot)
-        self.database = {}  # username -> {words to watch}
-        # TODO db
+        self.database = {}  # username -> {words to watch}  # TODO db
 
     def on_pubmsg(self, source, msg, **kwargs):
         if self.bot.is_user_ignored(source.nick): return
