@@ -18,24 +18,28 @@ class words_blacklist(plugin):
                     self.logger.warning(f'{source.nick} cannot be kicked [{word}], operator privileges needed')
 
     @command(admin=True)
-    @doc('ban_word <word>...: ban <word> words. when one of them appears on chat, bot will kick its sender')
-    def ban_word(self, sender_nick, args, **kwargs):
-        if not args: return
+    @doc('ban_word <regex>: ban <regex>. When it appears on chat, bot will kick its sender')
+    def ban_word(self, sender_nick, msg, **kwargs):
+        if not msg: return
+        try:
+            _ = re.compile(msg)
+        except Exception:
+            self.bot.say(f'it does not look like a valid regex pattern')
+            return
+
         suffix = ', but I need operator privileges to kick ;(' if not self.am_i_channel_operator() else ''
-        self.blacklist.update(args)
-        self.bot.say(f'{args} banned{suffix}')
-        self.logger.info(f'words {args} banned by {sender_nick}')
+        self.blacklist.add(msg)
+        self.bot.say(f'"{msg}" banned{suffix}')
+        self.logger.info(f'regex "{msg}" banned by {sender_nick}')
 
     @command(admin=True)
-    @doc('unban_word <word>...: unban <word> words')
-    def unban_word(self, sender_nick, args, **kwargs):
-        to_unban = [arg for arg in args if arg in self.blacklist]
-        if not to_unban: return
-        for arg in to_unban:
-            self.blacklist.remove(arg)
+    @doc('unban_word <regex>: unban <regex>')
+    def unban_word(self, sender_nick, msg, **kwargs):
+        if msg in self.blacklist:
+            self.blacklist.remove(msg)
 
-        self.bot.say(f'{to_unban} unbanned')
-        self.logger.info(f'words {to_unban} unbanned by {sender_nick}')
+        self.bot.say_ok()
+        self.logger.info(f'regex "{msg}" unbanned by {sender_nick}')
 
     def am_i_channel_operator(self):
         return self.bot.get_channel().is_oper(self.bot.get_nickname())
