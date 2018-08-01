@@ -6,14 +6,14 @@ from plugin import *
 class words_blacklist(plugin):
     def __init__(self, bot):
         super().__init__(bot)
-        self.blacklist = set()
+        self.blacklist = set()  # TODO db
 
     def on_pubmsg(self, source, msg, **kwargs):
         for word in self.blacklist:
             if re.findall(word, msg) and not self.bot.is_user_op(source.nick):
                 if self.am_i_channel_operator():
                     self.bot.kick(source.nick, 'watch your language!')
-                    self.logger.info(f'{source.nick} kicked [{word}]')
+                    self.logger.warning(f'{source.nick} kicked [{word}]')
                 else:
                     self.logger.warning(f'{source.nick} cannot be kicked [{word}], operator privileges needed')
 
