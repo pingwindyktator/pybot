@@ -76,7 +76,7 @@ class seen(plugin):
             if self.activity == seen.activity_type.quit:
                 return f'{nickname} was last seen {delta_time} ago disconnecting from server'
             if self.activity == seen.activity_type.mode_changed:
-                return f'{nickname} was last seen {delta_time} ago setting mode {self.data[1]} {self.data[0]}'
+                return f'{nickname} was last seen {delta_time} ago setting mode {" ".join(self.data[0])}'
             else:
                 raise RuntimeError(f"seen_data: ups, you didn't implemented case for activity_type={self.activity}")
 
@@ -102,9 +102,9 @@ class seen(plugin):
         if not self.config['register_pubmsg_only']:
             self.update_database(irc_nickname(old_nickname), [new_nickname], self.activity_type.nick_changed)
 
-    def on_mode(self, source, who, mode_change, **kwargs):
+    def on_mode(self, source, mode_change, **kwargs):
         if not self.config['register_pubmsg_only']:
-            self.update_database(irc_nickname(source.nick), [who, mode_change], self.activity_type.mode_changed)
+            self.update_database(source.nick, [mode_change], self.activity_type.mode_changed)
 
     def on_kick(self, who, source, **kwargs):
         if not self.config['register_pubmsg_only']:

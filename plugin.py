@@ -54,21 +54,12 @@ class plugin:
         :param raw_msg : raw IRC msg
         """
 
-    def on_mode(self, raw_msg, source, who, mode_change, **kwargs):
+    def on_mode(self, raw_msg, source, mode_change, **kwargs):
         """
         called by bot when someone's mode changed
         :param raw_msg         : raw IRC msg
         :param source          : changer's source
-        :param who             : nickname of user whose mode has changed
-        :param mode_change     : e.g. '+o', '-v'
-        """
-
-    def on_channel_mode(self, raw_msg, source, mode_change, **kwargs):
-        """
-        called by bot when someone's mode changed
-        :param raw_msg         : raw IRC msg
-        :param source          : changer's source
-        :param mode_change     : e.g. '-r', '+f'
+        :param mode_change     : e.g. ['+o', 'some_nick'], ['-v', 'some_nick'], ['+r'], ['+f', '#some_channel']
         """
 
     def on_pubmsg(self, raw_msg, source, msg, **kwargs):
