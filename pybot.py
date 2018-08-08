@@ -660,6 +660,12 @@ class pybot(irc.bot.SingleServerIRCBot):
         if type(msg) is bytes: msg = msg.decode('utf-8')
         if not isinstance(msg, str): msg = str(msg)
 
+        if '\n' in msg:
+            for m in msg.split('\n'):
+                self.say(m, target, force)
+
+            return
+
         if self.is_msg_too_long(msg):
             if not self.config['wrap_too_long_msgs']:
                 self._logger.debug('privmsg too long, discarding...')
