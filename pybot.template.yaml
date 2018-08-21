@@ -1,4 +1,4 @@
-server: irc.freenode.net
+server: chat.freenode.net
 port: 6697
 channel: '#pybot'
 nickname: [pybot, pybot_, pybot__]
