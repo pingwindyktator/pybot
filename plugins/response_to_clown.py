@@ -18,8 +18,8 @@ class response_to_clown(plugin):
         return a == b and a
 
     def on_pubmsg(self, source, msg, **kwargs):
-        if self.riemann in msg                          \
-          and is_same_nickname(source.nick, self.clown) \
+        if self.riemann in msg                               \
+          and self.is_same_nickname(source.nick, self.clown) \
           and annoying_msg.match(msg):
             if self.kick_counter:
                 self.bot.say(f'{self.kick_counter}!')
