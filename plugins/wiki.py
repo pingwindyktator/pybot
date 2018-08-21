@@ -22,11 +22,11 @@ class wiki(plugin):
                 return
 
             prefix = color.orange(f'[{page.title}]')
-            result = f'{prefix} {summary} {page.url}'
-            if self.bot.is_msg_too_long(result):
-                self.bot.say(f'{prefix} {page.url}')
-            else:
+            result = f'{prefix} {summary}'
+            if not self.bot.is_msg_too_long(result):
                 self.bot.say(result)
+
+            self.bot.say(f'{prefix} {page.url}')
 
         except wikipedia.exceptions.PageError:
             self.bot.say_err()
