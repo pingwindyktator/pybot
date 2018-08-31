@@ -29,7 +29,7 @@ class man(plugin):
             self.bot.say_err(ask)
             return
 
-        result = content[start + 19:end].replace(b'       ', b'').replace(b'-\n', b'').replace(b'\n', b' ').replace(b'  ', b' ').decode('utf-8').strip()
+        result = content[start + len('DESCRIPTION'):end].replace(b'       ', b'').replace(b'-\n', b'').replace(b'\n', b' ').replace(b'  ', b' ').replace(b'  ', b' ').replace(b'  ', b' ').decode('utf-8').strip()
 
         if self.bot.is_msg_too_long(result):
             self.bot.say(result, sender_nick)
