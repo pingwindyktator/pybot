@@ -10,7 +10,7 @@ file_logging_level: info
 stdout_logging_level: info
 # enabled_plugins: []
 # disabled_plugins: []
-command_prefix: '!'
+command_prefix: '.'
 colors: true
 flood_protection: true
 try_autocorrect: true

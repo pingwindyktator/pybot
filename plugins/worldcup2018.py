@@ -79,7 +79,7 @@ class worldcup2018(plugin):
             for t in self.match_timers: t.cancel()
 
     def get_api_response(self):
-        return json.loads(requests.get(r'https://worldcup.sfg.io/matches').content.decode())
+        return requests.get(r'https://worldcup.sfg.io/matches').json()
 
     @utils.timed_lru_cache(expiration=timedelta(hours=1), typed=False)
     def update_match_timers(self, api_response):

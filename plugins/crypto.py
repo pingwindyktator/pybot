@@ -25,8 +25,7 @@ class crypto(plugin):
     def update_known_crypto_currencies(self):
         self.logger.debug('updating known cryptocurrencies...')
         url = r'https://api.coinmarketcap.com/v1/ticker/?limit=0'
-        content = requests.get(url, timeout=10).content.decode('utf-8')
-        raw_result = json.loads(content)
+        raw_result = requests.get(url, timeout=10).json()
         result = []
         for entry in raw_result:
             result.append(self.currency_id(entry['id'], entry['name'], entry['symbol']))
@@ -72,8 +71,7 @@ class crypto(plugin):
         curr_id = self.get_crypto_currency_id(curr)
         if not curr_id: return None
 
-        content = requests.get(self.coinmarketcap_url % curr_id.id, timeout=10).content.decode('utf-8')
-        raw_result = json.loads(content)[0]
+        raw_result = requests.get(self.coinmarketcap_url % curr_id.id, timeout=10).json()[0]
         return self.currency_info(curr_id, raw_result)
 
     def generate_curr_price_change_output(self, curr_info):
@@ -174,8 +172,7 @@ class crypto(plugin):
 
         if not (_from_curr and _to_curr) and from_curr.upper() != to_curr.upper():
             # TODO fix fixer.io
-            content = requests.get(self.fixer_url % from_curr, timeout=10).content.decode('utf-8')
-            raw_result = json.loads(content)
+            raw_result = requests.get(self.fixer_url % from_curr, timeout=10).json()
             if 'error' in raw_result:
                 if raw_result['error'] == 'Invalid base':
                     self.bot.say_err(from_curr)

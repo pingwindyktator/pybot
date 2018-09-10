@@ -406,8 +406,7 @@ class builtins(plugin):
             return
 
         with open(filename) as file:
-            raw_response = requests.post(r'http://file.io/?expires=1w', files={r'file': file}).content.decode('utf-8')
-            response = json.loads(raw_response)
+            response = requests.post(r'http://file.io/?expires=1w', files={r'file': file}).json()
             if not response['success'] or 'link' not in response:
                 self.bot.say('file.io error')
                 self.logger.info(f'file.io returned error for {sender_nick}: {response}')

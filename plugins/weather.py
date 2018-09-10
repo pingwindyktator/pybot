@@ -94,11 +94,10 @@ class weather(plugin):
     @utils.timed_lru_cache(expiration=datetime.timedelta(minutes=3), typed=True)
     def get_weather_info_impl(self, city_name):
         ask = urllib.parse.quote(city_name)
-        raw_response = requests.get(self.weather_url % (ask, self.config['openweathermap_api_key'])).content.decode('utf-8')
-        response = json.loads(raw_response)
+        response = requests.get(self.weather_url % (ask, self.config['openweathermap_api_key'])).json()
         if 'cod' not in response or int(response['cod']) != 200:
             if 'cod' not in response or int(response['cod']) != 404:
-                self.logger.warning(f'openweathermap error: {raw_response}')
+                self.logger.warning(f'openweathermap error: {response}')
                 self.get_weather_info_impl.do_not_cache()
                 
             return None
@@ -119,11 +118,10 @@ class weather(plugin):
     @utils.timed_lru_cache(expiration=datetime.timedelta(minutes=3), typed=True)
     def get_forecast_info_impl(self, city_name):
         ask = urllib.parse.quote(city_name)
-        raw_response = requests.get(self.forecast_url % (ask, self.config['openweathermap_api_key'])).content.decode('utf-8')
-        response = json.loads(raw_response)
+        response = requests.get(self.forecast_url % (ask, self.config['openweathermap_api_key'])).json()
         if 'cod' not in response or int(response['cod']) != 200:
             if 'cod' not in response or int(response['cod']) != 404:
-                self.logger.warning(f'openweathermap error: {raw_response}')
+                self.logger.warning(f'openweathermap error: {response}')
                 self.get_forecast_info_impl.do_not_cache()
                 
             return None

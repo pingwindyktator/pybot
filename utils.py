@@ -5,7 +5,7 @@ import tzlocal
 
 from threading import Timer, RLock
 from datetime import datetime, timedelta
-from functools import total_ordering, wraps, update_wrapper
+from functools import total_ordering, update_wrapper
 
 logging_level_str_to_int = {
     'disabled': sys.maxsize,

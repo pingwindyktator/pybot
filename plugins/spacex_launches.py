@@ -36,22 +36,15 @@ class spacex_launches(plugin):
 
     @utils.timed_lru_cache(expiration=timedelta(minutes=3))
     def get_upcoming_launches(self):
-        upcoming_api_uri = r'https://api.spacexdata.com/v2/launches/upcoming'
-        raw_response = requests.get(upcoming_api_uri).content.decode('utf-8')
-        response = json.loads(raw_response)
-        return response
+        return requests.get(r'https://api.spacexdata.com/v2/launches/upcoming').json()
 
     @utils.timed_lru_cache(expiration=timedelta(minutes=3), typed=True)
     def get_launch_by_id(self, flight_id):
-        flight_api_uri = r'https://api.spacexdata.com/v2/launches/all?flight_number=%s'
-        raw_response = requests.get(flight_api_uri % flight_id).content.decode('utf-8')
-        return json.loads(raw_response)[0]
+        return requests.get(r'https://api.spacexdata.com/v2/launches/all?flight_number=%s' % flight_id).json()[0]
 
     @utils.timed_lru_cache(expiration=timedelta(minutes=3))
     def get_latest_launch(self):
-        latest_api_uri = r'https://api.spacexdata.com/v2/launches/latest'
-        raw_response = requests.get(latest_api_uri).content.decode('utf-8')
-        return json.loads(raw_response)
+        return requests.get(r'https://api.spacexdata.com/v2/launches/latest').json()
 
     def check_upcoming_launches(self):
         self.logger.debug('checking upcoming launches...')

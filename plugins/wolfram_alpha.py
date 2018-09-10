@@ -41,8 +41,7 @@ class crypto_wa_warner:
     def _update_known_cryptocurrencies(self):
         self.logger.debug('updating known cryptocurrencies...')
         url = r'https://api.coinmarketcap.com/v1/ticker/?limit=0'
-        content = requests.get(url, timeout=10).content.decode('utf-8')
-        raw_result = json.loads(content)
+        raw_result = requests.get(url, timeout=10).json()
         known_crypto_currencies = []
         for entry in raw_result:
             known_crypto_currencies.append(self.currency_id(entry['id'], entry['name'], entry['symbol']))
