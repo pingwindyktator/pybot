@@ -222,7 +222,7 @@ class builtins(plugin):
         plugins_config = CommentedMap()
 
         for key, value in config.items():
-            if type(value) is not dict and type(value) is not CommentedMap:
+            if not isinstance(value, dict):
                 global_config[key] = value
             else:
                 plugins_config[key] = value
@@ -234,15 +234,18 @@ class builtins(plugin):
 
         with open(outfilename, 'r+') as outfile:
             lines = outfile.readlines()
+            # remove doubled newline
+            lines = [line for i, line in enumerate(lines) if not (not line.strip() and i + 1 < len(lines) and not lines[i + 1].strip())]
+            if lines[-1] != '\n': lines.append('\n')
             outfile.truncate(0)
             outfile.seek(0)
 
             for i, line in enumerate(lines):
                 outfile.write(line)
-                if line.strip() and line.startswith(' ') and i + 1 < len(lines) and lines[i + 1] and lines[i + 1][0].isalpha():
-                    outfile.write('\n')
 
-            outfile.write('\n')
+                if line.strip() and line.startswith(' ') and i + 1 < len(lines) and lines[i + 1].strip() and not lines[i + 1].startswith(' '):
+                    # if last entry in plugin's config
+                    outfile.write('\n')
 
     def update_config_file(self):
         """
@@ -256,7 +259,7 @@ class builtins(plugin):
         # TODO config file backup
 
         config = yaml.load(open('pybot.yaml'), Loader=yaml.RoundTripLoader)
-        config_template = yaml.load(open("pybot.template.yaml"), Loader=yaml.Loader)
+        config_template = yaml.load(open('pybot.template.yaml'), Loader=yaml.Loader)
         if not config: config = {}
         for key, value in config_template.items():
             self.insert_to_config(key, value, config)
@@ -298,6 +301,9 @@ class builtins(plugin):
             self.bot.say('cannot update config file, aborting...')
             shutil.copyfile('..pybot.yaml', 'pybot.yaml')
             if self.bot.is_debug_mode_enabled(): raise
+    
+    def prepare_commit_msg(self, commit):
+        return f'{str(commit)[:6]}: {commit.message.strip()}'
 
     @command(superadmin=True)
     @doc('self_update [<force>]: pull changes from git remote ref and update config file, use [<force>] to discard local changes')
@@ -305,9 +311,15 @@ class builtins(plugin):
         # TODO pip requirements update
         # TODO transactional update?
         self.logger.info(f'{sender_nick} asked for self-update')
-        repo = git.Repo(self.pybot_dir)
-        origin = repo.remote()
+        
+        try:
+            repo = git.Repo(self.pybot_dir)
+        except git.InvalidGitRepositoryError:
+            self.bot.say('not in a git repository, cannot update')
+            return
+
         force_str = ''
+        repo.head.orig_head().set_commit(repo.head)
 
         if repo.head.commit.diff(None):  # will not count files added to working tree
             if args and args[0].strip().casefold() == 'force':
@@ -324,11 +336,11 @@ class builtins(plugin):
             self.logger.info(f'cannot self-update, not pushed changes')
             return
 
-        origin.fetch()
-        origin.pull()
+        repo.remote().fetch()
+        repo.remote().pull()
         if repo.head.orig_head().commit == repo.head.commit:
             self.logger.info(f'already up-to-date at {repo.head.commit}')
-            self.bot.say(f'already up-to-date at "{str(repo.head.commit)[:6]}: {repo.head.commit.message.strip()}"')
+            self.bot.say(f'already up-to-date at "{self.prepare_commit_msg(repo.head.commit)}"')
             return
 
         self.logger.warning(f'updated {repo.head.orig_head().commit} -> {repo.head.commit}')
@@ -348,8 +360,7 @@ class builtins(plugin):
             if self.bot.is_debug_mode_enabled(): raise
             return
 
-        self.bot.say(f'updated, now at "{str(repo.head.commit)[:6]}: {repo.head.commit.message.strip()}"{config_updated_str}{force_str}{diff_str}')
-        repo.head.orig_head().set_commit(repo.head)
+        self.bot.say(f'updated, now at "{self.prepare_commit_msg(repo.head.commit)}"{config_updated_str}{force_str}{diff_str}')
 
     @command(superadmin=True)
     @doc('change_config <entry> <value>: change, save, apply bot config file and ** restart **. use ":" to separate config nesting (eg. "a:b:c" means config["a"]["b"]["c"])')
