@@ -255,9 +255,6 @@ class builtins(plugin):
         :return: True if config was updated, False otherwise
         """
 
-        # TODO fail safety
-        # TODO config file backup
-
         config = yaml.load(open('pybot.yaml'), Loader=yaml.RoundTripLoader)
         config_template = yaml.load(open('pybot.template.yaml'), Loader=yaml.Loader)
         if not config: config = {}
@@ -308,8 +305,6 @@ class builtins(plugin):
     @command(superadmin=True)
     @doc('self_update [<force>]: pull changes from git remote ref and update config file, use [<force>] to discard local changes')
     def self_update(self, sender_nick, args, **kwargs):
-        # TODO pip requirements update
-        # TODO transactional update?
         self.logger.info(f'{sender_nick} asked for self-update')
         
         try:
