@@ -90,6 +90,7 @@ class wolfram_alpha(plugin):
                         r'&excludepodid=NumberLine' \
                         r'&excludepodid=NumberName' \
                         r'&excludepodid=Input' \
+                        r'&excludepodid=DifferenceConversions' \
                         r'&excludepodid=Sequence'
 
     @doc('wa <ask>: ask Wolfram|Alpha about <ask>')
