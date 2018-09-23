@@ -114,7 +114,13 @@ class crypto(plugin):
             self.bot.say_err(curr)
             return
 
-        price_usd = f' ${curr_info.price_usd} (US dollars) ' if curr_info.price_usd else ' unknown price '
+        if curr_info.price_usd > 100:
+            price_usd = f' ${curr_info.price_usd:.2f} (US dollars) '
+        elif curr_info.price_usd > 0:
+            price_usd = f' ${curr_info.price_usd} (US dollars) '
+        else:
+            price_usd = ' unknown price '
+
         self.bot.say(color.orange(f'[{curr_info.id.name}]') + price_usd + self.generate_curr_price_change_output(curr_info))
 
     @command
