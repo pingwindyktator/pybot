@@ -114,10 +114,10 @@ class crypto(plugin):
             self.bot.say_err(curr)
             return
 
-        if curr_info.price_usd > 100:
+        if curr_info.price_usd > 10:
             price_usd = f' ${curr_info.price_usd:.2f} (US dollars) '
         elif curr_info.price_usd > 0:
-            price_usd = f' ${curr_info.price_usd} (US dollars) '
+            price_usd = f' ${curr_info.price_usd:.10f} (US dollars) '
         else:
             price_usd = ' unknown price '
 
@@ -194,7 +194,11 @@ class crypto(plugin):
                 convertions[2] = self.convertion(amount, from_curr, result, to_curr)
 
         self.logger.info(convertions)
-        self.bot.say(color.orange('[Result]') + f' {result:.10f} {to_curr_org}')
+
+        if result > 10: result = f'{result:.2f}'
+        else: result = f'{result:.10f}'
+
+        self.bot.say(color.orange('[Result]') + f' {result} {to_curr_org}')
 
     # --------------------------------------------------------------------------------------------------------------
 
