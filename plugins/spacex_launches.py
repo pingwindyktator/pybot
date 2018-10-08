@@ -112,7 +112,6 @@ class spacex_launches(plugin):
 
             suffix = f'{rocket_name} launch {flight_id_str} was just rescheduled: {old_time_str} -> {new_time_str}'
             self.bot.say(f'{prefix}{suffix}')
-            self.bot.say(self.get_launch_info_str(launch))
 
     def remind_upcoming_launch(self, flight_id):
         self.logger.info(f'reminding about next upcoming launch: {flight_id}')
