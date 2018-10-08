@@ -54,13 +54,17 @@ class spacex_launches(plugin):
             self.handle_upcoming_launch(next_launch)
 
     def handle_upcoming_launch(self, next_launch):
+        now = datetime.now()
         flight_id = next_launch['flight_number']
         next_launch_time = datetime.fromtimestamp(next_launch['launch_date_unix']) if next_launch['launch_date_unix'] else None
 
         if flight_id in self.upcoming_launches_timers:
             if self.upcoming_launches_timers[flight_id].launch_datetime != next_launch_time:
                 old_launch_time = self.upcoming_launches_timers[flight_id].launch_datetime
-                self.inform_rescheduled_launch(next_launch, old_launch_time)
+                self.logger.info(f'launch {flight_id} was just rescheduled: {old_launch_time} -> {next_launch_time}')
+                if old_launch_time - timedelta(days=30) < now:
+                    self.inform_rescheduled_launch(next_launch, old_launch_time)
+
                 self.logger.debug(f'canceling timers for {flight_id}')
                 for timer in self.upcoming_launches_timers[flight_id].timers: timer.cancel()
                 del self.upcoming_launches_timers[flight_id]
@@ -92,31 +96,36 @@ class spacex_launches(plugin):
         self.upcoming_launches_timers[flight_id].launch_datetime = launch_time
 
     def inform_rescheduled_launch(self, launch, old_launch_time):
-        users_to_call = self.get_users_to_call()
-        flight_id = launch['flight_number']
         new_launch_time = datetime.fromtimestamp(launch['launch_date_unix']) if launch['launch_date_unix'] else None
         assert new_launch_time != old_launch_time
+        users_to_call = self.get_users_to_call()
 
-        old_time_str = old_launch_time.strftime('%Y-%m-%d %H:%M') + utils.get_str_utc_offset() if old_launch_time else '<unknown>'
-        new_time_str = new_launch_time.strftime('%Y-%m-%d %H:%M') + utils.get_str_utc_offset() if new_launch_time else '<unknown>'
-        self.logger.info(f'launch {flight_id} was just rescheduled: {old_time_str} -> {new_time_str}')
+        if not self.config['inform_about_rescheduled_launches'] or not users_to_call: return
+
+        flight_id = launch['flight_number']
         old_time_str = color.green(old_launch_time.strftime('%Y-%m-%d %H:%M')) + utils.get_str_utc_offset() if old_launch_time else '<unknown>'
         new_time_str = color.green(new_launch_time.strftime('%Y-%m-%d %H:%M')) + utils.get_str_utc_offset() if new_launch_time else '<unknown>'
+        rocket_name = color.cyan(launch['rocket']['rocket_name'])
+        flight_id_str = color.orange(flight_id)
 
-        if self.config['inform_about_rescheduled_launches'] and users_to_call:
-            if self.config['call_users_for_rescheduled_launches']: prefix = ', '.join(users_to_call) + ': '
-            else: prefix = ''
+        if self.config['call_users_for_rescheduled_launches']: prefix = ', '.join(users_to_call)
+        else: prefix = ''
 
-            rocket_name = color.cyan(launch['rocket']['rocket_name'])
-            flight_id_str = color.orange(flight_id)
+        suffix = f'{rocket_name} launch {flight_id_str} was just rescheduled: {old_time_str} -> {new_time_str}'
 
-            suffix = f'{rocket_name} launch {flight_id_str} was just rescheduled: {old_time_str} -> {new_time_str}'
-            self.bot.say(f'{prefix}{suffix}')
+        if prefix:
+            if self.bot.is_msg_too_long(f'{prefix}: {suffix}'):
+                self.bot.say(f'{prefix}')
+                self.bot.say(f'{suffix}')
+            else:
+                self.bot.say(f'{prefix}: {suffix}')
+        else:
+            self.bot.say(f'{suffix}')
 
     def remind_upcoming_launch(self, flight_id):
         self.logger.info(f'reminding about next upcoming launch: {flight_id}')
-        to_call = self.get_users_to_call()
-        if not to_call: return
+        users_to_call = self.get_users_to_call()
+        if not users_to_call: return
 
         launch = self.get_launch_by_id(flight_id)
         launch_time = datetime.fromtimestamp(launch['launch_date_unix']) if launch['launch_date_unix'] else None
@@ -129,7 +138,7 @@ class spacex_launches(plugin):
             self.logger.warning(f'launch {flight_id} probably canceled / rescheduled, skipping...')
             return
 
-        self.bot.say(', '.join(to_call))
+        self.bot.say(', '.join(users_to_call))
         self.bot.say(self.get_launch_info_str(launch))
 
     @command
