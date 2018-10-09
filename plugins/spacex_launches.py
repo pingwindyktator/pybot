@@ -76,11 +76,10 @@ class spacex_launches(plugin):
         self.upcoming_launches_timers[flight_id] = self.upcoming_launch_info(next_launch_time, [])
 
         if next_launch_time:
-            self.add_reminder_at(next_launch_time - timedelta(hours=24), flight_id, next_launch_time)
-            self.add_reminder_at(next_launch_time - timedelta(hours=1), flight_id, next_launch_time)
-            self.add_reminder_at(next_launch_time - timedelta(minutes=20), flight_id, next_launch_time)
+            self.add_reminder_at(next_launch_time - timedelta(hours=12), flight_id)
+            self.add_reminder_at(next_launch_time - timedelta(minutes=30), flight_id)
 
-    def add_reminder_at(self, time, flight_id, launch_time):
+    def add_reminder_at(self, time, flight_id):
         now = datetime.now()
         if time < now: return
         total_seconds = (time - now).total_seconds()
@@ -92,8 +91,6 @@ class spacex_launches(plugin):
             self.upcoming_launches_timers[flight_id].timers.append(timer)
             timer.start()
             self.logger.debug(f'reminder at {time} set for upcoming launch: {flight_id}')
-
-        self.upcoming_launches_timers[flight_id].launch_datetime = launch_time
 
     def inform_rescheduled_launch(self, launch, old_launch_time):
         new_launch_time = datetime.fromtimestamp(launch['launch_date_unix']) if launch['launch_date_unix'] else None
