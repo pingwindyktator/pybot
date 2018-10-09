@@ -49,7 +49,7 @@ class words_blacklist(plugin):
                     self.bot.say(f'{source.nick}, watch your language!')
                     self.logger.warning(f'{source.nick} cannot be kicked [{word}], operator privileges needed')
 
-    @command(admin=True)
+    @command(channel_op=True)
     @doc('ban_word <regex>: ban <regex>. When it appears on chat, bot will kick its sender')
     def ban_word(self, sender_nick, msg, **kwargs):
         if not msg: return
@@ -65,7 +65,7 @@ class words_blacklist(plugin):
         self.bot.say(f'"{msg}" banned{suffix}')
         self.logger.info(f'regex "{msg}" banned by {sender_nick}')
 
-    @command(admin=True)
+    @command(channel_op=True)
     @doc('unban_word <regex>: unban <regex>')
     def unban_word(self, sender_nick, msg, **kwargs):
         self.remove_from_blacklist(msg)
