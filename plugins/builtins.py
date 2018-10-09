@@ -8,7 +8,7 @@ import copy
 import requests
 import collections
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from ruamel import yaml
 from ruamel.yaml.comments import CommentedMap
 from ruamel.yaml.parser import ParserError
@@ -406,35 +406,58 @@ class builtins(plugin):
         self.bot.say('config entry applied, restarting...', force=True)
         self.restart_impl(sender_nick)
 
-    def upload_file_impl(self, sender_nick, filename):
-        if not os.path.isfile(filename):
-            self.bot.say(f'no {filename} file found')
-            return
-
+    def upload_file_impl(self, filename):
         with open(filename) as file:
             response = requests.post(r'http://file.io/?expires=1w', files={r'file': file}).json()
             if not response['success'] or 'link' not in response:
-                self.bot.say('file.io error')
-                self.logger.info(f'file.io returned error for {sender_nick}: {response}')
+                raise RuntimeError('file.io error')
             else:
-                self.bot.say(f'{sender_nick}: check your privmsg!')
-                self.bot.say(response['link'], sender_nick)
-                self.logger.info(f'{filename} uploaded to file.io for {sender_nick}: {response["link"]}')
+                return response['link']
+
+    def upload_file(self, filename):
+        if not os.path.isfile(filename):
+            raise RuntimeError(f'{filename}: no such file')
+
+        for i in range(0, 3):
+            try:
+                return self.upload_file_impl(filename)
+            except Exception as e:
+                self.logger.debug(f'unable to upload {filename}: {type(e).__name__}: {e}, retrying...')
+
+        with open('.upload_file', 'w') as outfile:
+            with open(filename) as infile:
+                outfile.writelines(infile.readlines()[-1000:])
+
+        return self.upload_file_impl('.upload_file')
 
     @command(admin=True)
     @doc('uploads error logs to file.io')
     def upload_errors(self, sender_nick, **kwargs):
-        self.upload_file_impl(sender_nick, r'pybot.error')
+        try:
+            link = self.upload_file(r'pybot.error')
+            self.bot.say(f'{sender_nick}: check your privmsg!')
+            self.bot.say(link, sender_nick)
+            self.logger.info(f'pybot.error uploaded to file.io for {sender_nick}: {link}')
+        except Exception as e:
+            self.bot.say(f'unable to upload file')
+            self.logger.error(f'unable to upload pybot.error: {type(e).__name__}: {e}')
+
+    @command(admin=True)
+    @doc('uploads log file to file.io')
+    def upload_logs(self, sender_nick, **kwargs):
+        try:
+            link = self.upload_file(r'pybot.log')
+            self.bot.say(f'{sender_nick}: check your privmsg!')
+            self.bot.say(link, sender_nick)
+            self.logger.info(f'pybot.log uploaded to file.io for {sender_nick}: {link}')
+        except Exception as e:
+            self.bot.say(f'unable to upload file')
+            self.logger.error(f'unable to upload pybot.log: {type(e).__name__}: {e}')
 
     @command
     @doc("get bot's local time")
     def time(self, **kwargs):
         self.bot.say(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + utils.get_str_utc_offset())
-
-    @command(admin=True)
-    @doc('uploads log file to file.io')
-    def upload_logs(self, sender_nick, **kwargs):
-        self.upload_file_impl(sender_nick, r'pybot.log')
 
     @command
     @doc("fix your previous command")

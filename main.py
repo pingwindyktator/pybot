@@ -29,7 +29,7 @@ if __name__ == "__main__":
               % (type(e).__name__, e))
         open('pybot.error', 'w').close()
         if not os.path.exists('pybot.log'):
-            with open('pybot.log', 'w'): pass
+            open('pybot.log', 'w').close()
 
         with open('pybot.error', 'a') as error_file:
             with open('pybot.log') as log_file:
