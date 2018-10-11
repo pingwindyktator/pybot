@@ -11,10 +11,10 @@ See [wiki/features](https://github.com/pingwindyktator/pybot/wiki/features)!
 First of all, you need at least Python 3.6 to run it. You can use pyenv to get it:
 
 ```shell
-sudo apt-get install -y build-essential libbz2-dev libssl-dev libreadline-dev \
+sudo apt-get install -y curl git vim build-essential libbz2-dev libssl-dev libreadline-dev \
                         libsqlite3-dev tk-dev  # install headers needed to build CPythons
-sudo apt-get install curl git vim && curl -L https://raw.githubusercontent.com/yyuu/pyenv-installer/master/bin/pyenv-installer \
-      | bash  # run the pyenv installer script
+curl -L https://raw.githubusercontent.com/yyuu/pyenv-installer/master/bin/pyenv-installer \
+      | bash # run the pyenv installer script
 ```
 
 Then add those lines to your `~/.bashrc` file:
