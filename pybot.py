@@ -682,7 +682,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         self.say(random.choice(okies), target, force)
 
     def say_err(self, ctx=None, target=None, force=False):
-        errs = ["you best check yo'self!", "I can't do that Dave", 'who knows?', "don't ask me", '*shrug*', '...eh?', 'no idea', 'no clue', 'beats me', 'dunno']
+        errs = ["you best check yo'self!", '¯\_(ツ)_/¯', "I can't do that Dave", 'who knows?', "don't ask me", '*shrug*', '...eh?', 'no idea', 'no clue', 'beats me', 'dunno']
         errs_ctx = ['I know nothing about %s', "I can't help you with %s", 'I never heard of %s :(', "%s? what's that then?"]
         self.say(random.choice(errs_ctx) % ctx) if ctx else self.say(random.choice(errs), target, force)
 
