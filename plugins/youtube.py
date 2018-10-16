@@ -2,6 +2,7 @@ import json
 import urllib.parse
 import requests
 
+from datetime import timedelta
 from plugin import *
 
 
@@ -36,11 +37,12 @@ class youtube(plugin):
             prefix = color.cyan(f'[{item["snippet"]["title"]}]')
             self.bot.say(f'{prefix} {self.yt_url % item["id"]["videoId"]}')
 
+    @utils.timed_lru_cache(expiration=timedelta(minutes=3), typed=True)
     def get_yt_data(self, ask):
         ask = urllib.parse.quote(ask)
-        raw_response = requests.get(self.yt_api_url % (self.config['order_by'], self.config['api_key'], ask)).content.decode('utf-8')
-        response = json.loads(raw_response)
+        response = requests.get(self.yt_api_url % (self.config['order_by'], self.config['api_key'], ask)).json()
         if 'error' not in response and 'items' in response: return response
         else:
             self.logger.warning(f'youtube api returned error: {response}')
+            self.get_yt_data.do_not_cache()
             return None

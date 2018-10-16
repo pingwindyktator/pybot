@@ -2,6 +2,7 @@ import requests
 import urllib.parse
 import json
 
+from datetime import timedelta
 from plugin import *
 
 
@@ -58,14 +59,15 @@ class movie(plugin):
         rating = f' ({response["imdbRating"]}/10 out of {response["imdbVotes"]} voters)' if self.api_response_contains(response, 'imdbRating') and 'imdbVotes' in response else ''
         self.bot.say(f'{self.build_prefix(response)} {self.imdb_url % response["imdbID"]}{rating}')
 
+    @utils.timed_lru_cache(expiration=timedelta(hours=1), typed=True)
     def get_movie_info(self, movie):
         ask = urllib.parse.quote(movie)
-        raw_response = requests.get(self.omdbapi_url % (ask, self.config['omdb_api_key'])).content.decode('utf-8')
-        response = json.loads(raw_response)
+        response = requests.get(self.omdbapi_url % (ask, self.config['omdb_api_key'])).json()
         if response['Response'] == 'True' and self.api_response_contains(response, 'Title'): return response
         else:
             if 'not found' not in response['Error'].casefold():
-                self.logger.warning(f'omdbapi returned error: {response}')
+                self.logger.warning(f'omdbapi returned error: {response["Error"]}')
+                self.get_movie_info.do_not_cache()
 
             return None
 

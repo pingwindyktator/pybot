@@ -17,7 +17,7 @@ class whois(plugin):
         try:
             data = pythonwhois.get_whois(domain, normalized=True)
         except Exception as e:
-            self.logger.warning(f'unable to get whois info: {e}')
+            self.logger.warning(f'unable to get whois info: {type(e).__name__}: {e}')
             self.bot.say_err()
             return
 

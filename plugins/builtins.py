@@ -8,7 +8,7 @@ import copy
 import requests
 import collections
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from ruamel import yaml
 from ruamel.yaml.comments import CommentedMap
 from ruamel.yaml.parser import ParserError
@@ -144,7 +144,7 @@ class builtins(plugin):
         except utils.config_error as e:
             return f'invalid config value: {e}'
         except Exception as e:
-            self.logger.error(f'unexpected exception: {e}')
+            self.logger.error(f'unexpected exception: {type(e).__name__}: {e}')
             if self.bot.is_debug_mode_enabled(): raise
             return 'internal error occurred'
 
@@ -222,7 +222,7 @@ class builtins(plugin):
         plugins_config = CommentedMap()
 
         for key, value in config.items():
-            if type(value) is not dict and type(value) is not CommentedMap:
+            if not isinstance(value, dict):
                 global_config[key] = value
             else:
                 plugins_config[key] = value
@@ -234,15 +234,18 @@ class builtins(plugin):
 
         with open(outfilename, 'r+') as outfile:
             lines = outfile.readlines()
+            # remove doubled newline
+            lines = [line for i, line in enumerate(lines) if not (not line.strip() and i + 1 < len(lines) and not lines[i + 1].strip())]
+            if lines[-1] != '\n': lines.append('\n')
             outfile.truncate(0)
             outfile.seek(0)
 
             for i, line in enumerate(lines):
                 outfile.write(line)
-                if line.strip() and line.startswith(' ') and i + 1 < len(lines) and lines[i + 1] and lines[i + 1][0].isalpha():
-                    outfile.write('\n')
 
-            outfile.write('\n')
+                if line.strip() and line.startswith(' ') and i + 1 < len(lines) and lines[i + 1].strip() and not lines[i + 1].startswith(' '):
+                    # if last entry in plugin's config
+                    outfile.write('\n')
 
     def update_config_file(self):
         """
@@ -253,7 +256,7 @@ class builtins(plugin):
         """
 
         config = yaml.load(open('pybot.yaml'), Loader=yaml.RoundTripLoader)
-        config_template = yaml.load(open("pybot.template.yaml"), Loader=yaml.Loader)
+        config_template = yaml.load(open('pybot.template.yaml'), Loader=yaml.Loader)
         if not config: config = {}
         for key, value in config_template.items():
             self.insert_to_config(key, value, config)
@@ -263,7 +266,7 @@ class builtins(plugin):
         if config == self.bot.config: return False
 
         # seems to be more safe to first save config, then load it and check consistency
-        self.write_config_file(config, '.pybot.yaml')
+        self.write_config_file(config, '.pybot.yaml')  # TODO temp file
 
         config = yaml.load(open('.pybot.yaml'), Loader=yaml.Loader)
         utils.ensure_config_is_ok(config)
@@ -291,20 +294,27 @@ class builtins(plugin):
             self.bot.say(f'invalid config value: {e}, aborting...')
             shutil.copyfile('..pybot.yaml', 'pybot.yaml')
         except Exception as e:
-            self.logger.error(f'exception caught while updating config file: {e}')
+            self.logger.error(f'exception caught while updating config file: {type(e).__name__}: {e}')
             self.bot.say('cannot update config file, aborting...')
             shutil.copyfile('..pybot.yaml', 'pybot.yaml')
             if self.bot.is_debug_mode_enabled(): raise
+    
+    def prepare_commit_msg(self, commit):
+        return f'{str(commit)[:6]}: {commit.message.strip()}'
 
     @command(superadmin=True)
     @doc('self_update [<force>]: pull changes from git remote ref and update config file, use [<force>] to discard local changes')
     def self_update(self, sender_nick, args, **kwargs):
-        # TODO pip requirements update
-        # TODO transactional update?
         self.logger.info(f'{sender_nick} asked for self-update')
-        repo = git.Repo(self.pybot_dir)
-        origin = repo.remote()
+        
+        try:
+            repo = git.Repo(self.pybot_dir)
+        except git.InvalidGitRepositoryError:
+            self.bot.say('not in a git repository, cannot update')
+            return
+
         force_str = ''
+        repo.head.orig_head().set_commit(repo.head)
 
         if repo.head.commit.diff(None):  # will not count files added to working tree
             if args and args[0].strip().casefold() == 'force':
@@ -321,11 +331,11 @@ class builtins(plugin):
             self.logger.info(f'cannot self-update, not pushed changes')
             return
 
-        origin.fetch()
-        origin.pull()
+        repo.remote().fetch()
+        repo.remote().pull()
         if repo.head.orig_head().commit == repo.head.commit:
             self.logger.info(f'already up-to-date at {repo.head.commit}')
-            self.bot.say(f'already up-to-date at "{str(repo.head.commit)[:6]}: {repo.head.commit.message.strip()}"')
+            self.bot.say(f'already up-to-date at "{self.prepare_commit_msg(repo.head.commit)}"')
             return
 
         self.logger.warning(f'updated {repo.head.orig_head().commit} -> {repo.head.commit}')
@@ -339,14 +349,13 @@ class builtins(plugin):
             else: config_updated_str = ''
 
         except Exception as e:
-            self.logger.error(f'exception caught while updating config file: {e}. getting back to {repo.head.orig_head().commit}')
+            self.logger.error(f'exception caught while updating config file: {type(e).__name__}: {e}. getting back to {repo.head.orig_head().commit}')
             self.bot.say('cannot update config file, aborting...')
             repo.head.reset(commit=repo.head.orig_head().commit, index=True, working_tree=True)
             if self.bot.is_debug_mode_enabled(): raise
             return
 
-        self.bot.say(f'updated, now at "{str(repo.head.commit)[:6]}: {repo.head.commit.message.strip()}"{config_updated_str}{force_str}{diff_str}')
-        repo.head.orig_head().set_commit(repo.head)
+        self.bot.say(f'updated, now at "{self.prepare_commit_msg(repo.head.commit)}"{config_updated_str}{force_str}{diff_str}')
 
     @command(superadmin=True)
     @doc('change_config <entry> <value>: change, save, apply bot config file and ** restart **. use ":" to separate config nesting (eg. "a:b:c" means config["a"]["b"]["c"])')
@@ -397,36 +406,58 @@ class builtins(plugin):
         self.bot.say('config entry applied, restarting...', force=True)
         self.restart_impl(sender_nick)
 
-    def upload_file_impl(self, sender_nick, filename):
-        if not os.path.isfile(filename):
-            self.bot.say(f'no {filename} file found')
-            return
-
+    def upload_file_impl(self, filename):
         with open(filename) as file:
-            raw_response = requests.post(r'http://file.io/?expires=1w', files={r'file': file}).content.decode('utf-8')
-            response = json.loads(raw_response)
+            response = requests.post(r'http://file.io/?expires=1w', files={r'file': file}).json()
             if not response['success'] or 'link' not in response:
-                self.bot.say('file.io error')
-                self.logger.info(f'file.io returned error for {sender_nick}: {response}')
+                raise RuntimeError('file.io error')
             else:
-                self.bot.say(f'{sender_nick}: check your privmsg!')
-                self.bot.say(response['link'], sender_nick)
-                self.logger.info(f'{filename} uploaded to file.io for {sender_nick}: {response["link"]}')
+                return response['link']
+
+    def upload_file(self, filename):
+        if not os.path.isfile(filename):
+            raise RuntimeError(f'{filename}: no such file')
+
+        for i in range(0, 3):
+            try:
+                return self.upload_file_impl(filename)
+            except Exception as e:
+                self.logger.debug(f'unable to upload {filename}: {type(e).__name__}: {e}, retrying...')
+
+        with open('.upload_file', 'w') as outfile:
+            with open(filename) as infile:
+                outfile.writelines(infile.readlines()[-1000:])
+
+        return self.upload_file_impl('.upload_file')
 
     @command(admin=True)
     @doc('uploads error logs to file.io')
     def upload_errors(self, sender_nick, **kwargs):
-        self.upload_file_impl(sender_nick, r'pybot.error')
+        try:
+            link = self.upload_file(r'pybot.error')
+            self.bot.say(f'{sender_nick}: check your privmsg!')
+            self.bot.say(link, sender_nick)
+            self.logger.info(f'pybot.error uploaded to file.io for {sender_nick}: {link}')
+        except Exception as e:
+            self.bot.say(f'unable to upload file')
+            self.logger.error(f'unable to upload pybot.error: {type(e).__name__}: {e}')
+
+    @command(admin=True)
+    @doc('uploads log file to file.io')
+    def upload_logs(self, sender_nick, **kwargs):
+        try:
+            link = self.upload_file(r'pybot.log')
+            self.bot.say(f'{sender_nick}: check your privmsg!')
+            self.bot.say(link, sender_nick)
+            self.logger.info(f'pybot.log uploaded to file.io for {sender_nick}: {link}')
+        except Exception as e:
+            self.bot.say(f'unable to upload file')
+            self.logger.error(f'unable to upload pybot.log: {type(e).__name__}: {e}')
 
     @command
     @doc("get bot's local time")
     def time(self, **kwargs):
         self.bot.say(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + utils.get_str_utc_offset())
-
-    @command(admin=True)
-    @doc('uploads log file to file.io')
-    def upload_logs(self, sender_nick, **kwargs):
-        self.upload_file_impl(sender_nick, r'pybot.log')
 
     @command
     @doc("fix your previous command")

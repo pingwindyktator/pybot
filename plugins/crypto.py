@@ -12,34 +12,25 @@ class crypto(plugin):
         self.known_crypto_currencies = None
         self.convert_regex = re.compile(r'^([0-9]*\.?[0-9]*)\W*([A-Za-z]+)\W+(to|in)\W+([A-Za-z]+)$')
         self.time_delta_regex = re.compile(r'([0-9]+[Hh])?\W*([0-9]+[Mm])?(.*)')
-        self.coinmarketcap_url = r'https://api.coinmarketcap.com/v1/ticker/%s'
-        self.fixer_url = r'http://api.fixer.io/latest?base=%s'
         self.watch_timers = {}  # {curr -> watch_desc}
         self.crypto_currencies_lock = Lock()
-        self.update_timer = utils.repeated_timer(timedelta(hours=1).total_seconds(), self.update_known_crypto_currencies)
-        self.update_timer.start()
 
     def unload_plugin(self):
-        self.update_timer.cancel()
-
         for t in self.watch_timers.values():
             t.timer_object.cancel()
 
-    def get_known_crypto_currencies(self):
+    @utils.timed_lru_cache(expiration=timedelta(hours=1))
+    def update_known_crypto_currencies(self):
+        self.logger.debug('updating known cryptocurrencies...')
         url = r'https://api.coinmarketcap.com/v1/ticker/?limit=0'
-        content = requests.get(url, timeout=10).content.decode('utf-8')
-        raw_result = json.loads(content)
+        raw_result = requests.get(url, timeout=10).json()
         result = []
         for entry in raw_result:
             result.append(self.currency_id(entry['id'], entry['name'], entry['symbol']))
 
-        return result
-
-    def update_known_crypto_currencies(self):
-        self.logger.debug('updating known cryptocurrencies...')
-        res = self.get_known_crypto_currencies()
         with self.crypto_currencies_lock:
-            self.known_crypto_currencies = res
+            self.known_crypto_currencies = result
+            self.get_crypto_currency_id.clear_cache()
 
     class watch_desc:
         def __init__(self, timer_object, timedelta):
@@ -62,6 +53,7 @@ class crypto(plugin):
             self.week_change = float(raw_result['percent_change_7d']) if raw_result['percent_change_7d'] else None
             self.marker_cap_usd = float(raw_result['market_cap_usd']) if raw_result['market_cap_usd'] else None
 
+    @utils.timed_lru_cache(typed=True)
     def get_crypto_currency_id(self, alias):
         alias = alias.casefold()
         with self.crypto_currencies_lock:
@@ -71,12 +63,13 @@ class crypto(plugin):
 
         return None
 
+    @utils.timed_lru_cache(expiration=timedelta(minutes=3), typed=True)
     def get_crypto_curr_info(self, curr):
+        self.update_known_crypto_currencies()
         curr_id = self.get_crypto_currency_id(curr)
         if not curr_id: return None
-
-        content = requests.get(self.coinmarketcap_url % curr_id.id, timeout=10).content.decode('utf-8')
-        raw_result = json.loads(content)[0]
+        url = r'https://api.coinmarketcap.com/v1/ticker/%s'
+        raw_result = requests.get(url % curr_id.id, timeout=10).json()[0]
         return self.currency_info(curr_id, raw_result)
 
     def generate_curr_price_change_output(self, curr_info):
@@ -119,7 +112,13 @@ class crypto(plugin):
             self.bot.say_err(curr)
             return
 
-        price_usd = f' ${curr_info.price_usd} (US dollars) ' if curr_info.price_usd else ' unknown price '
+        if curr_info.price_usd > 10:
+            price_usd = f' ${curr_info.price_usd:.2f} (US dollars) '
+        elif curr_info.price_usd > 0:
+            price_usd = f' ${curr_info.price_usd:.10f} (US dollars) '
+        else:
+            price_usd = ' unknown price '
+
         self.bot.say(color.orange(f'[{curr_info.id.name}]') + price_usd + self.generate_curr_price_change_output(curr_info))
 
     @command
@@ -149,51 +148,27 @@ class crypto(plugin):
             return f'{self.amount_from} {self.from_curr} == {self.amount_to} {self.to_curr}'
 
     def convert_impl(self, amount, from_curr, to_curr):
-        to_curr_org = to_curr.upper()
-        _from_curr = self.get_crypto_curr_info(from_curr)
-        _to_curr = self.get_crypto_curr_info(to_curr)
-        convertions = [None, None, None]
+        from_curr_info = self.get_crypto_curr_info(from_curr)
+        to_curr_info = self.get_crypto_curr_info(to_curr)
 
-        if _from_curr:
-            if not _from_curr.price_usd:
-                self.bot.say(f'unknown price of {from_curr}')
-                return
+        if not from_curr_info:
+            self.bot.say(f'unknown cryptocurrency: {from_curr}')
+            return
 
-            convertions[0] = self.convertion(amount, _from_curr.id.symbol, amount * _from_curr.price_usd, 'usd')
-            amount *= _from_curr.price_usd
-            from_curr = 'usd'
+        to_curr = to_curr_info.id.symbol.lower() if to_curr_info else to_curr.lower()
+        url = r'https://api.coinmarketcap.com/v1/ticker/%s/?convert=%s' % (from_curr_info.id.id, to_curr)
+        raw_result = requests.get(url, timeout=10).json()[0]
 
-        if _to_curr:
-            if not _to_curr.price_usd:
-                self.bot.say(f'unknown price of {to_curr}')
-                return
+        if f'price_{to_curr}' not in raw_result:
+            self.bot.say(f'cannot convert {from_curr} to {to_curr}')
+            return
 
-            convertions[1] = self.convertion(amount / _to_curr.price_usd, _to_curr.id.symbol, amount, 'usd')
-            amount /= _to_curr.price_usd
-            to_curr = 'usd'
-            to_curr_org = _to_curr.id.symbol
+        result = float(raw_result[f'price_{to_curr}']) * amount
 
-        result = amount
+        if result > 10: result = f'{result:.2f}'
+        else: result = f'{result:.10f}'
 
-        if not (_from_curr and _to_curr) and from_curr.upper() != to_curr.upper():
-            content = requests.get(self.fixer_url % from_curr, timeout=5).content.decode('utf-8')
-            raw_result = json.loads(content)
-            if 'error' in raw_result:
-                if raw_result['error'] == 'Invalid base':
-                    self.bot.say_err(from_curr)
-                else:
-                    self.bot.say(f"fixer.io can't convert {from_curr} to {to_curr}")
-                    self.logger.warning(f'fixer.io error: {raw_result["error"]}')
-                return
-            elif to_curr.upper() not in raw_result['rates']:
-                self.bot.say_err(to_curr)
-                return
-            else:
-                result = amount * raw_result['rates'][to_curr.upper()]
-                convertions[2] = self.convertion(amount, from_curr, result, to_curr)
-
-        self.logger.info(convertions)
-        self.bot.say(color.orange('[Result]') + f' {result:.10f} {to_curr_org}')
+        self.bot.say(color.orange('[Result]') + f' {result} {to_curr.upper()}')
 
     # --------------------------------------------------------------------------------------------------------------
 

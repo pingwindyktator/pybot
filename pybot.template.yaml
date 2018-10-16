@@ -1,4 +1,4 @@
-server: irc.freenode.net
+server: chat.freenode.net
 port: 6697
 channel: '#pybot'
 nickname: [pybot, pybot_, pybot__]
@@ -10,7 +10,7 @@ file_logging_level: info
 stdout_logging_level: info
 # enabled_plugins: []
 # disabled_plugins: []
-command_prefix: '!'
+command_prefix: '.'
 colors: true
 flood_protection: true
 try_autocorrect: true
@@ -59,6 +59,9 @@ movie:
 weather:
   openweathermap_api_key: 42477cb64dced06bef9e59df50c48ca8
 
+words_blacklist:
+  db_location: db/words_blacklist.db
+
 youtube:
   api_key: AIzaSyCoO8Jm9Cc3L-O_y-QH0VZRG5LifKmq4io
   results: 2
@@ -76,7 +79,6 @@ antispam:
 
 spacex_launches:
   db_location: db/spacex.db
-  update_every_min: 10
   inform_about_rescheduled_launches: true
   call_users_for_rescheduled_launches: true
   include_flight_id: false

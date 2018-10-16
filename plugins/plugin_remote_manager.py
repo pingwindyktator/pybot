@@ -22,7 +22,7 @@ class plugin_remote_manager(plugin):
     @command
     @doc('get enabled plugins')
     def plugins(self, sender_nick, **kwargs):
-        self.bot.say(f'enabled plugins: {", ".join(self.bot.get_plugins_names())}')
+        self.bot.say(f'enabled plugins: {", ".join(sorted(self.bot.get_plugins_names()))}')
         self.logger.info(f'plugins given to {sender_nick}')
 
     def get_best_plugin_name_match(self, plugin_name):

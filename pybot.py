@@ -109,7 +109,7 @@ class pybot(irc.bot.SingleServerIRCBot):
 
     def on_mode(self, _, raw_msg):
         """ called by super() when someone's mode changed """
-        self._call_plugins_methods('mode', raw_msg=raw_msg, source=raw_msg.source, who=irc_nickname(raw_msg.arguments[1]), mode_change=raw_msg.arguments[0])
+        self._call_plugins_methods('mode', raw_msg=raw_msg, source=raw_msg.source, mode_change=raw_msg.arguments)
 
     def on_welcome(self, _, raw_msg):
         """ called by super() when connected to server """
@@ -291,6 +291,7 @@ class pybot(irc.bot.SingleServerIRCBot):
     # don't touch this
 
     def _login(self):
+        # TODO move to plugin, add other login ways
         if 'password' in self.config and self._nickname_id < len(self.config['password']):
             password = self.config['password'][self._nickname_id]
             if password is not None and password != '':
@@ -659,6 +660,12 @@ class pybot(irc.bot.SingleServerIRCBot):
         if type(msg) is bytes: msg = msg.decode('utf-8')
         if not isinstance(msg, str): msg = str(msg)
 
+        if '\n' in msg:
+            for m in msg.split('\n'):
+                self.say(m, target, force)
+
+            return
+
         if self.is_msg_too_long(msg):
             if not self.config['wrap_too_long_msgs']:
                 self._logger.debug('privmsg too long, discarding...')
@@ -675,7 +682,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         self.say(random.choice(okies), target, force)
 
     def say_err(self, ctx=None, target=None, force=False):
-        errs = ["you best check yo'self!", "I can't do that Dave", 'who knows?', "don't ask me", '*shrug*', '...eh?', 'no idea', 'no clue', 'beats me', 'dunno']
+        errs = ["you best check yo'self!", '¯\_(ツ)_/¯', "I can't do that Dave", 'who knows?', "don't ask me", '*shrug*', '...eh?', 'no idea', 'no clue', 'beats me', 'dunno']
         errs_ctx = ['I know nothing about %s', "I can't help you with %s", 'I never heard of %s :(', "%s? what's that then?"]
         self.say(random.choice(errs_ctx) % ctx) if ctx else self.say(random.choice(errs), target, force)
 

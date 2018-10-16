@@ -23,7 +23,7 @@ def trim_msg(to_trim, full_msg):
             to_trim_impl = re.compile(to_trim + r'\s*').findall(full_msg)[0]
             command = full_msg.replace(to_trim_impl, '', 1)
     except Exception as e:
-        logging.getLogger(__name__).error(f'exception caught while parsing msg: {e}')
+        logging.getLogger(__name__).error(f'exception caught while parsing msg: {type(e).__name__}: {e}')
         return ''
 
     return command

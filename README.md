@@ -11,10 +11,10 @@ See [wiki/features](https://github.com/pingwindyktator/pybot/wiki/features)!
 First of all, you need at least Python 3.6 to run it. You can use pyenv to get it:
 
 ```shell
-sudo apt-get install -y build-essential libbz2-dev libssl-dev libreadline-dev \
+sudo apt-get install -y curl git vim build-essential libbz2-dev libssl-dev libreadline-dev \
                         libsqlite3-dev tk-dev  # install headers needed to build CPythons
-sudo apt-get install curl git vim && curl -L https://raw.githubusercontent.com/yyuu/pyenv-installer/master/bin/pyenv-installer \
-      | bash  # run the pyenv installer script
+curl -L https://raw.githubusercontent.com/yyuu/pyenv-installer/master/bin/pyenv-installer \
+      | bash # run the pyenv installer script
 ```
 
 Then add those lines to your `~/.bashrc` file:
@@ -22,7 +22,7 @@ Then add those lines to your `~/.bashrc` file:
 ```shell
 # pyenv
 export PYENV_VIRTUALENV_DISABLE_PROMPT=1  # to prevent pyenv from messing up your PS1
-export PATH="~/.pyenv/bin:$PATH"
+export PATH="${HOME}/.pyenv/bin:${PATH}"
 eval "$(pyenv init -)"
 eval "$(pyenv virtualenv-init -)"
 ```
@@ -47,7 +47,7 @@ That's all. Really.
 
 ## Configuration
 
-Bot config is placed in `pybot.yaml` file, which is widely known yaml-format file. During the very first start, such file will be prepared based on `pybot.template.yaml`. I believe most of config values are self-descriptive, there are some tricky ones:
+Bot config is placed in `pybot.yaml` file, which is widely known yaml-format file. During the very first start, such file will be prepared based on `pybot.template.yaml`. I believe most of config values are self-descriptive, however, there might be some tricky ones:
 
 `max_autorejoin_attempts` - describes how many times bot rejoins after gets kicked from channel  
 `superop` - bot owner IRC nickname  
@@ -65,15 +65,15 @@ Go ahead and freely customize config to match your preferences. Bot will ensure 
 To create a new plugin:
 - Create new python file in `plugins` directory
 - Define a class deriving from `plugin` class (`from plugin import *`) and named as its file (i.e. in file `plugins/new_plugin.py` there should be class named `new_plugin`)
-- Create your new shiny bright plugin's constructor taking `bot` as parameter and giving it to `plugin` superclass' `__init__`
+- Create your new shiny bright plugin's constructor taking `bot` as parameter and forwarding it to `plugin` superclass' `__init__`
   
 Then follow those tips:
 - You should run `_main.py` instead of `main.py` for development purposes
 - All plugin functions will be called from one, main thread
-- IRC nickname is case-insensitive. Usually you should'nt worry about it, since pybot API uses `irc_nickname` class to represent it, but - for example - if you wan't to use database, use `.casefold()`
+- IRC nickname is case-insensitive. Usually you shouldn't worry about it, since pybot API uses `irc_nickname` class to represent it, but - for example - if you want to use database serialization, use `.casefold()`
 - All exceptions from commands and from `on_*` methods will be caught by bot - nothing bad will happen
 - If your `__init__` throws, plugin won't be loaded by bot. You can use it to assert environment compatibility
-- Plugin class name should be equal to module name (filename)
+- Plugin class name should be same as module name (filename)
 - Message you'd get (`msg`, `args` arguments) might be empty
 - Help docs should follow docopt standard (see http://docopt.org)
 - You can safely assume that config won't change at runtime

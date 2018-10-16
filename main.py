@@ -28,6 +28,9 @@ if __name__ == "__main__":
         print('\nInternal error occurred: %s: %s\nPlease contact  ja2222ja@gmail.com  with  pybot.error  file (file paths will be compromised).'
               % (type(e).__name__, e))
         open('pybot.error', 'w').close()
+        if not os.path.exists('pybot.log'):
+            open('pybot.log', 'w').close()
+
         with open('pybot.error', 'a') as error_file:
             with open('pybot.log') as log_file:
                 error_file.writelines(log_file.readlines()[-300:])

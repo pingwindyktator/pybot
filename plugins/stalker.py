@@ -130,6 +130,8 @@ class stalker(plugin):
         all_nicknames = self.get_all_nicknames_from_database()
         for x in all_nicknames:
             if nick in x: result.update(x)
+        
+        if nick in result: result.remove(nick)
 
         if result:
             self.bot.say(f'other nicks of {nick}: {", ".join(result)}')
