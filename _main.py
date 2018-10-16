@@ -62,8 +62,7 @@ def main(debug_mode=False):
         bot.start()
     except KeyboardInterrupt:
         bot.die('Interrupted by owner')
-        try: sys.exit(0)
-        except SystemExit: os._exit(0)
+        sys.exit(0)
 
 
 if __name__ == "__main__":
