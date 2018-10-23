@@ -181,8 +181,8 @@ class weather(plugin):
     def colorize_temp(self, temp):
         temp = float(temp)
         if temp < 0:  return color.blue(temp)
-        if temp < 10: return color.light_blue(temp)
+        if temp < 10: return color.light_cyan(temp)
         if temp < 15: return color.cyan(temp)
         if temp < 26: return color.yellow(temp)
-        if temp < 30: return color.light_red(temp)
-        else:         return color.red(temp)
+        if temp < 30: return color.orange(temp)
+        else:         return color.light_red(temp)
