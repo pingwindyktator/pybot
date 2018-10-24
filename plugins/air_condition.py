@@ -1,6 +1,4 @@
-import json
 import requests
-import threading
 
 from datetime import timedelta
 from fuzzywuzzy import process, fuzz
@@ -8,13 +6,10 @@ from fuzzywuzzy import process, fuzz
 from plugin import *
 
 
-# TODO lock?
 # TODO measurement time?
 # TODO performance
 # TODO too many stations
 # TODO search by street name
-# TODO check lru_cache
-# TODO what if empty, exception safety, corner cases
 
 class air_condition(plugin):
     class station:
@@ -48,6 +43,10 @@ class air_condition(plugin):
             return
 
         conditions = [c for c in self.get_air_condition(city_name) if c.measurements]
+        if not conditions:
+            self.bot.say_err()
+            return
+
         for condition in conditions:
             prefix = color.cyan(f'[{condition.station.name}]')
             measurements = []
@@ -81,25 +80,27 @@ class air_condition(plugin):
 
     def get_measurements(self, station_id):
         result = []
+        index_response = requests.get(r'http://api.gios.gov.pl/pjp-api/rest/aqindex/getIndex/%s' % station_id, timeout=10).json()
 
         for sensor_id in self.get_station_sensors(station_id):
-            response = requests.get(r'http://api.gios.gov.pl/pjp-api/rest/data/getData/%s' % sensor_id, timeout=10).json()
-            index_level = self.get_index_level(station_id, response['key'])
-            if not response['values'] or index_level is None: continue
-            value = self.get_newest_measurment_value(response['values'])
-            result.append(self.measurement(response['key'], index_level, value))
+            data_response = requests.get(r'http://api.gios.gov.pl/pjp-api/rest/data/getData/%s' % sensor_id, timeout=10).json()
+            index_level = self.get_index_level(index_response, data_response['key'])
+            value = self.get_newest_measurment_value(data_response)
+            if value is not None: result.append(self.measurement(data_response['key'], index_level, value))
 
         return result
 
-    def get_index_level(self, station_id, sensor_name):
-        response = requests.get(r'http://api.gios.gov.pl/pjp-api/rest/aqindex/getIndex/%s' % station_id, timeout=10).json()
+    def get_index_level(self, raw_response, sensor_name):
         try:
             sensor_name = sensor_name.casefold().lower().replace('.', '').replace(' ', '')
-            return response[f'{sensor_name}IndexLevel']['id']
-        except Exception: return None
+            return raw_response[f'{sensor_name}IndexLevel']['id']
+        except Exception: return -1
 
-    def get_newest_measurment_value(self, values):
-        return sorted([v for v in values if 'value' in v and v['value'] is not None], key=lambda x: x['date'], reverse=True)[0]['value']
+    def get_newest_measurment_value(self, raw_response):
+        values = raw_response['values']
+        values = [v for v in values if 'value' in v and v['value'] is not None]
+        if not values: return None
+        return sorted(values, key=lambda x: x['date'], reverse=True)[0]['value']
 
     def get_station_sensors(self, station_id):
         response = requests.get(r'http://api.gios.gov.pl/pjp-api/rest/station/sensors/%s' % station_id, timeout=10).json()
@@ -107,7 +108,8 @@ class air_condition(plugin):
 
     def colorize_value(self, value, index_level):
         value = f'{value:.1f}'
-        if index_level <= 0: return color.light_green(value)
+        if index_level < 0: return value
+        if index_level == 0: return color.light_green(value)
         if index_level == 1: return color.green(value)
         if index_level == 2: return color.yellow(value)
         if index_level == 3: return color.orange(value)
