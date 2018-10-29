@@ -56,8 +56,7 @@ class air_condition(plugin):
                 else:
                     standard_percent = ''
 
-                data = self.colorize(f'{measurement.value:.1f} µg/m³{standard_percent}', measurement.index_level)
-                measurements.append(f'{measurement.what}: {data}')
+                measurements.append(self.colorize(f'{measurement.what}{standard_percent}', measurement.index_level))
 
             self.bot.say(f'{prefix} {" :: ".join(measurements)}')
 
@@ -114,8 +113,8 @@ class air_condition(plugin):
 
     def colorize(self, str, index_level):
         if index_level < 0: return str
-        if index_level == 0: return color.light_green(str)
-        if index_level == 1: return color.green(str)
+        if index_level == 0: return color.green(str)
+        if index_level == 1: return color.light_green(str)
         if index_level == 2: return color.yellow(str)
         if index_level == 3: return color.orange(str)
         if index_level >= 4: return color.light_red(str)
