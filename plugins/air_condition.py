@@ -51,7 +51,13 @@ class air_condition(plugin):
             prefix = color.cyan(f'[{condition.station.name}]')
             measurements = []
             for measurement in condition.measurements:
-                measurements.append(f'{measurement.what}: {self.colorize_value(measurement.value, measurement.index_level)} µg/m³')
+                if measurement.value > self.get_pollution_standard(measurement.what):
+                    standard_percent = f' ({measurement.value / self.get_pollution_standard(measurement.what) * 100.:.0f}%)'
+                else:
+                    standard_percent = ''
+
+                data = self.colorize(f'{measurement.value:.1f} µg/m³{standard_percent}', measurement.index_level)
+                measurements.append(f'{measurement.what}: {data}')
 
             self.bot.say(f'{prefix} {" :: ".join(measurements)}')
 
@@ -106,11 +112,26 @@ class air_condition(plugin):
         response = requests.get(r'http://api.gios.gov.pl/pjp-api/rest/station/sensors/%s' % station_id, timeout=10).json()
         return [sensor['id'] for sensor in response]
 
-    def colorize_value(self, value, index_level):
-        value = f'{value:.1f}'
-        if index_level < 0: return value
-        if index_level == 0: return color.light_green(value)
-        if index_level == 1: return color.green(value)
-        if index_level == 2: return color.yellow(value)
-        if index_level == 3: return color.orange(value)
-        if index_level >= 4: return color.light_red(value)
+    def colorize(self, str, index_level):
+        if index_level < 0: return str
+        if index_level == 0: return color.light_green(str)
+        if index_level == 1: return color.green(str)
+        if index_level == 2: return color.yellow(str)
+        if index_level == 3: return color.orange(str)
+        if index_level >= 4: return color.light_red(str)
+
+    def get_pollution_standard(self, what):
+        what = what.casefold().upper().replace('.', '').replace(' ', '')
+
+        # http://powietrze.gios.gov.pl/pjp/content/annual_assessment_air_acceptable_level
+        standards = {
+            "PM10": 40,
+            "PM25": 25,
+            "NO2": 40,
+            "SO2": 20,
+            "C6H6": 5,
+            "CO": 10000,
+            "PB": 0.5
+        }
+
+        return standards[what] if what in standards else sys.maxsize
