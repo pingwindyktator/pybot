@@ -2,7 +2,7 @@ tzlocal==1.5.1
 unidecode==0.4.21
 ruamel.yaml==0.15.34
 lxml==3.7.3
-requests==2.18.4
+requests==2.20.0
 irc==16.1
 GitPython==2.1.7
 fuzzywuzzy==0.15.1
