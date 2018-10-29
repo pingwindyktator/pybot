@@ -35,6 +35,8 @@ class air_condition(plugin):
     @command
     @doc('air <city>: get air conditions in <city> from gios.gov.pl')
     def air(self, sender_nick, msg, **kwargs):
+        if not msg: return
+
         self.logger.info(f'{sender_nick} asks for air conditions in {msg}')
 
         city_name = self.get_city_name(msg)

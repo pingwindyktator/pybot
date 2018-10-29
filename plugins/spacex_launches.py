@@ -220,7 +220,7 @@ class spacex_launches(plugin):
 
         for saved in db_result:
             for present in on_channel:
-                if saved.casefold() in present.casefold():
+                if saved in present:
                     result.append(present)
                     break
 

@@ -154,6 +154,8 @@ class irc_nickname(str):
     """
     case-insensitive string
     """
+    def __new__(cls, value):
+        return super().__new__(cls, str(value).strip())
 
     def __eq__(self, other):
         return self.casefold() == other.casefold()
@@ -163,6 +165,9 @@ class irc_nickname(str):
 
     def __hash__(self):
         return hash(self.casefold())
+
+    def __contains__(self, other):
+        return other.casefold() in self.casefold()
 
 
 class config_error(Exception):
