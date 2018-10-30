@@ -163,7 +163,7 @@ def simulator_main():
     _main.configure_logger = configure_logger
     color.disable_colors()
     color.enable_colors = lambda: None
-        
+
     patcher = mock.patch.object(_main.pybot, '__bases__', (SingleServerIRCBot_mock,))
     with patcher:
         patcher.is_local = True

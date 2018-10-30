@@ -19,7 +19,7 @@ class echo(plugin):
         replies = ['spx', 'np', f'np, {sender_nick}', ':)', 'any time', 'de nada', "you're welcome"]
         self.bot.say(random.choice(replies))
         self.logger.info(f"thx from {sender_nick}!")
-    
+
     @command
     def thanks(self, **kwargs):
         self.thx(**kwargs)
@@ -31,11 +31,11 @@ class echo(plugin):
     @command
     def gimmegimmegimme(self, **kwargs):
         self.bot.say('a man after midnight!')
-        
+
     @command
     def lifeislife(self, **kwargs):
         self.bot.say('la la la la la!')
-   
+
     @command(admin=True)
     def server_uptime(self, sender_nick, **kwargs):
         with open('/proc/uptime', 'r') as f:

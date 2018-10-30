@@ -46,12 +46,12 @@ class example_plugin(plugin):
         pass
 
     @command(superadmin=True)
-    def example_admin_command(self, sender_nick, **kwargs):
+    def example_superadmin_command(self, sender_nick, **kwargs):
         # you need superadmin privileges to call this command
         pass
 
     @command(channel_op=True)
-    def example_admin_command(self, sender_nick, **kwargs):
+    def example_channel_op_command(self, sender_nick, **kwargs):
         # you need to be channel operator to call this command
         pass
 

@@ -151,7 +151,7 @@ class plugin:
 
     def unload_plugin(self):
         """
-        called when plugin needs to be disabled / reloaded 
+        called when plugin needs to be disabled / reloaded
         """
         pass
 

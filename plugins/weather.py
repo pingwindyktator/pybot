@@ -99,7 +99,7 @@ class weather(plugin):
             if 'cod' not in response or int(response['cod']) != 404:
                 self.logger.warning(f'openweathermap error: {response}')
                 self.get_weather_info_impl.do_not_cache()
-                
+
             return None
 
         return response
@@ -123,7 +123,7 @@ class weather(plugin):
             if 'cod' not in response or int(response['cod']) != 404:
                 self.logger.warning(f'openweathermap error: {response}')
                 self.get_forecast_info_impl.do_not_cache()
-                
+
             return None
 
         return response

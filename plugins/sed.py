@@ -13,7 +13,7 @@ class sed(plugin):
 
     def on_pubmsg(self, source, msg, **kwargs):
         if self.bot.is_user_ignored(source.nick): return
-        
+
         if source.nick not in self.database:
             self.database[source.nick] = deque(maxlen=3)
             self.database[source.nick].append(msg)

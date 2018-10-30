@@ -298,7 +298,7 @@ class builtins(plugin):
             self.bot.say('cannot update config file, aborting...')
             shutil.copyfile('..pybot.yaml', 'pybot.yaml')
             if self.bot.is_debug_mode_enabled(): raise
-    
+
     def prepare_commit_msg(self, commit):
         return f'{str(commit)[:6]}: {commit.message.strip()}'
 
@@ -306,7 +306,7 @@ class builtins(plugin):
     @doc('self_update [<force>]: pull changes from git remote ref and update config file, use [<force>] to discard local changes')
     def self_update(self, sender_nick, args, **kwargs):
         self.logger.info(f'{sender_nick} asked for self-update')
-        
+
         try:
             repo = git.Repo(self.pybot_dir)
         except git.InvalidGitRepositoryError:

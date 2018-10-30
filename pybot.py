@@ -14,7 +14,6 @@ import irc.bot
 import irc.connection
 import irc.client
 import utils
-import sys
 
 from typing import Optional
 from queue import Queue
@@ -283,7 +282,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         for i in range(0, len(nicks)):
             for prefix in nickname_prefixes:
                 if nicks[i].startswith(prefix): nicks[i] = nicks[i][1:].strip()
-            
+
             nicks[i] = irc_nickname(nicks[i])
 
         self._call_plugins_methods('namreply', raw_msg=raw_msg, nicknames=nicks)
@@ -682,7 +681,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         self.say(random.choice(okies), target, force)
 
     def say_err(self, ctx=None, target=None, force=False):
-        errs = ["you best check yo'self!", '¯\_(ツ)_/¯', "I can't do that Dave", 'who knows?', "don't ask me", '*shrug*', '...eh?', 'no idea', 'no clue', 'beats me', 'dunno']
+        errs = ["you best check yo'self!", r'¯\_(ツ)_/¯', "I can't do that Dave", 'who knows?', "don't ask me", '*shrug*', '...eh?', 'no idea', 'no clue', 'beats me', 'dunno']
         errs_ctx = ['I know nothing about %s', "I can't help you with %s", 'I never heard of %s :(', "%s? what's that then?"]
         self.say(random.choice(errs_ctx) % ctx) if ctx else self.say(random.choice(errs), target, force)
 

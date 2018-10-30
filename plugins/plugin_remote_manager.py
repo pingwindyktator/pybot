@@ -1,5 +1,4 @@
 import importlib
-import inspect
 import sys
 
 from fuzzywuzzy import process, fuzz
@@ -77,7 +76,7 @@ class plugin_remote_manager(plugin):
 
     def enable_plugin_impl(self, name):
         """
-        module has to be loaded! 
+        module has to be loaded!
         """
 
         enabled_plugins = {}  # plugin_name -> plugin_instance
@@ -92,7 +91,7 @@ class plugin_remote_manager(plugin):
 
     def disable_plugin_impl(self, name):
         """
-        plugin has to be enabled! 
+        plugin has to be enabled!
         """
 
         enabled_plugins = {}  # plugin_name -> plugin_instance

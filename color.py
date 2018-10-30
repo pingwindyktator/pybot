@@ -1,5 +1,6 @@
 import random
 
+
 class color:
     _on_template = '\x03{0:02d}{1}\x0F'
     _off_template = '{1}'

@@ -108,7 +108,7 @@ class wolfram_alpha(plugin):
         xml_root = xml.etree.ElementTree.fromstring(raw_response)
         if xml_root.attrib['error'] == 'true' or xml_root.attrib['success'] == 'false':
             self.get_api_response.do_not_cache()
-        
+
         return xml_root
 
     def manage_api_response(self, xml_root):

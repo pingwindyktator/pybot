@@ -149,7 +149,7 @@ class antispam(plugin):
         reason = self.get_kick_reason(sender_nick, msg)
         if not reason: return
         if self.is_whitelisted(sender_nick): return
-        
+
         if self.am_i_channel_operator():
             self.bot.kick(sender_nick, 'stop it!')
             self.logger.warning(f'{sender_nick} kicked: {reason}')
