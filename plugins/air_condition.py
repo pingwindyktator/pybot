@@ -37,13 +37,12 @@ class air_condition(plugin):
     def air(self, sender_nick, msg, **kwargs):
         if not msg: return
 
-        self.logger.info(f'{sender_nick} asks for air conditions in {msg}')
-
         city_name = self.get_city_name(msg)
         if city_name is None:
             self.bot.say_err()
             return
 
+        self.logger.info(f'{sender_nick} asks for air conditions in {city_name}')
         conditions = [c for c in self.get_air_condition(city_name) if c.measurements]
         if not conditions:
             self.bot.say_err()
@@ -68,10 +67,16 @@ class air_condition(plugin):
         return [self.condition(station, self.get_measurements(station.id)) for station in self.stations_by_city[city_name]]
 
     @utils.timed_lru_cache(typed=True)
-    def get_city_name(self, msg):
+    def get_city_name(self, msg, ignore_national_chars=False):
         self.update_known_stations()
-        result = process.extract(msg, self.stations_by_city.keys(), scorer=fuzz.token_sort_ratio)
-        return result[0][0] if result and len(result[0]) > 1 and result[0][1] > 65 else None
+        if ignore_national_chars:
+            msg = utils.remove_national_chars(msg)
+            stations = {utils.remove_national_chars(city): city for city in self.stations_by_city.keys()}
+            result = process.extract(msg, stations.keys(), scorer=fuzz.token_sort_ratio)
+            return stations[result[0][0]] if result and len(result[0]) > 1 and result[0][1] > 65 else None
+        else:
+            result = process.extract(msg, self.stations_by_city.keys(), scorer=fuzz.token_sort_ratio)
+            return result[0][0] if result and len(result[0]) > 1 and result[0][1] > 65 else self.get_city_name(msg, ignore_national_chars=True)
 
     @utils.timed_lru_cache(expiration=timedelta(hours=12))
     def update_known_stations(self):
