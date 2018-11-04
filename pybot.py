@@ -211,11 +211,15 @@ class pybot(irc.bot.SingleServerIRCBot):
         # args_list == ["some", "msg"]
         # raw_msg   == IRC Event class
 
-        if cmd in self.get_commands():
+        if not (cmd and len(cmd) > 0 and all(c.isalpha() or c == '_' for c in cmd)):
+            pass  # invalid cmd
+
+        elif cmd in self.get_commands():
             func = self.get_commands()[cmd]
             self._logger.debug(f'calling command  {func.__qualname__}(sender_nick={sender_nick}, args={args_list}, msg=\'{args}\', raw_msg=...)...')
             func(sender_nick=sender_nick, args=args_list, msg=args, raw_msg=raw_msg)
-        elif self.config['try_autocorrect'] and cmd and len(cmd) > 0 and cmd[0].isalpha():
+
+        elif self.config['try_autocorrect']:
             possible_cmd = self._get_best_command_match(cmd, sender_nick)
             if possible_cmd:
                 self.say(f"no such command: {cmd}, did you mean '{possible_cmd}'?")
