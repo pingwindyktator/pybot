@@ -324,6 +324,7 @@ class pybot(irc.bot.SingleServerIRCBot):
             except Exception as e:
                 self._logger.error(f'exception caught calling {p.__getattribute__(func_name).__qualname__}: {type(e).__name__}: {e}')
                 if self.is_debug_mode_enabled(): raise
+                else: utils.backtrace_report_error()
 
     def _load_plugins(self):
         self._logger.debug('loading plugins...')
@@ -342,6 +343,7 @@ class pybot(irc.bot.SingleServerIRCBot):
             except Exception as e:
                 self._logger.error(f'- unable to load plugin {plugin_class.__name__}: {type(e).__name__}: {e}')
                 if self.is_debug_mode_enabled(): raise
+                else: utils.backtrace_report_error()
                 continue
 
         self._logger.debug('plugins loaded')
@@ -363,6 +365,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         except Exception as e:
             self._logger.error(f'cannot send "{msg}": {type(e).__name__}: {e}. discarding msg...')
             if self.is_debug_mode_enabled(): raise
+            else: utils.backtrace_report_error()
 
     def _process_say(self):
         msgs_sent = 0
@@ -458,6 +461,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         except Exception as e:
             self._logger.error(f'{plugin_name}.unload_plugin() throws: {type(e).__name__}: {e}. continuing anyway...')
             if self.is_debug_mode_enabled(): raise
+            else: utils.backtrace_report_error()
 
         plugin_cmds = self.get_plugin_commands(plugin_name)
         commands_copy = self.get_commands().copy()  # using copy and update here
@@ -630,6 +634,7 @@ class pybot(irc.bot.SingleServerIRCBot):
             except Exception as e:
                 self._logger.error(f'{type(plugin_instance).__name__}.unload_plugin() throws: {type(e).__name__}: {e}. continuing anyway...')
                 if self.is_debug_mode_enabled(): raise
+                else: utils.backtrace_report_error()
 
         with self._plugins_lock:
             self._commands.clear()

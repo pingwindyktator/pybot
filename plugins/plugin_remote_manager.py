@@ -55,6 +55,7 @@ class plugin_remote_manager(plugin):
             self.logger.error(f'exception caught while trying to enable plugin {plugin_name}: {type(e).__name__}: {e}')
             self.bot.say(f'cannot enable {plugin_name}: unexpected exception thrown')
             if self.bot.is_debug_mode_enabled(): raise
+            else: utils.backtrace_report_error()
 
     @command(admin=True)
     @doc('disable_plugin <name>: unload and disable enabled <name> plugin')
@@ -73,6 +74,7 @@ class plugin_remote_manager(plugin):
             self.logger.error(f'exception caught while trying to disable plugin {plugin_name}: {type(e).__name__}: {e}')
             self.bot.say(f'cannot disable {plugin_name}: unexpected exception thrown')
             if self.bot.is_debug_mode_enabled(): raise
+            else: utils.backtrace_report_error()
 
     def enable_plugin_impl(self, name):
         """
@@ -168,3 +170,4 @@ class plugin_remote_manager(plugin):
             self.logger.error(f'exception caught while trying to load plugin {plugin_name}: {type(e).__name__}: {e}')
             self.bot.say(f'cannot load {plugin_name}: unexpected exception thrown')
             if self.bot.is_debug_mode_enabled(): raise
+            else: utils.backtrace_report_error()

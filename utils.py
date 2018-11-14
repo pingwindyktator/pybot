@@ -1,5 +1,6 @@
 import sys
 import logging
+import backtracepython
 import unidecode
 import tzlocal
 
@@ -251,3 +252,10 @@ def ensure_config_is_ok(config, assert_unknown_keys=False):
     if assert_unknown_keys:
         for key, value in config.items():
             if not isinstance(value, dict): c_assert_error(key in config_keys, f'unknown config file key: {key}')
+
+
+def backtrace_report_error():
+    try:
+        backtracepython.send_last_exception()
+    except Exception as e:
+        logging.getLogger(__name__).error(f'exception caught calling backtracepython.send_last_exception: {type(e).__name__}: {e}, continuing...')

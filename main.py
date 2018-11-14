@@ -3,9 +3,15 @@ from __future__ import print_function
 import sys
 import traceback
 import os
+import backtracepython
 
 
 def main():
+    backtracepython.initialize(
+        endpoint="https://submit.backtrace.io/pingwindyktator/1ce98b24c4b29dd8b7f3c84599a5b7a7564fed071c441960a791fd638c3f7335/json",
+        token="1ce98b24c4b29dd8b7f3c84599a5b7a7564fed071c441960a791fd638c3f7335"
+    )
+
     import _main
     _main.main(debug_mode=False)
 
@@ -29,6 +35,12 @@ if __name__ == "__main__":
         print()
         print('Internal error occurred: %s: %s' % (type(e).__name__, e))
         print('Please contact  ja2222ja@gmail.com  with  pybot.error  file (file paths will be compromised)')
+
+        try:
+            backtracepython.send_last_exception()
+        except Exception as e:
+            print('Unable to report error to backtrace.io')
+
         open('pybot.error', 'w').close()
         if not os.path.exists('pybot.log'):
             open('pybot.log', 'w').close()
