@@ -150,7 +150,7 @@ class plugin_remote_manager(plugin):
                 self.bot.say(f'plugin {plugin_name} loaded and enabled')
 
         except (self.no_plugins_module_found, ImportError, ModuleNotFoundError) as e:  # user error #1
-            self.logger.info(e)
+            self.logger.info(f'exception caught while trying to load plugin {plugin_name}: {type(e).__name__}: {e}')
             response = f'cannot find {plugin_name}'
             possible_name = self.get_best_plugin_name_match(plugin_name) if self.config['try_autocorrect'] else None
             if possible_name:
@@ -161,7 +161,7 @@ class plugin_remote_manager(plugin):
             self.bot.say(response)
 
         except self.plugin_not_enabled as e:  # user error #2
-            self.logger.info(e)
+            self.logger.info(f'exception caught while trying to load plugin {plugin_name}: {type(e).__name__}: {e}')
             self.bot.say(f'cannot disable {plugin_name}, plugin is not enabled')
 
         except (Exception, self.plugin_already_enabled) as e:  # implementation error
