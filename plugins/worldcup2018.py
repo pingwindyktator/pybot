@@ -1,4 +1,3 @@
-import json
 import requests
 
 from threading import Timer, Lock

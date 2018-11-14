@@ -251,7 +251,8 @@ def ensure_config_is_ok(config, assert_unknown_keys=False):
 
     if assert_unknown_keys:
         for key, value in config.items():
-            if not isinstance(value, dict): c_assert_error(key in config_keys, f'unknown config file key: {key}')
+            if not isinstance(value, dict):
+                c_assert_error(key in config_keys, f'unknown config file key: {key}')
 
 
 def backtrace_report_error():

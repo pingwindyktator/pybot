@@ -1,6 +1,5 @@
 import requests
 import urllib.parse
-import json
 
 from datetime import timedelta
 from plugin import *

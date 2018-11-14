@@ -1,14 +1,12 @@
-import json
 import os
 import sys
 import shutil
-
 import git
 import copy
 import requests
 import collections
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from ruamel import yaml
 from ruamel.yaml.comments import CommentedMap
 from ruamel.yaml.parser import ParserError
