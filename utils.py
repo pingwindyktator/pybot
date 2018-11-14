@@ -1,8 +1,10 @@
+import os
 import sys
 import logging
 import backtracepython
 import unidecode
 import tzlocal
+import git
 
 from threading import Timer, RLock
 from datetime import datetime, timedelta
@@ -256,7 +258,16 @@ def ensure_config_is_ok(config, assert_unknown_keys=False):
 
 
 def backtrace_report_error():
+    attributes = {}
+
     try:
-        backtracepython.send_last_exception()
+        pybot_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__))))
+        repo = git.Repo(pybot_dir)
+        attributes['git.commit'] = str(repo.head.commit)
+    except Exception: pass
+
+    try:
+        backtracepython.send_last_exception(attributes=attributes)
+        logging.getLogger(__name__).info('exception report sent to backtrace.io')
     except Exception as e:
-        logging.getLogger(__name__).error(f'exception caught calling backtracepython.send_last_exception: {type(e).__name__}: {e}, continuing...')
+        logging.getLogger(__name__).error(f'exception caught calling backtracepython.send_last_exception: {type(e).__name__}: {e}')
