@@ -367,9 +367,9 @@ class builtins(plugin):
         value = msg[len(msg.split()[0]):].strip()
         try:
             value = yaml.load(value, Loader=yaml.RoundTripLoader)
-        except ParserError:
+        except ParserError as e:
+            self.logger.warning(f'cannot parse value "{value}": {type(e).__name__}: {e}')
             self.bot.say(f'cannot parse value: {value}')
-            if self.bot.is_debug_mode_enabled(): raise
             return
 
         config = yaml.load(open('pybot.yaml'), Loader=yaml.RoundTripLoader)

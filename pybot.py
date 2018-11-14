@@ -344,7 +344,7 @@ class pybot(irc.bot.SingleServerIRCBot):
                 if self.is_debug_mode_enabled(): raise
                 continue
             except Exception as e:
-                self._logger.warning(f'- unable to load plugin {plugin_class.__name__}: {type(e).__name__}: {e}')
+                self._logger.error(f'- unable to load plugin {plugin_class.__name__}: {type(e).__name__}: {e}')
                 if self.is_debug_mode_enabled(): raise
                 continue
 

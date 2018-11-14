@@ -2,7 +2,6 @@ import requests
 
 from datetime import timedelta
 from fuzzywuzzy import process, fuzz
-
 from plugin import *
 
 
