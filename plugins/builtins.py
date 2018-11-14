@@ -136,17 +136,18 @@ class builtins(plugin):
         """
         :returns: reason why restart is not safe or None if it is
         """
+
         try:
-            # TODO pip requirements!
             config = yaml.load(open('pybot.yaml'), Loader=yaml.Loader)
-            utils.ensure_config_is_ok(config)
-            # more asserts should be placed here
-        except utils.config_error as e:
-            return f'invalid config value: {e}'
         except Exception as e:
-            self.logger.error(f'unexpected exception: {type(e).__name__}: {e}')
-            if self.bot.is_debug_mode_enabled(): raise
-            return 'internal error occurred'
+            self.logger.info(f'exception: {type(e).__name__}: {e}')
+            return 'cannot load config file'
+
+        try:
+            utils.ensure_config_is_ok(config)
+        except Exception as e:
+            self.logger.info(f'exception: {type(e).__name__}: {e}')
+            return 'invalid config file'
 
         return None
 
@@ -290,9 +291,6 @@ class builtins(plugin):
 
             self.bot.say('config updated, restarting...', force=True)
             self.restart_impl(sender_nick)
-        except utils.config_error as e:
-            self.bot.say(f'invalid config value: {e}, aborting...')
-            shutil.copyfile('..pybot.yaml', 'pybot.yaml')
         except Exception as e:
             self.logger.error(f'exception caught while updating config file: {type(e).__name__}: {e}')
             self.bot.say('cannot update config file, aborting...')
@@ -392,7 +390,7 @@ class builtins(plugin):
 
         try:
             utils.ensure_config_is_ok(config)
-        except utils.config_error as e:
+        except Exception as e:
             self.bot.say(f'invalid value: {e}, aborting...')
             return
 

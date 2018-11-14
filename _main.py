@@ -52,7 +52,7 @@ def main(debug_mode=False):
 
     try:
         utils.ensure_config_is_ok(config, assert_unknown_keys=True)
-    except utils.config_error as e:
+    except Exception as e:
         print(f'Invalid config file: {type(e).__name__}: {e}')
         sys.exit(3)
 

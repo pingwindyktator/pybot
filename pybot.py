@@ -339,10 +339,6 @@ class pybot(irc.bot.SingleServerIRCBot):
                 plugin_instance = plugin_class(self)
                 self.register_plugin(plugin_instance)
                 self._logger.info(f'+ plugin {plugin_class.__name__} loaded')
-            except utils.config_error as e:
-                self._logger.warning(f'- invalid {plugin_class.__name__} plugin config: {type(e).__name__}: {e}')
-                if self.is_debug_mode_enabled(): raise
-                continue
             except Exception as e:
                 self._logger.error(f'- unable to load plugin {plugin_class.__name__}: {type(e).__name__}: {e}')
                 if self.is_debug_mode_enabled(): raise

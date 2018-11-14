@@ -13,7 +13,7 @@ class example_plugin(plugin):
 
     def assert_config(self):
         # assert config compatibility here
-        # should throw utils.config_error if config is invalid (see utils.c_assert_error)
+        # should throw if config is invalid
         # in such case, plugin won't be loaded
         pass
 

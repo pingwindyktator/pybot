@@ -21,6 +21,20 @@ class plugin:
     def _get_class_name(self):
         return self.__class__.__name__
 
+    def unload_plugin(self):
+        """
+        called when plugin needs to be disabled / reloaded
+        """
+        pass
+
+    def assert_config(self):
+        """
+        called by plugin superclass to assert config values
+        should throw if config is invalid
+        in such case, plugin won't be loaded
+        """
+        pass
+
     # see https://www.alien.net.au/irc/irc2numerics.html
     # for deep explanation
 
@@ -146,20 +160,6 @@ class plugin:
         called by bot when names response arrives
         :param raw_msg   : raw IRC msg
         :param nicknames : nicknames in channel
-        """
-        pass
-
-    def unload_plugin(self):
-        """
-        called when plugin needs to be disabled / reloaded
-        """
-        pass
-
-    def assert_config(self):
-        """
-        called by plugin superclass to assert config values
-        should throw utils.config_error if config is invalid (see utils.c_assert_error)
-        in such case, plugin won't be loaded
         """
         pass
 
