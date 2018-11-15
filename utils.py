@@ -1,9 +1,11 @@
 import os
+import platform
 import sys
 import logging
-import backtracepython
+import sentry_sdk
 import unidecode
 import tzlocal
+import locale
 import git
 
 from threading import Timer, RLock
@@ -262,17 +264,65 @@ def ensure_config_is_ok(config, assert_unknown_keys=False):
                 c_assert_error(key in config_keys, f'unknown config file key: {key}')
 
 
-def backtrace_report_error():
+def setup_sentry():
+    import sentry_sdk.utils
+    from sentry_sdk.integrations.logging import _breadcrumb_from_record
+    from sentry_sdk.integrations.logging import LoggingIntegration
+    from sentry_sdk.integrations.stdlib import StdlibIntegration
+    from sentry_sdk.integrations.excepthook import ExcepthookIntegration
+    from sentry_sdk.integrations.dedupe import DedupeIntegration
+    from sentry_sdk.integrations.atexit import AtexitIntegration
+    from sentry_sdk.integrations.modules import ModulesIntegration
+    from sentry_sdk.integrations.argv import ArgvIntegration
+
+    class sentry_handler(logging.Handler, object):
+        def emit(self, record):
+            try:
+                with sentry_sdk.utils.capture_internal_exceptions():
+                    self.format(record)
+                    return self._emit(record)
+
+            except Exception:
+                self.handleError(record)
+
+        def _emit(self, record):
+            hub = sentry_sdk.Hub.current
+            hub.add_breadcrumb(_breadcrumb_from_record(record), hint={"log_record": record})
+
+    sentry_handler = sentry_handler()
+    sentry_handler.setLevel(logging.DEBUG)
+    sentry_handler.addFilter(only_pybot_logs_filter())
+    logging.getLogger().addHandler(sentry_handler)
+    sentry_sdk.init(r'https://c83d8785f15f4b259c898a9ca61201d6@sentry.io/1323248',
+                    default_integrations=False,
+                    integrations=[StdlibIntegration(), ExcepthookIntegration(), DedupeIntegration(), AtexitIntegration(), ModulesIntegration(), ArgvIntegration()],
+                    max_breadcrumbs=400)
+
     attributes = {}
 
     try:
         pybot_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__))))
         repo = git.Repo(pybot_dir)
-        attributes['git.commit'] = str(repo.head.commit)
-    except Exception: pass
+        attributes['git_commit'] = str(repo.head.commit)
+    except Exception:
+        attributes['git_commit'] = 'not in a git repo'
 
+    attributes['os_name'] = os.name
+    attributes['platform_system'] = platform.system()
+    attributes['platform_release'] = platform.release()
+    attributes['platform_python_version'] = platform.python_version()
+    attributes['locale_getdefaultlocale_0'] = locale.getdefaultlocale()[0]
+    attributes['locale_getdefaultlocale_1'] = locale.getdefaultlocale()[1]
+
+    with sentry_sdk.configure_scope() as scope:
+        for key, value in attributes.items():
+            scope.set_tag(key, value)
+
+
+def report_error():
     try:
-        backtracepython.send_last_exception(attributes=attributes)
-        logging.getLogger(__name__).info('exception report sent to backtrace.io')
+        sentry_sdk.capture_exception()
+        logging.getLogger(__name__).info('exception report sent to sentry.io')
     except Exception as e:
-        logging.getLogger(__name__).error(f'exception caught calling backtracepython.send_last_exception: {type(e).__name__}: {e}')
+        logging.getLogger(__name__).error(f'exception caught calling sentry_sdk.capture_exception: {type(e).__name__}: {e}')
+

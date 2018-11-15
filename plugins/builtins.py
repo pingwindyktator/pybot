@@ -294,7 +294,7 @@ class builtins(plugin):
             self.bot.say('cannot update config file, aborting...')
             shutil.copyfile('..pybot.yaml', 'pybot.yaml')
             if self.bot.is_debug_mode_enabled(): raise
-            else: utils.backtrace_report_error()
+            else: utils.report_error()
 
     def prepare_commit_msg(self, commit):
         return f'{str(commit)[:6]}: {commit.message.strip()}'
@@ -350,7 +350,7 @@ class builtins(plugin):
             self.bot.say('cannot update config file, aborting...')
             repo.head.reset(commit=repo.head.orig_head().commit, index=True, working_tree=True)
             if self.bot.is_debug_mode_enabled(): raise
-            else: utils.backtrace_report_error()
+            else: utils.report_error()
             return
 
         self.bot.say(f'updated, now at "{self.prepare_commit_msg(repo.head.commit)}"{config_updated_str}{force_str}{diff_str}')
