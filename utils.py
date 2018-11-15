@@ -173,6 +173,11 @@ class irc_nickname(str):
         return other.casefold() in self.casefold()
 
 
+class only_pybot_logs_filter(logging.Filter):
+        def filter(self, record):
+            return record.pathname.startswith(os.path.dirname(os.path.abspath(__file__))) or record.levelno > logging.DEBUG
+
+
 def remove_national_chars(s):
     return unidecode.unidecode(s)
 

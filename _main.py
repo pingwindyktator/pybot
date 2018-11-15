@@ -10,27 +10,23 @@ from pybot import pybot
 
 
 def configure_logger(config):
-    class CustomFilter(logging.Filter):
-        def filter(self, record):
-            return record.pathname.startswith(os.path.dirname(os.path.abspath(__file__))) or record.levelno > logging.DEBUG
-
     logging_format = '%(levelname)-10s%(asctime)s %(filename)s:%(funcName)-16s: %(message)s'
     log_formatter = logging.Formatter(logging_format)
-    root_logger = logging.getLogger('')
+    root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG)
 
     file_handler = logging.FileHandler('pybot.log')
     file_handler.setFormatter(log_formatter)
     level = utils.logging_level_str_to_int[config['file_logging_level']]
     file_handler.setLevel(level)
-    file_handler.addFilter(CustomFilter())
+    file_handler.addFilter(utils.only_pybot_logs_filter())
     root_logger.addHandler(file_handler)
 
     stdout_handler = logging.StreamHandler(sys.stdout)
     stdout_handler.setFormatter(log_formatter)
     level = utils.logging_level_str_to_int[config['stdout_logging_level']]
     stdout_handler.setLevel(level)
-    stdout_handler.addFilter(CustomFilter())
+    stdout_handler.addFilter(utils.only_pybot_logs_filter())
     root_logger.addHandler(stdout_handler)
 
 
