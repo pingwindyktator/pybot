@@ -2,6 +2,7 @@
 import __future__
 import sys
 import os
+import platform
 
 
 def main():
@@ -14,7 +15,7 @@ def main():
 
 if __name__ == "__main__":
     if sys.version_info < (3, 6, 0):
-        print('Python >= v3.6.0 required to run pybot')
+        print('Python >= v3.6.0 required to run pybot, you have %s' % platform.python_version())
         sys.exit(4)
 
     os.chdir(os.path.dirname(os.path.abspath(__file__)))

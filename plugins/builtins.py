@@ -16,8 +16,6 @@ from plugin import *
 class builtins(plugin):
     def __init__(self, bot):
         super().__init__(bot)
-        self.pybot_dir = os.path.dirname(os.path.realpath(__file__))
-        self.pybot_dir = os.path.abspath(os.path.join(self.pybot_dir, os.pardir))
 
     @command
     @doc("""help <entry>: get doc msg for <entry> command / plugin
@@ -113,7 +111,7 @@ class builtins(plugin):
             self.bot.say(f'unknown level: {level_name}, supported levels: {", ".join(utils.logging_level_str_to_int.keys())}')
             return
 
-        root_logger = logging.getLogger('')
+        root_logger = logging.getLogger()
         level = utils.logging_level_str_to_int[level_name]
         try:
             if handler_name == 'stdout':
@@ -305,7 +303,7 @@ class builtins(plugin):
         self.logger.info(f'{sender_nick} asked for self-update')
 
         try:
-            repo = git.Repo(self.pybot_dir)
+            repo = git.Repo(utils.get_pybot_dir())
         except git.InvalidGitRepositoryError:
             self.bot.say('not in a git repository, cannot update')
             return

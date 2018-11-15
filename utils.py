@@ -59,6 +59,7 @@ class timed_lru_cache:
     decorator that caches a function's return value each time it is called
     cache is automatically invalidated after given expiration time
     """
+
     def __init__(self, expiration=timedelta.max, typed=True):
         """
         :param expiration: timedelta object
@@ -159,6 +160,7 @@ class irc_nickname(str):
     """
     case-insensitive string
     """
+
     def __new__(cls, value):
         return super().__new__(cls, str(value).strip())
 
@@ -176,8 +178,12 @@ class irc_nickname(str):
 
 
 class only_pybot_logs_filter(logging.Filter):
-        def filter(self, record):
-            return record.pathname.startswith(os.path.dirname(os.path.abspath(__file__))) or record.levelno > logging.DEBUG
+    """
+    filters non-pybot DEBUG logs
+    """
+
+    def filter(self, record):
+        return record.pathname.startswith(get_pybot_dir()) or record.levelno > logging.DEBUG
 
 
 def remove_national_chars(s):
@@ -192,6 +198,10 @@ def get_str_utc_offset():
     mins = int((result - 3600 * hours) // 60)
     result = f'{hours}:{str(mins).zfill(2)}'
     return f'-{result}' if lt else f'+{result}'
+
+
+def get_pybot_dir():
+    return os.path.dirname(os.path.abspath(__file__))
 
 
 def ensure_config_is_ok(config, assert_unknown_keys=False):
@@ -301,8 +311,7 @@ def setup_sentry():
     attributes = {}
 
     try:
-        pybot_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__))))
-        repo = git.Repo(pybot_dir)
+        repo = git.Repo(get_pybot_dir())
         attributes['git_commit'] = str(repo.head.commit)
     except Exception:
         attributes['git_commit'] = 'not in a git repo'

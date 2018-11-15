@@ -10,10 +10,8 @@ class irc_privmsg_logger_handler(logging.StreamHandler):
         super().__init__()
         self.plhs_getter = plhs_getter
         self.bot = bot
-        self.ignored_funcs = ['send_raw', '_say_impl', 'say', '_process_say']
 
     def emit(self, record):
-        if record.funcName in self.ignored_funcs: return
         try:
             msg = self.format(record)
             for target, level in self.plhs_getter().items():
@@ -38,10 +36,11 @@ class privmsg_logger_handler(plugin):
         self.plh_handler = irc_privmsg_logger_handler(self.bot, self.get_plhs_impl)
         self.plh_handler.setFormatter(logging.Formatter('%(levelname)-10s%(filename)s:%(funcName)-16s: %(message)s'))
         self.plh_handler.setLevel(logging.DEBUG)
-        logging.getLogger('').addHandler(self.plh_handler)
+        self.plh_handler.addFilter(utils.only_pybot_logs_filter())
+        logging.getLogger().addHandler(self.plh_handler)
 
     def unload_plugin(self):
-        logging.getLogger('').removeHandler(self.plh_handler)
+        logging.getLogger().removeHandler(self.plh_handler)
 
     def get_plhs_impl(self):
         with self.db_mutex:
