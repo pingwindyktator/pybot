@@ -8,6 +8,7 @@ import tzlocal
 import locale
 import git
 
+from ruamel import yaml
 from threading import Timer, RLock
 from datetime import datetime, timedelta
 from functools import total_ordering, update_wrapper
@@ -186,6 +187,27 @@ class only_pybot_logs_filter(logging.Filter):
         return record.pathname.startswith(get_pybot_dir()) or record.levelno > logging.DEBUG
 
 
+class sentry_specific_filter(logging.Filter):
+    def __init__(self, name=''):
+        super().__init__(name)
+        self.to_be_filtered_out = []
+        self.analyze_config(yaml.load(open('pybot.yaml'), Loader=yaml.Loader))
+
+    def filter(self, record):
+        for f in self.to_be_filtered_out:
+            if f.casefold() in record.msg.casefold():
+                return False
+
+        return True
+
+    def analyze_config(self, config):
+        for key, value in config.items():
+            if not isinstance(value, dict):
+                if 'api_key'.casefold() in key.casefold(): self.to_be_filtered_out.append(value)
+            else:
+                self.analyze_config(value)
+
+
 def remove_national_chars(s):
     return unidecode.unidecode(s)
 
@@ -302,6 +324,7 @@ def setup_sentry():
     sentry_handler = sentry_handler()
     sentry_handler.setLevel(logging.DEBUG)
     sentry_handler.addFilter(only_pybot_logs_filter())
+    sentry_handler.addFilter(sentry_specific_filter())
     logging.getLogger().addHandler(sentry_handler)
     sentry_sdk.init(r'https://c83d8785f15f4b259c898a9ca61201d6@sentry.io/1323248',
                     default_integrations=False,

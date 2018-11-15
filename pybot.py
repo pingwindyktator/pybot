@@ -647,7 +647,7 @@ class pybot(irc.bot.SingleServerIRCBot):
     # connection API funcs
 
     def join_channel(self, channel=None):
-        if not channel: channel = self.config["channel"]
+        if not channel: channel = self.config['channel']
 
         self._logger.info(f'joining {channel}...')
         self.connection.join(channel)
