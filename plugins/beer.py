@@ -1,0 +1,66 @@
+import os
+import sqlite3
+
+from contextlib import suppress
+from threading import Lock
+from plugin import *
+
+# TODO beer_get_all <nickname> should return all beers
+# TODO beer_get_all
+class beer(plugin):
+    def __init__(self, bot):
+        super().__init__(bot)
+        os.makedirs(os.path.dirname(os.path.realpath(self.config['db_location'])), exist_ok=True)
+        self.db_connection = sqlite3.connect(self.config['db_location'], check_same_thread=False)
+        self.db_cursor = self.db_connection.cursor()
+        self.db_mutex = Lock()
+
+    @command
+    @doc('beer <nickname>: give <nickname> a beer')
+    def beer(self, sender_nick, args, **kwargs):
+        if not args: return
+        nickname = irc_nickname(args[0])
+        self.logger.info(f'{sender_nick} gives {nickname} beer')
+        self.update_beers(sender_nick, nickname)
+        self.beer_get_say(sender_nick, nickname)
+
+    @command
+    @doc('beer_get <nickname>: get beers owned <nickname>')
+    def beer_get(self, sender_nick, args, **kwargs):
+        if not args: return
+        self.beer_get_say(sender_nick, irc_nickname(args[0]))
+
+    @command
+    @doc('beer_reset <nickname>: reset owned beers')
+    def beer_reset(self, sender_nick, args, **kwargs):
+        # TODO authorization
+        if not args: return
+        nickname = irc_nickname(args[0])
+        self.logger.info(f'{sender_nick} resets {nickname} beers')
+        self.reset(sender_nick, nickname)
+        self.beer_get_say(sender_nick, nickname)
+
+    def beer_get_say(self, who, to_whom):
+        self.bot.say(f'{who} {self.get_beers(to_whom, who)}:{self.get_beers(who, to_whom)} {to_whom}')
+
+    def get_beers(self, who, to_whom):
+        with self.db_mutex:
+            try:
+                self.db_cursor.execute(f"SELECT beers FROM '{who.casefold()}' WHERE nickname = ?", (to_whom.casefold(),))
+                result = self.db_cursor.fetchone()
+            except sqlite3.OperationalError:
+                return 0
+
+            return result[0] if result else 0
+
+    def reset(self, a, b):
+        with self.db_mutex:
+            with suppress(sqlite3.OperationalError): self.db_cursor.execute(f"INSERT OR REPLACE INTO '{a.casefold()}' VALUES (?, ?)", (b.casefold(), 0))
+            with suppress(sqlite3.OperationalError): self.db_cursor.execute(f"INSERT OR REPLACE INTO '{b.casefold()}' VALUES (?, ?)", (a.casefold(), 0))
+            self.db_connection.commit()
+
+    def update_beers(self, who, to_whom):
+        with self.db_mutex:
+            self.db_cursor.execute(f"CREATE TABLE IF NOT EXISTS '{who.casefold()}' (nickname TEXT primary key not null, beers INTEGER)")  # nickname -> beers
+            self.db_cursor.execute(f"INSERT OR REPLACE INTO '{who.casefold()}' VALUES (?, COALESCE((SELECT beers + 1 FROM '{who.casefold()}' WHERE nickname = ?), 1))", (to_whom.casefold(), to_whom.casefold()))
+            self.db_connection.commit()

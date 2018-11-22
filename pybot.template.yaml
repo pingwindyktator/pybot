@@ -93,3 +93,6 @@ wiki:
 
 worldcup2018:
   remind_before_match: true
+
+beer:
+  db_location: db/beer.db
