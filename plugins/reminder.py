@@ -8,8 +8,9 @@ from plugin import *
 class reminder(plugin):
     def __init__(self, bot):
         super().__init__(bot)
-        self.time_regex = re.compile(r'^(([0-9]{4})-([0-9]{1,2})-([0-9]{1,2}) )?([0-9]{1,2}):([0-9]{1,2})(.*)')
-        self.delta_regex = re.compile(r'([0-9]+[Hh])?\W*([0-9]+[Mm])?(.*)')
+        self.time_regex = re.compile(r'^(([0-9]{4})-([0-9]{1,2})-([0-9]{1,2}) )?([0-9]{1,2}):([0-9]{1,2})(.*)$')
+        self.date_regex = re.compile(r'^([0-9]{4})-([0-9]{1,2})-([0-9]{1,2})(.*)$')
+        self.delta_regex = re.compile(r'^([0-9]+[Hh])?\W*([0-9]+[Mm])?(.*)$')
         self.to_notice = {}  # {timer_id -> remind_desc}
 
     def unload_plugin(self):
@@ -57,9 +58,10 @@ class reminder(plugin):
             return None, None
 
     def prepare_run_time_impl(self, msg, now):
+        msg = msg.strip()
         time_reg_res = self.time_regex.findall(msg)
+        date_reg_res = self.date_regex.findall(msg)
         delta_reg_res = self.delta_regex.findall(msg)
-
         if time_reg_res:
             hour = f'{time_reg_res[0][4].zfill(2)}:{time_reg_res[0][5].zfill(2)}'
             if not time_reg_res[0][0]:
@@ -74,6 +76,13 @@ class reminder(plugin):
             msg = time_reg_res[0][6].strip()
             return run_at, msg
 
+        elif date_reg_res:
+            day = f'{date_reg_res[0][0].zfill(2)}-{date_reg_res[0][1].zfill(2)}-{date_reg_res[0][2].zfill(2)}'
+            hour = '9:00'
+            run_at = datetime.strptime(f'{day} {hour}', r'%Y-%m-%d %H:%M')
+            msg = date_reg_res[0][3].strip()
+            return run_at, msg
+
         elif delta_reg_res:
             hour_delta = int(delta_reg_res[0][0][:-1]) if delta_reg_res[0][0] else 0
             minute_delta = int(delta_reg_res[0][1][:-1]) if delta_reg_res[0][1] else 0
@@ -82,4 +91,5 @@ class reminder(plugin):
             msg = delta_reg_res[0][2].strip()
             run_at = now + timedelta(hours=hour_delta, minutes=minute_delta)
             return run_at, msg
+
         else: return None, None
