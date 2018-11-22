@@ -20,6 +20,15 @@ class beer(plugin):
     def beer(self, sender_nick, args, **kwargs):
         if not args: return
         nickname = irc_nickname(args[0])
+
+        if nickname == sender_nick:
+            self.bot.say('orly?')
+            return
+
+        if nickname == self.bot.get_nickname():
+            self.bot.say('thank you!')
+            return
+
         self.logger.info(f'{sender_nick} gives {nickname} beer')
         self.update_beers(sender_nick, nickname)
         self.beer_get_say(sender_nick, nickname)
@@ -28,7 +37,13 @@ class beer(plugin):
     @doc('beer_get <nickname>: get beers owned <nickname>')
     def beer_get(self, sender_nick, args, **kwargs):
         if not args: return
-        self.beer_get_say(sender_nick, irc_nickname(args[0]))
+        nickname = irc_nickname(args[0])
+
+        if nickname == sender_nick or nickname == self.bot.get_nickname():
+            self.bot.say('orly?')
+            return
+
+        self.beer_get_say(sender_nick, nickname)
 
     @command
     @doc('beer_reset <nickname>: reset owned beers')
@@ -36,6 +51,11 @@ class beer(plugin):
         # TODO authorization
         if not args: return
         nickname = irc_nickname(args[0])
+
+        if nickname == sender_nick or nickname == self.bot.get_nickname():
+            self.bot.say('orly?')
+            return
+
         self.logger.info(f'{sender_nick} resets {nickname} beers')
         self.reset(sender_nick, nickname)
         self.beer_get_say(sender_nick, nickname)

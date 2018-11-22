@@ -97,3 +97,4 @@ pybot.error
 ..pybot.yaml
 db/
 pybot.log
+.upload_file
