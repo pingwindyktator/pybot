@@ -2,6 +2,7 @@ import inspect
 import logging
 import sqlite3
 import ssl
+import string
 import time
 import textwrap
 import sys
@@ -425,6 +426,12 @@ class pybot(irc.bot.SingleServerIRCBot):
         if hasattr(func, '__channel_op') and not self.get_channel().is_oper(nickname): return False
         return True
 
+    def _is_same_nickname(self, a, b):
+        strip_str = ' _' + string.digits
+        a = a.casefold().strip(strip_str)
+        b = b.casefold().strip(strip_str)
+        return a == b and a
+
     # API funcs
 
     def register_plugin(self, plugin_instance):
@@ -590,7 +597,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         return [irc_nickname(n[0]) for n in result]
 
     def is_user_ignored(self, nickname):
-        return irc_nickname(nickname) in self.get_ignored_users() and not self.is_user_op(nickname)
+        return not self.is_user_op(nickname) and any((self._is_same_nickname(irc_nickname(nickname), x) for x in self.get_ignored_users()))
 
     def add_op(self, nickname):
         if self.is_user_ignored(nickname): self.unignore_user(nickname)
