@@ -1,6 +1,6 @@
 tzlocal==1.5.1
 unidecode==0.4.21
-ruamel.yaml==0.15.75
+ruamel.yaml==0.15.34
 lxml==4.2.5
 requests==2.20.0
 irc==16.1
