@@ -9,7 +9,7 @@ superop: ''
 file_logging_level: info
 stdout_logging_level: info
 # enabled_plugins: []
- disabled_plugins: [worldcup2018]
+disabled_plugins: [worldcup2018]
 command_prefix: '.'
 colors: true
 flood_protection: true
