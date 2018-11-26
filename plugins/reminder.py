@@ -1,16 +1,16 @@
 import uuid
 
 from threading import Timer
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 from plugin import *
 
 
 class reminder(plugin):
     def __init__(self, bot):
         super().__init__(bot)
-        self.time_regex = re.compile(r'^(([0-9]{1,2})-([0-9]{1,2})-([0-9]{4}) )?([0-9]{1,2}):([0-9]{1,2})(.*)')
-        self.delta_regex = re.compile(r'([0-9]+[Hh])?\W*([0-9]+[Mm])?(.*)')
+        self.time_regex = re.compile(r'^(([0-9]{4})-([0-9]{1,2})-([0-9]{1,2}) )?([0-9]{1,2}):([0-9]{1,2})(.*)$')
+        self.date_regex = re.compile(r'^([0-9]{4})-([0-9]{1,2})-([0-9]{1,2})(.*)$')
+        self.delta_regex = re.compile(r'^([0-9]+[Hh])?\W*([0-9]+[Mm])?(.*)$')
         self.to_notice = {}  # {timer_id -> remind_desc}
 
     def unload_plugin(self):
@@ -24,7 +24,7 @@ class reminder(plugin):
             self.timer_object = timer_object
 
     @command
-    @doc('remind <time> <msg>: sets timer to <time>. <time> can be  %d-%m-%Y %H:%M  or  %H:%M  or  %Hh %Mm  (eg.  1-12-2017 13:14  or  13:14  or  3h 2m)')
+    @doc('remind <time> <msg>: sets timer to <time>. <time> can be  %Y-%m-%d %H:%M  or  %H:%M  or  %Hh %Mm  (eg.  2018-12-1 13:14  or  13:14  or  3h 2m)')
     def remind(self, sender_nick, msg, **kwargs):
         now = datetime.now()
         run_at, msg = self.prepare_run_time(msg, now)
@@ -44,7 +44,7 @@ class reminder(plugin):
         t = Timer(delta_time, self.remind_say, kwargs={'timer_id': timer_id})
         self.to_notice[timer_id] = self.remind_desc(sender_nick, msg, t)
         t.start()
-        self.bot.say(f'reminder set to {run_at.strftime(r"%d-%m-%Y %H:%M")}')
+        self.bot.say(f'reminder set to {run_at.strftime(r"%Y-%m-%d %H:%M")}')
 
     def remind_say(self, timer_id):
         self.bot.say(f'{color.light_red("[Reminder] ")}{self.to_notice[timer_id].sender_nick}: {self.to_notice[timer_id].msg}')
@@ -58,21 +58,29 @@ class reminder(plugin):
             return None, None
 
     def prepare_run_time_impl(self, msg, now):
+        msg = msg.strip()
         time_reg_res = self.time_regex.findall(msg)
+        date_reg_res = self.date_regex.findall(msg)
         delta_reg_res = self.delta_regex.findall(msg)
-
         if time_reg_res:
             hour = f'{time_reg_res[0][4].zfill(2)}:{time_reg_res[0][5].zfill(2)}'
             if not time_reg_res[0][0]:
-                day = now.strftime(r'%d-%m-%Y')
+                day = now.strftime(r'%Y-%m-%d')
             else:
                 day = f'{time_reg_res[0][1].zfill(2)}-{time_reg_res[0][2].zfill(2)}-{time_reg_res[0][3].zfill(2)}'
 
-            run_at = datetime.strptime(f'{day} {hour}', r'%d-%m-%Y %H:%M')
+            run_at = datetime.strptime(f'{day} {hour}', r'%Y-%m-%d %H:%M')
             if run_at < now and not time_reg_res[0][0]:
                 run_at = run_at + timedelta(days=1)
 
             msg = time_reg_res[0][6].strip()
+            return run_at, msg
+
+        elif date_reg_res:
+            day = f'{date_reg_res[0][0].zfill(2)}-{date_reg_res[0][1].zfill(2)}-{date_reg_res[0][2].zfill(2)}'
+            hour = '9:00'
+            run_at = datetime.strptime(f'{day} {hour}', r'%Y-%m-%d %H:%M')
+            msg = date_reg_res[0][3].strip()
             return run_at, msg
 
         elif delta_reg_res:
@@ -83,4 +91,5 @@ class reminder(plugin):
             msg = delta_reg_res[0][2].strip()
             run_at = now + timedelta(hours=hour_delta, minutes=minute_delta)
             return run_at, msg
+
         else: return None, None

@@ -1,10 +1,13 @@
+tzlocal==1.5.1
 unidecode==0.4.21
 ruamel.yaml==0.15.34
-lxml==3.7.3
-requests==2.18.4
+lxml==4.2.5
+requests==2.20.0
 irc==16.1
 GitPython==2.1.7
 fuzzywuzzy==0.15.1
 beautifulsoup4==4.6.0
 urllib3==1.22
 pythonwhois==2.4.3
+wikipedia==1.4.0
+sentry-sdk==0.5.4

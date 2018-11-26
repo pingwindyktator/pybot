@@ -1,4 +1,3 @@
-import json
 import urllib.parse
 import datetime
 import requests
@@ -32,7 +31,7 @@ class weather(plugin):
         self.logger.info(f'getting weather in {msg} for {sender_nick}')
         weather_info = self.get_weather_info(msg)
         if not weather_info:
-            self.bot.say(f'cannot obtain weather in {msg}')
+            self.bot.say_err()
             return
 
         prefix = color.orange(f'[Latest recorded weather for {weather_info["name"]}, {weather_info["sys"]["country"]}]')
@@ -59,14 +58,14 @@ class weather(plugin):
         self.logger.info(f'getting weather forecast in {msg} for {sender_nick}')
         weather_info = self.get_forecast_info(msg)
         if not weather_info:
-            self.bot.say(f'cannot obtain weather in {msg}')
+            self.bot.say_err()
             return
 
         forecasts = {
             'today': self.parse_forecast(weather_info, 0),
-            'next night': self.parse_forecast(weather_info, 1, True),
+            'next night': self.parse_forecast(weather_info, 1, night=True),
             'tomorrow': self.parse_forecast(weather_info, 1),
-            (datetime.date.today() + datetime.timedelta(days=2)).strftime(r'%d-%m-%Y'): self.parse_forecast(weather_info, 2)
+            (datetime.date.today() + datetime.timedelta(days=2)).strftime(r'%Y-%m-%d'): self.parse_forecast(weather_info, 2)
         }
 
         for _time, forec in forecasts.items():
@@ -91,14 +90,15 @@ class weather(plugin):
 
         return result
 
+    @utils.timed_lru_cache(expiration=datetime.timedelta(minutes=3), typed=True)
     def get_weather_info_impl(self, city_name):
         ask = urllib.parse.quote(city_name)
-        raw_response = requests.get(self.weather_url % (ask, self.config['api_key'])).content.decode('utf-8')
-        response = json.loads(raw_response)
-        if 'cod' not in response or response['cod'] != 200:
-            if 'cod' not in response or response['cod'] != 404:
-                self.logger.warning(f'openweathermap error: {raw_response}')
-                
+        response = requests.get(self.weather_url % (ask, self.config['openweathermap_api_key'])).json()
+        if 'cod' not in response or int(response['cod']) != 200:
+            if 'cod' not in response or int(response['cod']) != 404:
+                self.logger.warning(f'openweathermap error: {response}')
+                self.get_weather_info_impl.do_not_cache()
+
             return None
 
         return response
@@ -114,14 +114,15 @@ class weather(plugin):
         return result
 
     # openweathermap API is really fucked up, I know there's ugly code duplication here...
+    @utils.timed_lru_cache(expiration=datetime.timedelta(minutes=3), typed=True)
     def get_forecast_info_impl(self, city_name):
         ask = urllib.parse.quote(city_name)
-        raw_response = requests.get(self.forecast_url % (ask, self.config['api_key'])).content.decode('utf-8')
-        response = json.loads(raw_response)
-        if 'cod' not in response or response['cod'] != '200':
-            if 'cod' not in response or response['cod'] != '404':
-                self.logger.warning(f'openweathermap error: {raw_response}')
-                
+        response = requests.get(self.forecast_url % (ask, self.config['openweathermap_api_key'])).json()
+        if 'cod' not in response or int(response['cod']) != 200:
+            if 'cod' not in response or int(response['cod']) != 404:
+                self.logger.warning(f'openweathermap error: {response}')
+                self.get_forecast_info_impl.do_not_cache()
+
             return None
 
         return response
@@ -179,8 +180,8 @@ class weather(plugin):
     def colorize_temp(self, temp):
         temp = float(temp)
         if temp < 0:  return color.blue(temp)
-        if temp < 10: return color.light_blue(temp)
+        if temp < 10: return color.light_cyan(temp)
         if temp < 15: return color.cyan(temp)
         if temp < 26: return color.yellow(temp)
-        if temp < 30: return color.light_red(temp)
-        else:         return color.red(temp)
+        if temp < 30: return color.orange(temp)
+        else:         return color.light_red(temp)

@@ -1,3 +1,6 @@
+import random
+
+
 class color:
     _on_template = '\x03{0:02d}{1}\x0F'
     _off_template = '{1}'
@@ -11,6 +14,10 @@ class color:
     @classmethod
     def disable_colors(cls):
         cls._template = cls._off_template
+
+    @classmethod
+    def random(cls, text):
+        return cls._template.format(random.randint(0, 15), text)
 
     @classmethod
     def white(cls, text):

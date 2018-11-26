@@ -1,7 +1,6 @@
 import pythonwhois
 
 from contextlib import suppress
-from pythonwhois.shared import WhoisException
 from plugin import *
 
 
@@ -10,18 +9,16 @@ class whois(plugin):
         super().__init__(bot)
 
     @command
-    @doc('gets whois info')
+    @doc('get whois info')
     def whois(self, sender_nick, msg, **kwargs):
         domain = msg.strip().lower()
         self.logger.info(f'{sender_nick} whoised {domain}')
 
         try:
             data = pythonwhois.get_whois(domain, normalized=True)
-        except WhoisException:
-            self.bot.say(f'no match for {domain}')
-            return
-        except:
-            self.bot.say(f'no info for {domain}')
+        except Exception as e:
+            self.logger.warning(f'unable to get whois info: {type(e).__name__}: {e}')
+            self.bot.say_err()
             return
 
         result = []
@@ -30,10 +27,10 @@ class whois(plugin):
             result.append(['Registrar', format(data['registrar'][0])])
 
         with suppress(KeyError):
-            result.append(['Registered', format(data['creation_date'][0].strftime('%d-%m-%Y'))])
+            result.append(['Registered', format(data['creation_date'][0].strftime('%Y-%m-%d'))])
 
         with suppress(KeyError):
-            result.append(['Expires', format(data['expiration_date'][0].strftime('%d-%m-%Y'))])
+            result.append(['Expires', format(data['expiration_date'][0].strftime('%Y-%m-%d'))])
 
         if data['contacts']['registrant']:
             result.append(['Registrant', self.build_contact_str(data, 'registrant')])
@@ -42,7 +39,8 @@ class whois(plugin):
             result.append(['Admin', self.build_contact_str(data, 'admin')])
 
         if not result:
-            self.bot.say(f'no info for {domain}')
+            self.bot.say_err()
+            return
 
         for i in result:
             self.bot.say(f'{i[0]}: {i[1]}')

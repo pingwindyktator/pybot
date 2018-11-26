@@ -17,7 +17,9 @@ class webtitle_parser(plugin):
             r'(?::\d+)?'  # optional port
             r'(?:/?|[/?]\S+)$', re.IGNORECASE)
 
-    def on_pubmsg(self, msg, **kwargs):
+    def on_pubmsg(self, msg, source, **kwargs):
+        if self.bot.is_user_ignored(source.nick): return
+
         urls = msg.strip().split()
         for url in urls: self.parse_url(url.strip())
 

@@ -1,15 +1,5 @@
 from plugin import *
 
-# TIPS:
-# - all plugin functions will be called from one, main thread
-# - IRC nickname is case-insensitive. Usually you should'nt worry about it, since pybot API uses irc_nickname class
-#     to represent it, but - for example - if you wan't to use database, use .casefold()
-# - All exceptions from commands and from on_* methods will be caught by bot - nothing bad will happen
-# - If your __init__ throws, plugin won't be loaded by bot. You can use it to assert environment compatibility
-# - Plugin class name should be equal to module name
-# - Message you'd get ('msg', 'args' arguments) might be empty
-# - Help docs should follow docopt standard (see http://docopt.org)
-
 
 @doc("this is what you will see as plugin's help")
 class example_plugin(plugin):
@@ -23,10 +13,8 @@ class example_plugin(plugin):
 
     def assert_config(self):
         # assert config compatibility here
-        # should throw utils.config_error if config is invalid (see utils.c_assert_error)
+        # should throw if config is invalid
         # in such case, plugin won't be loaded
-        #
-        # ex: utils.c_assert_error(config['port'] >= 1024, 'port should be >= 1024')
         pass
 
     @command
@@ -52,10 +40,19 @@ class example_plugin(plugin):
         # see plugin base class for possible positional arguments
         pass
 
-    @command
-    @admin
+    @command(admin=True)
     def example_admin_command(self, sender_nick, **kwargs):
         # you need admin privileges to call this command
+        pass
+
+    @command(superadmin=True)
+    def example_superadmin_command(self, sender_nick, **kwargs):
+        # you need superadmin privileges to call this command
+        pass
+
+    @command(channel_op=True)
+    def example_channel_op_command(self, sender_nick, **kwargs):
+        # you need to be channel operator to call this command
         pass
 
     @command

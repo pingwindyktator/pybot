@@ -42,11 +42,16 @@ class get(plugin):
     @doc("get all saved messages")
     def get_list(self, sender_nick, **kwargs):
         self.logger.info(f'{sender_nick} gets entry list')
-        result = self.get_list_impl()
+        result = sorted(self.get_list_impl())
         response = f'saved entries: {", ".join(result)}' if result else 'no saved entries'
         self.bot.say(response)
 
     @command
+    @doc("get all saved messages")
+    def get_all(self, **kwargs):
+        return self.get_list(**kwargs)
+
+    @command(admin=True)
     @doc('unset <entry>: remove <entry> entry')
     def unset(self, sender_nick, msg, **kwargs):
         if not msg: return
@@ -58,7 +63,7 @@ class get(plugin):
         self.bot.say_ok()
         self.logger.info(f'{sender_nick} removes {entry}')
 
-    @command
+    @command(admin=True)
     @doc('set <entry> <message>: save <message> for <entry>')
     def set(self, sender_nick, msg, **kwargs):
         if not msg: return
@@ -66,6 +71,7 @@ class get(plugin):
         val = msg[len(entry):].strip()
         if not val: return
         entry = self.prepare_entry(entry)
+
         try:
             with self.db_mutex:
                 self.db_cursor.execute(f"INSERT INTO '{self.db_name}' VALUES (?, ?)", (entry, val))
@@ -75,6 +81,7 @@ class get(plugin):
             self.bot.say_ok()
         except sqlite3.IntegrityError:
             self.bot.say(f'"{entry}" entry already exists')
+            return
 
     def get_list_impl(self):
         with self.db_mutex:
