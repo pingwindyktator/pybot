@@ -451,9 +451,11 @@ class builtins(plugin):
             self.logger.error(f'unable to upload pybot.log: {type(e).__name__}: {e}')
 
     @command
+    @commandAlias("date")
     @doc("get bot's local time")
     def time(self, **kwargs):
         self.bot.say(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + utils.get_str_utc_offset())
+
 
     @command
     @doc("fix your previous command")

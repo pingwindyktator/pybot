@@ -163,6 +163,24 @@ class plugin:
         """
         pass
 
+def commandAlias(aliases):
+    def real_decorator(function):
+        function.__aliases = []
+        _aliases = []
+
+        if type(aliases) is list:
+            _aliases = aliases
+        elif type(aliases) is str:
+            _aliases = [aliases]
+
+        for alias in _aliases:
+            if type(alias) is str:
+                function.__aliases.append(alias);
+
+        return function;
+
+    return real_decorator
+
 
 def command(_cls=None, admin=False, superadmin=False, channel_op=False):
     def command_decorator(function):
