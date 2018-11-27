@@ -388,6 +388,25 @@ class pybot(irc.bot.SingleServerIRCBot):
 
         self._logger.debug('no more msgs to send, exiting...')
 
+    def _register_command(self, command_name, func):
+        if command_name in self.get_commands():
+            self._logger.warning(f'command {command_name} already registered, skipping...')
+            return
+
+        self._commands[command_name] = func
+        self._logger.debug(f'command {command_name} registered')
+
+
+    def _register_aliases(self, func):
+        if not hasattr(func, '__aliases'):
+            return
+
+        _aliases = getattr(func, '__aliases')
+
+        for alias in _aliases:
+            self._register_command(alias, func)
+
+
     def _register_plugin_handlers(self, plugin_instance):
         """ not thread safe """
         if plugin_instance not in self._plugins:
@@ -398,12 +417,8 @@ class pybot(irc.bot.SingleServerIRCBot):
             func = f[1]
             func_name = f[0]
             if hasattr(func, '__command'):
-                if func_name in self.get_commands():
-                    self._logger.warning(f'command {func_name} already registered, skipping...')
-                    continue
-
-                self._commands[func_name] = func
-                self._logger.debug(f'command {func_name} registered')
+                self._register_command(func_name, func)
+                self._register_aliases(func)
 
             if hasattr(func, '__regex'):
                 __regex = getattr(func, '__regex')
