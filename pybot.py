@@ -403,9 +403,6 @@ class pybot(irc.bot.SingleServerIRCBot):
 
         _aliases = getattr(func, '__aliases')
 
-        if type(_aliases) is not list:
-            return
-
         for alias in _aliases:
             self._register_command(alias, func)
 
@@ -422,7 +419,6 @@ class pybot(irc.bot.SingleServerIRCBot):
             if hasattr(func, '__command'):
                 self._register_command(func_name, func)
                 self._register_aliases(func)
-
 
             if hasattr(func, '__regex'):
                 __regex = getattr(func, '__regex')
