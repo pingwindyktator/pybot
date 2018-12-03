@@ -92,8 +92,8 @@ class weather(plugin):
     def get_weather_info_impl(self, city_name):
         ask = urllib.parse.quote(city_name)
         response = requests.get(self.weather_url % (ask, self.config['openweathermap_api_key'])).json()
-        if 'cod' not in response or int(response['cod']) != 200:
-            if 'cod' not in response or int(response['cod']) != 404:
+        if 'cod' not in response or int(response['cod']) != requests.codes.OK:
+            if 'cod' not in response or int(response['cod']) != requests.codes.NOT_FOUND:
                 self.logger.warning(f'openweathermap error: {response}')
                 self.get_weather_info_impl.do_not_cache()
 
@@ -116,8 +116,8 @@ class weather(plugin):
     def get_forecast_info_impl(self, city_name):
         ask = urllib.parse.quote(city_name)
         response = requests.get(self.forecast_url % (ask, self.config['openweathermap_api_key'])).json()
-        if 'cod' not in response or int(response['cod']) != 200:
-            if 'cod' not in response or int(response['cod']) != 404:
+        if 'cod' not in response or int(response['cod']) != requests.codes.OK:
+            if 'cod' not in response or int(response['cod']) != requests.codes.NOT_FOUND:
                 self.logger.warning(f'openweathermap error: {response}')
                 self.get_forecast_info_impl.do_not_cache()
 
