@@ -61,7 +61,7 @@ class spacex_launches(plugin):
             if self.upcoming_launches_timers[flight_id].launch_datetime != next_launch_time:
                 old_launch_time = self.upcoming_launches_timers[flight_id].launch_datetime
                 self.logger.info(f'launch {flight_id} was just rescheduled: {old_launch_time} -> {next_launch_time}')
-                if old_launch_time - timedelta(days=30) < now:
+                if old_launch_time - timedelta(days=10) < now:
                     self.inform_rescheduled_launch(next_launch, old_launch_time)
 
                 self.logger.debug(f'canceling timers for {flight_id}')
