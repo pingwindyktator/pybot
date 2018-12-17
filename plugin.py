@@ -166,6 +166,10 @@ class plugin:
 
 def command_alias(*args):
     def command_alias_decorator(function):
+        if any(len(arg.split()) > 1 for arg in args):
+            print(f'invalid aliases for {function.__qualname__}')
+            sys.exit(9)
+
         function.__aliases = [*args]
         return function
 
@@ -173,22 +177,22 @@ def command_alias(*args):
 
 
 def command(_cls=None, admin=False, superadmin=False, channel_op=False):
-    def command_decorator(function):
+    def command_impl(function):
         @wraps(function)
-        def command_impl(self, sender_nick, **kwargs):
+        def command_impl_impl(self, sender_nick, **kwargs):
             sender_nick = irc_nickname(sender_nick)
 
-            if hasattr(command_impl, '__superadmin') and sender_nick != self.bot.config['superop']:
+            if hasattr(command_impl_impl, '__superadmin') and sender_nick != self.bot.config['superop']:
                 self.logger.info(f'{sender_nick} is not superop, skipping command')
                 self.bot.say(f"{sender_nick}: you're not bot owner, sorry!")
                 return
 
-            if hasattr(command_impl, '__admin') and not self.bot.is_user_op(sender_nick):
+            if hasattr(command_impl_impl, '__admin') and not self.bot.is_user_op(sender_nick):
                 self.logger.info(f'{sender_nick} is not op, skipping command')
                 self.bot.say(f"{sender_nick}: you're not bot operator, sorry!")
                 return
 
-            if hasattr(command_impl, '__channel_op') and not self.bot.get_channel().is_oper(sender_nick):
+            if hasattr(command_impl_impl, '__channel_op') and not self.bot.get_channel().is_oper(sender_nick):
                 self.logger.info(f'{sender_nick} is not channel operator, skipping command')
                 self.bot.say(f"{sender_nick}: you're not channel operator, sorry!")
                 return
@@ -201,20 +205,20 @@ def command(_cls=None, admin=False, superadmin=False, channel_op=False):
                 if self.bot.is_debug_mode_enabled(): raise
                 else: utils.report_error()
 
-        if hasattr(command_impl, '__regex'):
+        if hasattr(command_impl_impl, '__regex'):
             print(f'function {function.__qualname__} already registered as regex handler')
             sys.exit(8)
 
-        command_impl.__command = True
-        if admin: command_impl.__admin = True
-        if superadmin: command_impl.__admin = command_impl.__superadmin = True
-        if channel_op: command_impl.__channel_op = True
-        return command_impl
+        command_impl_impl.__command = True
+        if admin: command_impl_impl.__admin = True
+        if superadmin: command_impl_impl.__admin = command_impl_impl.__superadmin = True
+        if channel_op: command_impl_impl.__channel_op = True
+        return command_impl_impl
 
     if _cls is None:
-        return command_decorator
+        return command_impl
     else:
-        return command_decorator(_cls)
+        return command_impl(_cls)
 
 
 def on_message(regex_str):
