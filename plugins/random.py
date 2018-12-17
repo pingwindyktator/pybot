@@ -25,9 +25,10 @@ class random(plugin):
         if result.startswith('Error: '): return None, result
         return result, None
 
+    @command
+    @command_alias('random_string')
     @doc("""randoms <length>: fetch random string of length <length> from random.org
             fetch random string of length 100 from random.org""")
-    @command
     def randoms(self, sender_nick, args, **kwargs):
         if not args:
             _len = 100
@@ -68,6 +69,7 @@ class random(plugin):
     @doc("""random2 <min> <max>: fetch binary random number in [min, max] from random.org
             fetch binary random number in [0, 1000000000] from random.org""")
     @command
+    @command_alias('random_bin')
     def random2(self, args, sender_nick,  **kwargs):
         result, error = self.random_impl(args, 2, sender_nick)
         if result: self.bot.say(f'0b{result}')
@@ -76,6 +78,7 @@ class random(plugin):
     @doc("""random8 <min> <max>: fetch oct random number in [min, max] from random.org
             fetch oct random number in [0, 1000000000] from random.org""")
     @command
+    @command_alias('random_oct')
     def random8(self, args, sender_nick, **kwargs):
         result, error = self.random_impl(args, 8, sender_nick)
         if result: self.bot.say(f'0o{result}')
@@ -84,6 +87,7 @@ class random(plugin):
     @doc("""random16 <min> <max>: fetch hex random number in [min, max] from random.org
             fetch hex random number in [0, 1000000000] from random.org""")
     @command
+    @command_alias('random_hex')
     def random16(self, args, sender_nick, **kwargs):
         result, error = self.random_impl(args, 16, sender_nick)
         if result: self.bot.say(f'0x{result}')

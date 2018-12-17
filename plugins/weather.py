@@ -53,6 +53,7 @@ class weather(plugin):
 
     @doc('forecast <location>: get weather forecast in <location> from openweathermap')
     @command
+    @command_alias('weather_forecast')
     def forecast(self, sender_nick, msg, **kwargs):
         if not msg: return
         self.logger.info(f'getting weather forecast in {msg} for {sender_nick}')

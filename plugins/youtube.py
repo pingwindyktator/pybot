@@ -18,6 +18,7 @@ class youtube(plugin):
         self.yt_url = 'https://www.youtube.com/watch?v=%s'
 
     @command
+    @command_alias('youtube')
     @doc('yt <ask>: search youtube for <ask>')
     def yt(self, msg, sender_nick, **kwargs):
         if not msg: return

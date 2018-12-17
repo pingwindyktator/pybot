@@ -185,6 +185,7 @@ class spacex_launches(plugin):
         return result
 
     @command
+    @command_alias('spacex_prev')
     @doc('get last SpaceX launch info')
     def spacex_last(self, sender_nick, **kwargs):
         self.logger.info(f'{sender_nick} wants spacex latest launch')

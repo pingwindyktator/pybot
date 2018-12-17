@@ -81,6 +81,7 @@ class privmsg_logger_handler(plugin):
         self.bot.say_ok()
 
     @command
+    @command_alias('plhs')
     @doc('get all registered privmsg logger handlers')
     def get_plhs(self, sender_nick, **kwargs):
         response = {t: utils.int_to_logging_level_str[level] for t, level in self.get_plhs_impl().items()}
