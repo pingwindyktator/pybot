@@ -33,6 +33,10 @@ class echo(plugin):
         self.bot.say('a man after midnight!')
 
     @command
+    def lenny(self, **kwargs):
+        self.bot.say('( ͡° ͜ʖ ͡°)')
+
+    @command
     def lifeislife(self, **kwargs):
         self.bot.say('la la la la la!')
 
