@@ -56,15 +56,10 @@ class random(plugin):
 
         self.bot.say(result)
 
-    @doc("""random <min> <max>: fetch random number in [min, max] from random.org
-            fetch random number in [0, 1000000000] from random.org""")
-    @command
-    def random(self, **kwargs):
-        return self.random10(**kwargs)
-
     @doc("""random10 <min> <max>: fetch random number in [min, max] from random.org
             fetch random number in [0, 1000000000] from random.org""")
     @command
+    @command_alias('random')
     def random10(self, args, sender_nick, **kwargs):
         result, error = self.random_impl(args, 10, sender_nick)
         if result: self.bot.say(result)
@@ -94,11 +89,6 @@ class random(plugin):
         if result: self.bot.say(f'0x{result}')
         else: self.bot.say(error)
 
-    @doc('generates random uuid4')
-    @command
-    def uuid(self, **kwargs):
-        return self.uuid4(**kwargs)
-
     @doc('generates random uuid1')
     @command
     def uuid1(self, sender_nick, **kwargs):
@@ -107,6 +97,7 @@ class random(plugin):
 
     @doc('generates random uuid4')
     @command
+    @command_alias('uuid')
     def uuid4(self, sender_nick, **kwargs):
         self.logger.info(f'generating uuid4 for {sender_nick}')
         self.bot.say(uuid.uuid4())
