@@ -39,17 +39,13 @@ class get(plugin):
             self.bot.say(response)
 
     @command
+    @command_alias('get_all')
     @doc("get all saved messages")
     def get_list(self, sender_nick, **kwargs):
         self.logger.info(f'{sender_nick} gets entry list')
         result = sorted(self.get_list_impl())
         response = f'saved entries: {", ".join(result)}' if result else 'no saved entries'
         self.bot.say(response)
-
-    @command
-    @doc("get all saved messages")
-    def get_all(self, **kwargs):
-        return self.get_list(**kwargs)
 
     @command(admin=True)
     @doc('unset <entry>: remove <entry> entry')
