@@ -9,7 +9,7 @@ from plugin import *
 class get(plugin):
     def __init__(self, bot):
         super().__init__(bot)
-        self.db_name = "get"
+        self.db_name = 'get'
         os.makedirs(os.path.dirname(os.path.realpath(self.config['db_location'])), exist_ok=True)
         self.db_connection = sqlite3.connect(self.config['db_location'], check_same_thread=False)
         self.db_cursor = self.db_connection.cursor()
@@ -40,7 +40,7 @@ class get(plugin):
 
     @command
     @command_alias('get_all')
-    @doc("get all saved messages")
+    @doc('get all saved messages')
     def get_list(self, sender_nick, **kwargs):
         self.logger.info(f'{sender_nick} gets entry list')
         result = sorted(self.get_list_impl())
