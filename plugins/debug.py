@@ -25,3 +25,17 @@ class debug(plugin):
         # self.bot.say(color.pink('pink'))
         # self.bot.say(color.gray('gray'))
         # self.bot.say(color.light_grey('light_grey'))
+
+    def _generate_markdown_help(self):
+        # TODO: WIP
+        commands_by_plugin = self.bot.get_commands_by_plugin()
+        for plugin_name in commands_by_plugin:
+            plugin = self.bot.get_plugin(plugin_name)
+            plugin_help = f'\\: {getattr(plugin, "__doc_string")}'.strip() if hasattr(plugin, '__doc_string') else ''
+            print(f'#### {plugin_name}{plugin_help}', end='  \n')
+
+            for command_name in commands_by_plugin[plugin_name]:
+                command = self.bot.get_commands()[command_name]
+                command_helps = getattr(command, '__doc_string').split('\n') if hasattr(command, '__doc_string') else []
+                for command_help in command_helps:
+                    print(f'* {command_name}\\: {command_help.strip()}', end='  \n')
