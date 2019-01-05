@@ -81,6 +81,7 @@ spacex_launches:
   db_location: db/spacex.db
   inform_about_rescheduled_launches: true
   call_users_for_rescheduled_launches: true
+  ignore_rescheduled_launches_further_than_days: 10
   include_flight_id: false
   include_details: true
   next_launches: 3
