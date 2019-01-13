@@ -46,6 +46,7 @@ class bot_operators(plugin):
         self.logger.warning(f'{sender_nick} removed bot operator: {nickname}')
 
     @command
+    @command_alias('get_ops')
     @doc('get bot operators')
     def ops(self, sender_nick, **kwargs):
         ops = self.bot.get_ops()

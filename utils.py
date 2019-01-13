@@ -104,7 +104,7 @@ class timed_lru_cache:
                         return func_result
 
                     except Exception:
-                        self.logger.warning(f'exception caught calling: {call_repr}, no result cached')
+                        self.logger.error(f'exception caught calling: {call_repr}, no result cached')
                         raise
                 else:
                     self.logger.debug(f'returned cached result: {call_repr} -> {self.cache[call_args][0]}')
@@ -149,7 +149,7 @@ class repeated_timer(Timer):
             try:
                 self.function(*self.args, **self.kwargs)
             except Exception as e:
-                logging.getLogger(__name__).warning(f'exception caught calling {self.function.__qualname__}: {type(e).__name__}: {e}, continuing...')
+                logging.getLogger(__name__).error(f'exception caught calling {self.function.__qualname__}: {type(e).__name__}: {e}, continuing...')
 
             self.finished.wait(self.interval)
 

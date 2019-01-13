@@ -10,6 +10,7 @@ class wiki(plugin):
         wikipedia.set_lang(self.config['language'])
 
     @command
+    @command_alias('wikipedia')
     @doc('wiki <ask>: search wikipedia for <ask>')
     def wiki(self, msg, sender_nick, **kwargs):
         if not msg: return

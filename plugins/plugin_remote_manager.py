@@ -104,7 +104,8 @@ class plugin_remote_manager(plugin):
         self.logger.warning(f'plugin {name} disabled')
 
     @command(admin=True)
-    @doc('load_plugin <name>: load new plugin or reload existing one')
+    @command_alias('reload_plugin')
+    @doc('load new plugin or reload existing one')
     def load_plugin(self, sender_nick, args, **kwargs):
         if not args: return
         plugin_name = args[0]

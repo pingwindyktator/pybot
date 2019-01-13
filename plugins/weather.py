@@ -53,6 +53,7 @@ class weather(plugin):
 
     @doc('forecast <location>: get weather forecast in <location> from openweathermap')
     @command
+    @command_alias('weather_forecast')
     def forecast(self, sender_nick, msg, **kwargs):
         if not msg: return
         self.logger.info(f'getting weather forecast in {msg} for {sender_nick}')
@@ -63,7 +64,6 @@ class weather(plugin):
 
         forecasts = {
             'today': self.parse_forecast(weather_info, 0),
-            'next night': self.parse_forecast(weather_info, 1, night=True),
             'tomorrow': self.parse_forecast(weather_info, 1),
             (datetime.date.today() + datetime.timedelta(days=2)).strftime(r'%Y-%m-%d'): self.parse_forecast(weather_info, 2)
         }
@@ -71,10 +71,9 @@ class weather(plugin):
         for _time, forec in forecasts.items():
             if not forec: continue
             prefix = color.orange(f'[Weather forecast for {weather_info["city"]["name"]}, {weather_info["city"]["country"]} for {_time}]')
-            responses = []
+            responses = [f'{self.colorize_temp(forec.min_temp)} °C to {self.colorize_temp(forec.max_temp)} °C',
+                         f'{forec.conditions}']
 
-            responses.append(f'{self.colorize_temp(forec.min_temp)} °C to {self.colorize_temp(forec.max_temp)} °C')
-            responses.append(f'{forec.conditions}')
             if forec.avg_humidity: responses.append(f'average relative humidity: {forec.avg_humidity}%')
             if forec.avg_wind_speed: responses.append(f'average wind speed: {forec.avg_wind_speed}mps')
 
@@ -94,8 +93,8 @@ class weather(plugin):
     def get_weather_info_impl(self, city_name):
         ask = urllib.parse.quote(city_name)
         response = requests.get(self.weather_url % (ask, self.config['openweathermap_api_key'])).json()
-        if 'cod' not in response or int(response['cod']) != 200:
-            if 'cod' not in response or int(response['cod']) != 404:
+        if 'cod' not in response or int(response['cod']) != requests.codes.OK:
+            if 'cod' not in response or int(response['cod']) != requests.codes.NOT_FOUND:
                 self.logger.warning(f'openweathermap error: {response}')
                 self.get_weather_info_impl.do_not_cache()
 
@@ -118,8 +117,8 @@ class weather(plugin):
     def get_forecast_info_impl(self, city_name):
         ask = urllib.parse.quote(city_name)
         response = requests.get(self.forecast_url % (ask, self.config['openweathermap_api_key'])).json()
-        if 'cod' not in response or int(response['cod']) != 200:
-            if 'cod' not in response or int(response['cod']) != 404:
+        if 'cod' not in response or int(response['cod']) != requests.codes.OK:
+            if 'cod' not in response or int(response['cod']) != requests.codes.NOT_FOUND:
                 self.logger.warning(f'openweathermap error: {response}')
                 self.get_forecast_info_impl.do_not_cache()
 
@@ -127,15 +126,11 @@ class weather(plugin):
 
         return response
 
-    def parse_forecast(self, weather_info, days, night=False):
+    def parse_forecast(self, weather_info, days):
         dt_txt = (datetime.date.today() + datetime.timedelta(days=days)).strftime(r'%Y-%m-%d')
-        if not night:
-            wanted_dt_txts = [f'{dt_txt} {x}' for x in ['06:00:00', '09:00:00', '12:00:00', '15:00:00', '18:00:00', '21:00:00']]
-        else:
-            wanted_dt_txts = [f'{dt_txt} {x}' for x in ['00:00:00', '03:00:00', '06:00:00']]
 
-        min_temp = 99999
-        max_temp = -99999
+        min_temp = sys.maxsize
+        max_temp = -sys.maxsize
         avg_humidity = 0.
         humidities = 0
         avg_wind_speed = 0.
@@ -143,7 +138,7 @@ class weather(plugin):
         conditions = []
 
         for forec in weather_info['list']:
-            if forec['dt_txt'] not in wanted_dt_txts or 'main' not in forec: continue
+            if not forec['dt_txt'].startswith(dt_txt) or 'main' not in forec: continue
             if forec['main']['temp_min'] < min_temp: min_temp = forec['main']['temp_min']
             if forec['main']['temp_max'] > max_temp: max_temp = forec['main']['temp_max']
             if 'humidity' in forec['main']:
@@ -159,7 +154,7 @@ class weather(plugin):
                 if cond['id'] == 800: continue  # clear sky
                 conditions.append(cond['description'])
 
-        if min_temp == 99999: return None  # no data found
+        if min_temp == sys.maxsize: return None  # no data found
         conditions = list(set(conditions))
 
         return self.forecast_info(int(max_temp),

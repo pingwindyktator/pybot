@@ -18,6 +18,7 @@ class example_plugin(plugin):
         pass
 
     @command
+    @command_alias('put_command', 'aliases_here')
     def example_command(self, sender_nick, args, **kwargs):
         self.logger.info(f'example command called by {sender_nick} with {args}')
         self.bot.say('example command called!')

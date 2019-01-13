@@ -32,6 +32,7 @@ class air_condition(plugin):
         self.stations_by_city = {}  # city_name -> [stations]
 
     @command
+    @command_alias('pollution')
     @doc('air <city>: get air conditions in <city> from gios.gov.pl')
     def air(self, sender_nick, msg, **kwargs):
         if not msg: return

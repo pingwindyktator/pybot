@@ -94,6 +94,7 @@ class wolfram_alpha(plugin):
 
     @doc('wa <ask>: ask Wolfram|Alpha about <ask>')
     @command
+    @command_alias('wolfram_alpha', 'wolfram')
     def wa(self, msg, sender_nick, **kwargs):
         if not msg: return
         self.logger.info(f'{sender_nick} asked wolfram alpha "{msg}"')
