@@ -82,13 +82,16 @@ class air_condition(plugin):
     def update_known_stations(self):
         response = requests.get(r'http://api.gios.gov.pl/pjp-api/rest/station/findAll', timeout=10).json()
         stations_by_city = {}
-        for station in response:
+        for station in self.filter_stations_response(response):
             city = station['city']['name']
             if city not in stations_by_city: stations_by_city[city] = []
             stations_by_city[city].append(self.station(station['id'], station['stationName']))
 
         self.stations_by_city = stations_by_city
         self.get_city_name.clear_cache()
+
+    def filter_stations_response(self, response):
+        return [r for r in response if 'city' in r and 'name' in r['city'] and r['city']]
 
     def get_measurements(self, station_id):
         result = []
