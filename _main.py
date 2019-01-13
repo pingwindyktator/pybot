@@ -10,7 +10,7 @@ from pybot import pybot
 
 
 def configure_logger(config):
-    logging_format = '%(levelname)-10s%(asctime)s %(filename)s:%(funcName)-16s: %(message)s'
+    logging_format = '%(levelname)-10s%(asctime)s %(name)s:%(funcName)-16s: %(message)s'
     log_formatter = logging.Formatter(logging_format)
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG)

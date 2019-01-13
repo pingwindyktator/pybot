@@ -70,7 +70,7 @@ class timed_lru_cache:
         self.typed = typed
         self.cache = {}
         self.cache_lock = RLock()
-        self.logger = logging.getLogger(__name__)
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.function = None
         self.do_not_cache = False
 
@@ -104,7 +104,7 @@ class timed_lru_cache:
                         return func_result
 
                     except Exception:
-                        self.logger.error(f'exception caught calling: {call_repr}, no result cached')
+                        self.logger.warning(f'exception caught calling: {call_repr}, no result cached')
                         raise
                 else:
                     self.logger.debug(f'returned cached result: {call_repr} -> {self.cache[call_args][0]}')
@@ -145,11 +145,13 @@ class repeated_timer(Timer):
     """
 
     def run(self):
+        logger = logging.getLogger(self.__class__.__name__)
+
         while not self.finished.is_set():
             try:
                 self.function(*self.args, **self.kwargs)
             except Exception as e:
-                logging.getLogger(__name__).error(f'exception caught calling {self.function.__qualname__}: {type(e).__name__}: {e}, continuing...')
+                logger.error(f'exception caught calling {self.function.__qualname__}: {type(e).__name__}: {e}, continuing...')
 
             self.finished.wait(self.interval)
 
@@ -352,9 +354,10 @@ def setup_sentry():
 
 
 def report_error():
+    logger = logging.getLogger(__name__)
     try:
         sentry_sdk.capture_exception()
-        logging.getLogger(__name__).info('exception report sent to sentry.io')
+        logger.info('exception report sent to sentry.io')
     except Exception as e:
-        logging.getLogger(__name__).error(f'exception caught calling sentry_sdk.capture_exception: {type(e).__name__}: {e}')
+        logger.error(f'exception caught calling sentry_sdk.capture_exception: {type(e).__name__}: {e}')
 

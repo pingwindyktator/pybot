@@ -155,7 +155,7 @@ class SingleServerIRCBot_mock:
 
 
 def configure_logger(*args, **kwargs):
-    logging_format = '%(levelname)-10s%(asctime)s %(filename)s:%(funcName)-16s: %(message)s'
+    logging_format = '%(levelname)-10s%(asctime)s %(name)s:%(funcName)-20s: %(message)s'
     logging.basicConfig(format=logging_format, level=logging.INFO, stream=sys.stdout)
 
 
@@ -171,7 +171,4 @@ def simulator_main():
 
 
 if __name__ == "__main__":
-    print('TODO, pybot simulator wont work now...')
-    sys.exit(0)
-
-    # simulator_main()
+    simulator_main()
