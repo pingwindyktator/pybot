@@ -2,6 +2,7 @@ import os
 import time
 import json
 import sqlite3
+import random
 
 from threading import Thread, Lock
 from plugin import *
@@ -131,10 +132,16 @@ class stalker(plugin):
         for x in all_nicknames:
             if nick in x: result.update(x)
 
-        if nick in result: result.remove(nick)
+        removed_nick = False
+        if nick in result:
+            result.remove(nick)
+            removed_nick = True
 
         if result:
             self.bot.say(f'other nicks of {nick}: {", ".join(result)}')
+        elif removed_nick:
+            msgs = ['Gods believe, that %s is unique in our world.', 'We have seen %s lately.', '%s does not have multi accounts :(', ]
+            self.bot.say(random.choice(msgs) % nick)
         else:
             self.bot.say_err(nick)
 
