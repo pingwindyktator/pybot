@@ -1,0 +1,11 @@
+version: '2'
+
+services:
+  pybot:
+    build: .
+    image: pybot
+    volumes:
+      - .:/pybot:z
+    container_name: pybot-run
+#    environment: 
+#      TZ: 'Europe/Warsaw'
