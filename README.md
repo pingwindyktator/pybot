@@ -1,12 +1,22 @@
 # pybot
 
-Yet another dumb IRC bot
+Yet another dumb IRC bot.
 
 ## Features
 
 See [wiki/features](https://github.com/pingwindyktator/pybot/wiki/features)!
 
-## Getting started
+## Getting started && Running
+
+The easiest and safest way to run pybot is to use docker. It's as simple as:
+```shell
+docker build -t pybot .
+./docker_run.sh
+```
+That's all. Really.
+
+
+## Local environment setup
 
 First of all, you need at least Python 3.6 to run it. You can use pyenv to get it:
 
@@ -35,15 +45,8 @@ pyenv virtualenv 3.6.0 general  # make it a virtualenv
 pyenv global general  # make it globally active for your user
 ```
 
-Now you can check your python version (`python -V`) and have fun!
+Now you can check your python version (`python -V`) and run `python main.py`.
 
-## Running
-
-```shell
-python main.py
-```
-
-That's all. Really.
 
 ## Configuration
 
