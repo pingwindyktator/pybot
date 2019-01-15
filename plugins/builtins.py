@@ -295,7 +295,8 @@ class builtins(plugin):
             else: utils.report_error()
 
     def prepare_commit_msg(self, commit):
-        return f'{str(commit)[:6]}: {commit.message.strip()}'
+        commit_msg = commit.message.strip().replace('\n', '; ')
+        return f'{str(commit)[:6]}: {commit_msg}'
 
     @command(superadmin=True)
     @doc('self_update [<force>]: pull changes from git remote ref and update config file, use [<force>] to discard local changes')
