@@ -228,14 +228,16 @@ def get_pybot_dir():
     return os.path.dirname(os.path.abspath(__file__))
 
 
-def ensure_config_is_ok(config, assert_unknown_keys=False):
+def get_config_violations(config, assert_unknown_keys=False):
     class config_key_info:
         def __init__(self, required, type):
             self.required = required
             self.type = type
 
+    exceptions = []
+
     def c_assert_error(expr, text):
-        if not expr: raise RuntimeError(text)
+        if not expr: exceptions.append(text)
 
     config_keys = {
         'server': config_key_info(True, str),
@@ -271,6 +273,8 @@ def ensure_config_is_ok(config, assert_unknown_keys=False):
         if key in config:
             c_assert_error(type(config[key]) is key_info.type, f'{key} field type should be {key_info.type.__name__}')
 
+    if exceptions: return exceptions
+
     c_assert_error(config['server'].strip(), 'you have to specify server field')
     c_assert_error(config['port'] > 0, 'port should be > 0')
     c_assert_error(config['port'] <= 65535, 'port should be <= 65535')
@@ -296,6 +300,8 @@ def ensure_config_is_ok(config, assert_unknown_keys=False):
         for key, value in config.items():
             if not isinstance(value, dict):
                 c_assert_error(key in config_keys, f'unknown config file key: {key}')
+
+    return exceptions
 
 
 def setup_sentry():

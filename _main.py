@@ -46,10 +46,9 @@ def main(debug_mode=False):
         print(f'Cannot read config file: {type(e).__name__}: {e}')
         sys.exit(6)
 
-    try:
-        utils.ensure_config_is_ok(config, assert_unknown_keys=True)
-    except Exception as e:
-        print(f'Invalid config file: {type(e).__name__}: {e}')
+    config_violations = utils.get_config_violations(config, assert_unknown_keys=True)
+    if config_violations:
+        print(f'Invalid config file:\n{config_violations}')
         sys.exit(3)
 
     configure_logger(config)

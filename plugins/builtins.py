@@ -139,10 +139,9 @@ class builtins(plugin):
             self.logger.info(f'exception: {type(e).__name__}: {e}')
             return 'cannot load config file'
 
-        try:
-            utils.ensure_config_is_ok(config)
-        except Exception as e:
-            self.logger.info(f'exception: {type(e).__name__}: {e}')
+        config_violations = utils.get_config_violations(config)
+        if config_violations:
+            self.logger.info(f'invalid config file: {config_violations}')
             return 'invalid config file'
 
         return None
@@ -266,7 +265,7 @@ class builtins(plugin):
         self.write_config_file(config, '.pybot.yaml')  # TODO temp file
 
         config = yaml.load(open('.pybot.yaml'), Loader=yaml.Loader)
-        utils.ensure_config_is_ok(config)
+        if utils.get_config_violations(config): raise RuntimeError('invalid config file')
 
         shutil.copyfile('.pybot.yaml', 'pybot.yaml')
         self.logger.warning('config file updated')
@@ -387,10 +386,10 @@ class builtins(plugin):
 
         config = yaml.load(open('.pybot.yaml'), Loader=yaml.Loader)
 
-        try:
-            utils.ensure_config_is_ok(config)
-        except Exception as e:
-            self.bot.say(f'invalid value: {e}, aborting...')
+        config_violations = utils.get_config_violations(config)
+        if config_violations:
+            self.logger.warning(f'invalid config: {config_violations}, aborting...')
+            self.bot.say(f'invalid value, aborting...')
             return
 
         reason = self.is_restart_unsafe()
