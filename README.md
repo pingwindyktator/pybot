@@ -13,6 +13,7 @@ The easiest and safest way to run pybot is to use docker. It's as simple as:
 docker build -t pybot .
 ./docker_run.sh
 ```
+or `docker-compose up -d`
 That's all. Really.
 
 
