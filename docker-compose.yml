@@ -6,6 +6,5 @@ services:
     image: pybot
     volumes:
       - .:/pybot:z
+      - /etc/localtime:/etc/localtime:ro
     container_name: pybot-run
-#    environment: 
-#      TZ: 'Europe/Warsaw'
