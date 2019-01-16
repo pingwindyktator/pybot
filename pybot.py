@@ -15,6 +15,7 @@ import irc.bot
 import irc.connection
 import irc.client
 import utils
+import signal
 
 from typing import Optional
 from queue import Queue
@@ -71,7 +72,10 @@ class pybot(irc.bot.SingleServerIRCBot):
         self._ping_ponger = ping_ponger(self.connection, self.config['health_check_interval_s'], self.on_not_healthy) if self.config['health_check'] else utils.null_object()
         self._logger.info('irc.bot.SingleServerIRCBot initiated')
 
-        if not debug_mode: atexit.register(self._atexit)
+        if not debug_mode:
+            atexit.register(self._atexit)
+            signal.signal(signal.SIGTERM, lambda s, f: self._atexit())
+            signal.signal(signal.SIGINT, lambda s, f: self._atexit())
 
         self._load_plugins()
 
@@ -308,6 +312,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         if not self._dying:
             self._logger.warning(f'interrupted, dying...')
             self.die('Interrupted by OS')
+            sys.exit(0)
 
     def _get_best_command_match(self, command, sender_nick):
         choices = [c.replace('_', ' ') for c in self.get_commands() if self._can_user_call_command(sender_nick, c)]
