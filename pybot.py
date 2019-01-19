@@ -294,6 +294,12 @@ class pybot(irc.bot.SingleServerIRCBot):
 
     # don't touch this
 
+    def _possessive_nick(self, nickname):
+        if nickname.endswith('s'):
+            return f"{nickname}'"
+
+        return f"{nickname}'s"
+
     def _login(self):
         # TODO move to plugin, add other login ways
         if 'password' in self.config and self._nickname_id < len(self.config['password']):

@@ -2,7 +2,6 @@ import os
 import time
 import json
 import sqlite3
-import random
 
 from threading import Thread, Lock
 from plugin import *
@@ -132,20 +131,19 @@ class stalker(plugin):
         for x in all_nicknames:
             if nick in x: result.update(x)
 
-        removed_nick = False
-        if nick in result:
+        self.logger.info(f'{sender_nick} stalks {nick}: {result}')
+
+        if len(result) == 1:
+            if nick in result:
+                self.bot.say('I don\'t know other %s nicks' % self.bot._possessive_nick(nick))
+                return
+
             result.remove(nick)
-            removed_nick = True
 
         if result:
             self.bot.say(f'other nicks of {nick}: {", ".join(result)}')
-        elif removed_nick:
-            msgs = ['Gods believe, that %s is unique in our world.', 'We have seen %s lately.', '%s does not have multi accounts :(', ]
-            self.bot.say(random.choice(msgs) % nick)
         else:
             self.bot.say_err(nick)
-
-        self.logger.info(f'{sender_nick} stalks {nick}: {result}')
 
     @command
     @doc('stalk_host <host>: get all nicknames from <host>')
