@@ -133,17 +133,15 @@ class stalker(plugin):
 
         self.logger.info(f'{sender_nick} stalks {nick}: {result}')
 
-        if len(result) == 1:
-            if nick in result:
-                self.bot.say('I don\'t know other %s nicks' % self.bot._possessive_nick(nick))
-                return
-
-            result.remove(nick)
-
-        if result:
-            self.bot.say(f'other nicks of {nick}: {", ".join(result)}')
+        if result == {nick}:
+            self.bot.say(f"I don't know other {nick} nicks")
         else:
-            self.bot.say_err(nick)
+            if nick in result: result.remove(nick)
+
+            if result:
+                self.bot.say(f'other nicks of {nick}: {", ".join(result)}')
+            else:
+                self.bot.say_err(nick)
 
     @command
     @doc('stalk_host <host>: get all nicknames from <host>')
