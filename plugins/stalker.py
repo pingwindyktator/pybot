@@ -131,14 +131,19 @@ class stalker(plugin):
         for x in all_nicknames:
             if nick in x: result.update(x)
 
-        if nick in result: result.remove(nick)
+        self.logger.info(f'{sender_nick} stalks {nick}: {result}')
+
+        if len(result) == 1:
+            if nick in result:
+                self.bot.say('I don\'t know other %s nicks' % self.bot._possessive_nick(nick))
+                return
+
+            result.remove(nick)
 
         if result:
             self.bot.say(f'other nicks of {nick}: {", ".join(result)}')
         else:
             self.bot.say_err(nick)
-
-        self.logger.info(f'{sender_nick} stalks {nick}: {result}')
 
     @command
     @doc('stalk_host <host>: get all nicknames from <host>')
