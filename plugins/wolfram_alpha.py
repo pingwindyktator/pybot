@@ -104,7 +104,7 @@ class wolfram_alpha(plugin):
 
     @utils.timed_lru_cache(expiration=timedelta(hours=1), typed=True)
     def get_api_response(self, ask):
-        raw_response = requests.get(self.full_req % (ask, self.config['api_key'])).content.decode('utf-8')
+        raw_response = requests.get(self.full_req % (ask, self.config['api_key'])).content.decode()
         xml_root = xml.etree.ElementTree.fromstring(raw_response)
         if xml_root.attrib['error'] == 'true' or xml_root.attrib['success'] == 'false':
             self.get_api_response.do_not_cache()

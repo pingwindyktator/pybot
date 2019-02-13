@@ -21,7 +21,7 @@ class random(plugin):
         else: return None, 'Error: not enough arguments'
 
         self.logger.info(f'getting [{min}, {max}) random of base {base} for {sender_nick}')
-        result = requests.get(self.random_org_uri % (min, max, base)).content.decode('utf-8').replace('\n', '')
+        result = requests.get(self.random_org_uri % (min, max, base)).content.decode().replace('\n', '')
         if result.startswith('Error: '): return None, result
         return result, None
 
@@ -48,9 +48,9 @@ class random(plugin):
         self.logger.info(f'getting random string of length {_len} for {sender_nick}')
         result = ''
         if a > 0:
-            result += requests.get(self.random_org_str_uri % (a, 20)).content.decode('utf-8').replace('\n', '')
+            result += requests.get(self.random_org_str_uri % (a, 20)).content.decode().replace('\n', '')
         if b > 0:
-            result += requests.get(self.random_org_str_uri % (1, b)).content.decode('utf-8').replace('\n', '')
+            result += requests.get(self.random_org_str_uri % (1, b)).content.decode().replace('\n', '')
 
         assert len(result) == _len
         assert result

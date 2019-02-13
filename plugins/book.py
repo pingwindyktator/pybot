@@ -13,7 +13,7 @@ class book(plugin):
 
     @utils.timed_lru_cache(expiration=timedelta(hours=1), typed=True)
     def get_api_response(self, ask):
-        raw_response = requests.get(self.goodreads_api_uri % (self.config['goodreads_api_key'], ask)).content.decode('utf-8')
+        raw_response = requests.get(self.goodreads_api_uri % (self.config['goodreads_api_key'], ask)).content.decode()
         return xml.etree.ElementTree.fromstring(raw_response)
 
     @command

@@ -685,7 +685,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         """
         if not msg: return
         if not target: target = self.get_channel_name()
-        if type(msg) is bytes: msg = msg.decode('utf-8')
+        if type(msg) is bytes: msg = msg.decode()
         if not isinstance(msg, str): msg = str(msg)
 
         if '\n' in msg:

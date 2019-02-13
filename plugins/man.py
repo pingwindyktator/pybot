@@ -29,7 +29,7 @@ class man(plugin):
             self.bot.say_err(ask)
             return
 
-        result = content[start + len('DESCRIPTION'):end].replace(b'       ', b'').replace(b'-\n', b'').replace(b'\n', b' ').replace(b'  ', b' ').replace(b'  ', b' ').replace(b'  ', b' ').decode('utf-8').strip()
+        result = content[start + len('DESCRIPTION'):end].replace(b'       ', b'').replace(b'-\n', b'').replace(b'\n', b' ').replace(b'  ', b' ').replace(b'  ', b' ').replace(b'  ', b' ').decode().strip()
 
         if self.bot.is_msg_too_long(result):
             self.bot.say(result, sender_nick)
@@ -41,7 +41,7 @@ class man(plugin):
     @utils.timed_lru_cache(timedelta(hours=1), typed=True)
     def get_api_response(self, ask):
         content = requests.get(self.man_url % ask, timeout=5).content
-        return BeautifulSoup(content, 'lxml').text.encode('utf-8')
+        return BeautifulSoup(content, 'lxml').text.encode()
 
     def man_df(self):
         answer = 'Dwarf Fortress is a part construction and management simulation, part roguelike, indie video game created by Tarn and Zach Adams. The primary game mode is set in a procedurally generated fantasy world in which the player indirectly controls a group of dwarves, and attempts to construct a successful and wealthy underground fortress.'
