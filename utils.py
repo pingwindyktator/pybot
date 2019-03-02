@@ -2,6 +2,7 @@ import os
 import platform
 import sys
 import logging
+import time
 import sentry_sdk
 import unidecode
 import tzlocal
@@ -258,6 +259,7 @@ def get_config_violations(config, assert_unknown_keys=False):
         'db_location': config_key_info(True, str),
         'superop': config_key_info(True, str),
         'use_fix_tip': config_key_info(True, bool),
+        'timezone': config_key_info(True, str),
 
         'password': config_key_info(False, list),
         'disabled_plugins': config_key_info(False, list),
@@ -302,6 +304,11 @@ def get_config_violations(config, assert_unknown_keys=False):
                 c_assert_error(key in config_keys, f'unknown config file key: {key}')
 
     return exceptions
+
+
+def set_timezone(timezone):
+    os.environ['TZ'] = timezone
+    time.tzset()
 
 
 # noinspection PyUnresolvedReferences
