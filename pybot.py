@@ -57,8 +57,6 @@ class pybot(irc.bot.SingleServerIRCBot):
         self._db_cursor.execute(f"CREATE TABLE IF NOT EXISTS '{self._db_ignored_users_tablename}' (nickname TEXT primary key not null)")
         self._db_mutex = Lock()
 
-        utils.set_timezone(config['timezone'])
-
         if self.config['colors']:
             color.enable_colors()
             self._logger.debug('colors loaded')

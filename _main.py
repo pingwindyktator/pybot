@@ -30,7 +30,7 @@ def configure_logger(config):
     root_logger.addHandler(stdout_handler)
 
 
-def main(debug_mode=False):
+def configure_config():
     try:
         if not os.path.exists('pybot.yaml'):
             shutil.copyfile('pybot.template.yaml', 'pybot.yaml')
@@ -51,8 +51,23 @@ def main(debug_mode=False):
         print(f'Invalid config file:\n{config_violations}')
         sys.exit(3)
 
+    return config
+
+
+def set_timezone(config):
+    try:
+        utils.set_timezone(config['timezone'])
+    except Exception as e:
+        print(f'Cannot set timezone: {type(e).__name__}: {e}')
+        sys.exit(10)
+
+
+def main(debug_mode=False):
+    config = configure_config()
+    set_timezone(config)
     configure_logger(config)
     bot = pybot(config, debug_mode)
+
     try:
         bot.start()
     except KeyboardInterrupt:
