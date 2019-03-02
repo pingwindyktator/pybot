@@ -209,12 +209,13 @@ class pybot(irc.bot.SingleServerIRCBot):
         assert args.startswith(cmd)
         args = args[len(cmd):].strip()
 
-        # !set entry some msg
-        # cmd       == "set"
-        # full_msg  == "!set entry some msg"
-        # args      == "entry some msg"
-        # args_list == ["some", "msg"]
-        # raw_msg   == IRC Event class
+        # Example:
+        #   !set entry some msg
+        #   cmd       == "set"
+        #   full_msg  == "!set entry some msg"
+        #   args      == "entry some msg"
+        #   args_list == ["some", "msg"]
+        #   raw_msg   == IRC Event class
 
         if not (cmd and len(cmd) > 0 and all(c.isalpha() or c == '_' for c in cmd)):
             pass  # invalid cmd

@@ -304,6 +304,7 @@ def get_config_violations(config, assert_unknown_keys=False):
     return exceptions
 
 
+# noinspection PyUnresolvedReferences
 def setup_sentry():
     import sentry_sdk.utils
     from sentry_sdk.integrations.logging import _breadcrumb_from_record
