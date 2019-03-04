@@ -151,22 +151,16 @@ class spacex_launches(plugin):
             self.bot.say(self.get_launch_info_str(launch))
 
     def get_launch_info_str(self, launch):
-        if not launch['launch_date_unix']:
-            past = False
-            include_video_uri = False
-            time = ''
-        else:
-            past = datetime.fromtimestamp(launch['launch_date_unix']) < datetime.now()
-            include_video_uri = (datetime.fromtimestamp(launch['launch_date_unix']) < datetime.now() + timedelta(hours=2)) or (past and launch['links']['video_link'])
-            time = datetime.fromtimestamp(launch['launch_date_unix'])
-            time = ' on ' + color.green(time.strftime('%Y-%m-%d')) + ' at ' + color.green(time.strftime('%H:%M')) + utils.get_str_utc_offset()
-
+        past = not launch['upcoming'] if launch['launch_date_unix'] else False
+        time = self.get_launch_time_str(launch, color.green)
+        time = f' {time}' if time else ''
         flight_id = color.orange(f'[{launch["flight_number"]}]')
         rocket_name = color.cyan(launch['rocket']['rocket_name'])
         reused = launch['reuse']['core'] or launch['reuse']['side_core1'] or launch['reuse']['side_core2']
         reused = 'Reused' if reused else 'Unused'
         launch_site = launch['launch_site']['site_name']
-        uri = launch['links']['video_link'] if launch['links']['video_link'] else r'http://www.spacex.com/webcast'
+        uri = self.get_video_uri(launch)
+        uri = f': {uri}' if uri else ''
 
         try:
             payload_weight = sum([payload['payload_mass_kg'] for payload in launch['rocket']['second_stage']['payloads']])
@@ -180,9 +174,35 @@ class spacex_launches(plugin):
         payload_info = f'{payload_weight}{orbits}'
 
         result = f'{flight_id} ' if self.config['include_flight_id'] else ''
-        result += f'{reused} {rocket_name} {"launched" if past else "launches"}{time} from {launch_site}{payload_info}'
-        result += f': {uri}' if include_video_uri else ''
+        result += f'{reused} {rocket_name} {"launched" if past else "launches"}{time} from {launch_site}{payload_info}{uri}'
         return result
+
+    def get_launch_time_str(self, launch, colorize_func=lambda x: x):
+        if not launch['launch_date_unix']:
+            return ''
+
+        result = datetime.fromtimestamp(launch['launch_date_unix'])
+        if not launch['is_tentative']:
+            return colorize_func(result.strftime('%Y-%m-%d')) + ' ' + colorize_func(result.strftime('%H:%M')) + utils.get_str_utc_offset()
+
+        if launch['tentative_max_precision'] == 'year':
+            return colorize_func(result.strftime('%Y'))
+        if launch['tentative_max_precision'] == 'month':
+            return colorize_func(result.strftime('%Y-%m'))
+        if launch['tentative_max_precision'] == 'day':
+            return colorize_func(result.strftime('%Y-%m-%d'))
+
+        return colorize_func(result.strftime('%Y-%m-%d')) + ' ' + colorize_func(result.strftime('%H:%M')) + utils.get_str_utc_offset()
+
+    def get_video_uri(self, launch):
+        if launch['links']['video_link']: return launch['links']['video_link']
+
+        if launch['upcoming'] and \
+            (datetime.fromtimestamp(launch['launch_date_unix']) < (datetime.now() + timedelta(hours=2))) and \
+            launch['tentative_max_precision'] not in ['month', 'year']:
+            return r'http://www.spacex.com/webcast'
+
+        return ''
 
     @command
     @command_alias('spacex_prev')
