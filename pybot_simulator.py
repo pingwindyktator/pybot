@@ -161,6 +161,7 @@ def configure_logger(*args, **kwargs):
 
 def simulator_main():
     _main.configure_logger = configure_logger
+    _main.set_timezone = lambda _: None
     color.disable_colors()
     color.enable_colors = lambda: None
 
