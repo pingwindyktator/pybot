@@ -91,7 +91,7 @@ class air_condition(plugin):
         self.get_city_name.clear_cache()
 
     def filter_stations_response(self, response):
-        return [r for r in response if 'city' in r and 'name' in r['city'] and r['city']]
+        return [r for r in response if 'city' in r and r['city'] and 'name' in r['city']]
 
     def get_measurements(self, station_id):
         result = []
