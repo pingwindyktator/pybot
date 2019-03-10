@@ -30,7 +30,7 @@ class webtitle_parser(plugin):
                 tree = fromstring(req.content.decode())
                 title = tree.findtext('.//title').strip()
                 if title is not None and title != '':
-                    self.bot.say(color.light_green(title))
+                    self.bot.say(color.light_green(utils.decode_html(title)))
 
         except Exception:
             self.logger.info(f'possibly invalid URL: {url}')

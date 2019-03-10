@@ -34,7 +34,7 @@ class youtube(plugin):
 
         result_count = min(self.config['results'], len(response['items']))
         for item in [response['items'][it] for it in range(0, result_count)]:
-            prefix = color.cyan(f'[{item["snippet"]["title"]}]')
+            prefix = color.cyan(f'[{utils.decode_html(item["snippet"]["title"])}]')
             self.bot.say(f'{prefix} {self.yt_url % item["id"]["videoId"]}')
 
     @utils.timed_lru_cache(expiration=timedelta(minutes=3), typed=True)
