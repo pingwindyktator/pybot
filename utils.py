@@ -261,6 +261,7 @@ def get_config_violations(config, assert_unknown_keys=False):
         'use_fix_tip': config_key_info(True, bool),
         'timezone': config_key_info(True, str),
 
+        'force_debug_mode_to_be': config_key_info(False, bool),
         'password': config_key_info(False, list),
         'disabled_plugins': config_key_info(False, list),
         'enabled_plugins': config_key_info(False, list),
@@ -304,6 +305,25 @@ def get_config_violations(config, assert_unknown_keys=False):
                 c_assert_error(key in config_keys, f'unknown config file key: {key}')
 
     return exceptions
+
+
+def decode_html(s):
+    """
+    Returns the ASCII decoded version of the given HTML string. This does
+    NOT remove normal HTML tags like <p>.
+    """
+    htmlCodes = (
+            ("'", '&#39;'),
+            ('"', '&quot;'),
+            ('>', '&gt;'),
+            ('<', '&lt;'),
+            ('&', '&amp;')
+        )
+
+    for code in htmlCodes:
+        s = s.replace(code[1], code[0])
+
+    return s
 
 
 def set_timezone(timezone):

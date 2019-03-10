@@ -63,9 +63,14 @@ def set_timezone(config):
         sys.exit(10)
 
 
-def main(debug_mode=False):
+def main(debug_mode=True):
     config = init_config()
-    set_timezone(config)
+    if 'force_debug_mode_to_be' in config: debug_mode = config['force_debug_mode_to_be']
+
+    if not debug_mode:
+        set_timezone(config)
+        utils.setup_sentry()
+
     configure_logger(config)
     bot = pybot(config, debug_mode)
 

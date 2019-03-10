@@ -6,9 +6,6 @@ import platform
 
 
 def main():
-    import utils
-    utils.setup_sentry()
-
     import _main
     _main.main(debug_mode=False)
 
