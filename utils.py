@@ -326,6 +326,17 @@ def decode_html(s):
     return s
 
 
+def get_next_weekday_datetime(date, day):
+    """
+    Returns the date of the next given weekday after
+    the given date. For example, the date of next Monday is get_next_weekday_datetime(datetime.now(), 0).
+    NB: if it IS the day we're looking for, this returns 0.
+    consider then doing onDay(foo, day + 1).
+    """
+
+    return date + timedelta(days=(day - date.weekday() + 7) % 7)
+
+
 def set_timezone(timezone):
     os.environ['TZ'] = timezone
     time.tzset()
