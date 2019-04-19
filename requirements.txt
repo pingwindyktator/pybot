@@ -7,7 +7,7 @@ irc==16.1
 GitPython==2.1.7
 fuzzywuzzy==0.15.1
 beautifulsoup4==4.6.0
-urllib3==1.23
+urllib3=1.24.2
 pythonwhois==2.4.3
 wikipedia==1.4.0
 sentry-sdk==0.5.4
