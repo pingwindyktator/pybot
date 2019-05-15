@@ -101,10 +101,17 @@ class wolfram_alpha(plugin):
         if self.config['warn_crypto_asks']: self.crypto_warner.handle_msg(msg)
 
         ask = urllib.parse.quote(msg)
-        self.manage_api_response(self.get_api_response(ask))
+        try:
+            response = self.get_api_response(ask)
+        except Exception as e:
+            self.logger.info(f'could not get proper Wolfram-Alpha response for {ask}: {type(e).__name__}: {e}')
+            self.bot.say_err()
+            return
+
+        self.manage_api_response(response)
 
     @utils.timed_lru_cache(expiration=timedelta(hours=1), typed=True)
-    @utils.repeat_until(no_exception=False, return_value_is=lambda x: x.attrib['success'] == 'true' and x.attrib['error'] == 'false')
+    @utils.repeat_until(no_exception=False, return_value_is=lambda x: x.attrib['success'] == 'true')
     def get_api_response(self, ask):
         raw_response = requests.get(self.full_req % (ask, self.config['api_key'])).content.decode()
         xml_root = xml.etree.ElementTree.fromstring(raw_response)
@@ -120,7 +127,7 @@ class wolfram_alpha(plugin):
         if xml_root.attrib['error'] == 'true':  # wa error
             error_msg = xml_root.find('error').find('msg').text
             self.logger.warning(f'wolfram alpha error: {error_msg}')
-            self.bot.say(error_msg)
+            self.bot.say(f'wolfram alpha error: {error_msg}')
             return
 
         if xml_root.attrib['success'] == 'false':  # no response
