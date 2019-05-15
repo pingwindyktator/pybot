@@ -104,12 +104,12 @@ class wolfram_alpha(plugin):
         self.manage_api_response(self.get_api_response(ask))
 
     @utils.timed_lru_cache(expiration=timedelta(hours=1), typed=True)
-    @utils.repeat_until(no_exception=False, return_value_is=lambda x: x.attrib['success'] == 'true')
+    @utils.repeat_until(no_exception=False, return_value_is=lambda x: x.attrib['success'] == 'true' and x.attrib['error'] == 'false')
     def get_api_response(self, ask):
         raw_response = requests.get(self.full_req % (ask, self.config['api_key'])).content.decode()
         xml_root = xml.etree.ElementTree.fromstring(raw_response)
 
-        if xml_root.attrib['error'] == 'true' or xml_root.attrib['success'] == 'false':
+        if xml_root.attrib['error'] == 'true' or xml_root.attrib['success'] == 'false' or int(xml_root.attrib['numpods']) <= 0:
             self.get_api_response.do_not_cache()
 
         return xml_root
