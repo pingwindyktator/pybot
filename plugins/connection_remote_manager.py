@@ -2,9 +2,6 @@ from plugin import *
 
 
 class connection_remote_manager(plugin):
-    def __init__(self, bot):
-        super().__init__(bot)
-
     @command(superadmin=True)
     @doc('kill pybot')
     def die(self, sender_nick, **kwargs):

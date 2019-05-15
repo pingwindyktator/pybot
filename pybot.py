@@ -217,7 +217,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         #   args_list == ["some", "msg"]
         #   raw_msg   == IRC Event class
 
-        if not (cmd and len(cmd) > 0 and all(c.isalpha() or c == '_' for c in cmd)):
+        if not (cmd and all(c.isalpha() or c == '_' for c in cmd)):
             pass  # invalid cmd
 
         elif cmd in self.get_commands():
@@ -257,10 +257,10 @@ class pybot(irc.bot.SingleServerIRCBot):
         if self._autorejoin_attempts >= self.config['max_autorejoin_attempts']:
             self._logger.warning('autorejoin attempts limit reached, waiting for user interact now')
             choice = None
-            while choice != 'Y' and choice != 'y' and choice != 'N' and choice != 'n':
-                choice = input(f'rejoin to {self.get_channel_name()}? [Y/n] ')
+            while choice not in ['Y', 'y', 'N' 'n']:
+                choice = input(f'rejoin to {self.get_channel_name()}? [y/n] ')
 
-            if choice == 'Y' or choice == 'y':
+            if choice in ['Y', 'y']:
                 self._autorejoin_attempts = 0
                 self.join_channel()
             else:
@@ -686,7 +686,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         """
         if not msg: return
         if not target: target = self.get_channel_name()
-        if type(msg) is bytes: msg = msg.decode()
+        if isinstance(msg, bytes): msg = msg.decode()
         if not isinstance(msg, str): msg = str(msg)
 
         if '\n' in msg:
@@ -725,8 +725,8 @@ class pybot(irc.bot.SingleServerIRCBot):
     def whois(self, targets):
         return self.connection.whois(targets)
 
-    def whowas(self, nick, max=""):
-        return self.connection.whowas(nick, max, self.get_server_name())
+    def whowas(self, nick, _max=""):
+        return self.connection.whowas(nick, _max, self.get_server_name())
 
     def userhost(self, nicks):
         return self.connection.userhost(nicks)

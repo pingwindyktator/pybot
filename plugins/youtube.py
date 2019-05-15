@@ -28,7 +28,7 @@ class youtube(plugin):
             self.bot.say('youtube api error')
             return
 
-        if len(response['items']) == 0:
+        if not response['items']:
             self.bot.say_err()
             return
 
@@ -41,7 +41,9 @@ class youtube(plugin):
     def get_yt_data(self, ask):
         ask = urllib.parse.quote(ask)
         response = requests.get(self.yt_api_url % (self.config['order_by'], self.config['api_key'], ask)).json()
-        if 'error' not in response and 'items' in response: return response
+
+        if 'error' not in response and 'items' in response:
+            return response
         else:
             self.logger.warning(f'youtube api returned error: {response}')
             self.get_yt_data.do_not_cache()

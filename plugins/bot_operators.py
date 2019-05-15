@@ -2,9 +2,6 @@ from plugin import *
 
 
 class bot_operators(plugin):
-    def __init__(self, bot):
-        super().__init__(bot)
-
     @command(admin=True)
     @doc('add_op <nickname>: add bot operator')
     def add_op(self, sender_nick, args, **kwargs):
@@ -51,7 +48,7 @@ class bot_operators(plugin):
     def ops(self, sender_nick, **kwargs):
         ops = self.bot.get_ops()
 
-        if len(ops) == 0:
+        if not ops:
             self.bot.say('no bot operators')
         else:
             self.bot.say(f'bot operators: {", ".join(ops)}')

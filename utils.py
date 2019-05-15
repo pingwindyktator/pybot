@@ -140,6 +140,7 @@ class timed_lru_cache:
             self.do_not_cache = True
 
 
+# noinspection PyUnresolvedReferences
 class repeated_timer(Timer):
     """
     exception safe, repeating timer
@@ -231,9 +232,9 @@ def get_pybot_dir():
 
 def get_config_violations(config, assert_unknown_keys=False):
     class config_key_info:
-        def __init__(self, required, type):
+        def __init__(self, required, _type):
             self.required = required
-            self.type = type
+            self.type = _type
 
     exceptions = []
 
@@ -354,7 +355,7 @@ def setup_sentry():
     from sentry_sdk.integrations.modules import ModulesIntegration
     from sentry_sdk.integrations.argv import ArgvIntegration
 
-    class sentry_handler(logging.Handler, object):
+    class sentry_handler(logging.Handler):
         def emit(self, record):
             try:
                 with sentry_sdk.utils.capture_internal_exceptions():
@@ -400,9 +401,9 @@ def setup_sentry():
 
 def report_error():
     logger = logging.getLogger(__name__)
+
     try:
         sentry_sdk.capture_exception()
         logger.info('exception report sent to sentry.io')
     except Exception as e:
         logger.error(f'exception caught calling sentry_sdk.capture_exception: {type(e).__name__}: {e}')
-

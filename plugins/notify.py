@@ -23,7 +23,7 @@ class notify(plugin):
     @command
     @doc("notify <args>...: set notify for <args>. bot will call your nickname when one of <args> appears on chat. supports regular expressions")
     def notify(self, sender_nick, args, **kwargs):
-        if len(args) == 0: return
+        if not args: return
 
         if sender_nick in self.database:
             self.database[sender_nick].update(args)
@@ -55,4 +55,3 @@ class notify(plugin):
             self.bot.say(f'no notifies set for {sender_nick}')
 
         self.logger.info(f'notifying {result} -> {sender_nick}')
-

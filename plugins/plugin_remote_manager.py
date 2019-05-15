@@ -6,9 +6,6 @@ from plugin import *
 
 
 class plugin_remote_manager(plugin):
-    def __init__(self, bot):
-        super().__init__(bot)
-
     class no_plugins_module_found(Exception):
         pass
 
@@ -113,7 +110,7 @@ class plugin_remote_manager(plugin):
 
         # modules loaded by python
         # e.g. ['plugins.man', 'plugins.stalker']
-        loaded_modules = [x for x in sys.modules.keys() if x.startswith('plugins.')]
+        loaded_modules = [x for x in sys.modules if x.startswith('plugins.')]
 
         # plugin_name -> plugin_instance
         # plugins enabled by bot - should be "subset" of loaded_modules

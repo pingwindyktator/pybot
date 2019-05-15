@@ -13,15 +13,15 @@ class random(plugin):
 
     def random_impl(self, args, base, sender_nick):
         if not args:
-            min = 0
-            max = 1000000000  # max defined in random.org API docs
+            _min = 0
+            _max = 1000000000  # max defined in random.org API docs
         elif len(args) == 2:
-            min = args[0]
-            max = args[1]
+            _min = args[0]
+            _max = args[1]
         else: return None, 'Error: not enough arguments'
 
-        self.logger.info(f'getting [{min}, {max}) random of base {base} for {sender_nick}')
-        result = requests.get(self.random_org_uri % (min, max, base)).content.decode().replace('\n', '')
+        self.logger.info(f'getting [{_min}, {_max}) random of base {base} for {sender_nick}')
+        result = requests.get(self.random_org_uri % (_min, _max, base)).content.decode().replace('\n', '')
         if result.startswith('Error: '): return None, result
         return result, None
 
@@ -70,7 +70,7 @@ class random(plugin):
             fetch binary random number in [0, 1000000000] from random.org""")
     @command
     @command_alias('random_bin')
-    def random2(self, args, sender_nick,  **kwargs):
+    def random2(self, args, sender_nick, **kwargs):
         result, error = self.random_impl(args, 2, sender_nick)
         if result: self.bot.say(f'0b{result}')
         else: self.bot.say(error)

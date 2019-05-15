@@ -1,10 +1,11 @@
 import logging
 import shutil
 import sys
-import utils
 import os
+import utils
 
 from ruamel import yaml
+# noinspection PyUnresolvedReferences
 from plugins import *
 from pybot import pybot
 
@@ -65,7 +66,9 @@ def set_timezone(config):
 
 def main(debug_mode=True):
     config = init_config()
-    if 'force_debug_mode_to_be' in config: debug_mode = config['force_debug_mode_to_be']
+
+    if 'force_debug_mode_to_be' in config:
+        debug_mode = config['force_debug_mode_to_be']
 
     if not debug_mode:
         set_timezone(config)

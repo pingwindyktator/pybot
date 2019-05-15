@@ -17,7 +17,7 @@ class worldcup2018(plugin):
         self.update_match_data_timer.start()
 
     class match_desc:
-        def __init__(self, home_team, away_team, date, goals_home_team, goals_away_team, status, city, stadium, time, id):
+        def __init__(self, home_team, away_team, date, goals_home_team, goals_away_team, status, city, stadium, time, _id):
             self.home_team = home_team
             self.away_team = away_team
             self.date = date
@@ -27,19 +27,19 @@ class worldcup2018(plugin):
             self.city = city
             self.stadium = stadium
             self.time = time
-            self.id = id
+            self.id = _id
 
         def to_response(self):
             if self.status == 'future':
                 return f'{color.cyan(self.home_team)} - {color.cyan(self.away_team)} starts at {color.green(self.date)}, {self.stadium}, {self.city}'
 
-            elif self.status == 'completed':
+            if self.status == 'completed':
                 return f'{color.cyan(self.home_team)} {self.goals_home_team} - {self.goals_away_team} {color.cyan(self.away_team)}, {self.stadium}, {self.city}'
 
-            elif self.status == 'in progress':
+            if self.status == 'in progress':
                 return f'{color.cyan(self.home_team)} {self.goals_home_team} - {self.goals_away_team} {color.cyan(self.away_team)}, {self.time}'
 
-            elif self.status == 'pending_correction':
+            if self.status == 'pending_correction':
                 raise Exception(f'unable to serialize match with {self.status} status')
 
         @staticmethod

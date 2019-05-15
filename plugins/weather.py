@@ -40,7 +40,7 @@ class weather(plugin):
         if 'main' in weather_info and 'temp' in weather_info['main']:
             results.append(f'{self.colorize_temp(weather_info["main"]["temp"])} °C')
 
-        if 'weather' in weather_info and len(weather_info['weather']) > 0:
+        if 'weather' in weather_info and weather_info['weather']:
             results.append(f'{weather_info["weather"][0]["description"]}')
 
         if 'main' in weather_info and 'humidity' in weather_info['main']:
@@ -149,7 +149,7 @@ class weather(plugin):
                 avg_wind_speed += forec['wind']['speed']
                 wind_speeds += 1
 
-            if 'weather' in forec and len(forec['weather']) > 0:
+            if 'weather' in forec and forec['weather']:
                 cond = forec['weather'][0]
                 if cond['id'] == 800: continue  # clear sky
                 conditions.append(cond['description'])
@@ -174,9 +174,9 @@ class weather(plugin):
 
     def colorize_temp(self, temp):
         temp = float(temp)
-        if temp < 0:  return color.blue(temp)
+        if temp < 0: return color.blue(temp)
         if temp < 10: return color.light_cyan(temp)
         if temp < 15: return color.cyan(temp)
         if temp < 26: return color.yellow(temp)
         if temp < 30: return color.orange(temp)
-        else:         return color.light_red(temp)
+        else: return color.light_red(temp)

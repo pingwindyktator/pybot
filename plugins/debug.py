@@ -2,9 +2,6 @@ from plugin import *
 
 
 class debug(plugin):
-    def __init__(self, bot):
-        super().__init__(bot)
-
     @command(admin=True)
     @doc('for debug purposed only, use during development to trigger needed actions')
     def _debug(self, sender_nick, **kwargs):
@@ -30,8 +27,8 @@ class debug(plugin):
         # TODO: WIP
         commands_by_plugin = self.bot.get_commands_by_plugin()
         for plugin_name in commands_by_plugin:
-            plugin = self.bot.get_plugin(plugin_name)
-            plugin_help = f'\\: {getattr(plugin, "__doc_string")}'.strip() if hasattr(plugin, '__doc_string') else ''
+            plugin_instance = self.bot.get_plugin(plugin_name)
+            plugin_help = f'\\: {getattr(plugin_instance, "__doc_string")}'.strip() if hasattr(plugin_instance, '__doc_string') else ''
             print(f'#### {plugin_name}{plugin_help}', end='  \n')
 
             for command_name in commands_by_plugin[plugin_name]:

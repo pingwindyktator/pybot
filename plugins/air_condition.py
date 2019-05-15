@@ -12,8 +12,8 @@ from plugin import *
 
 class air_condition(plugin):
     class station:
-        def __init__(self, id, name):
-            self.id = id
+        def __init__(self, _id, name):
+            self.id = _id
             self.name = name
 
     class measurement:
@@ -51,6 +51,7 @@ class air_condition(plugin):
         for condition in conditions:
             prefix = color.cyan(f'[{condition.station.name}]')
             measurements = []
+
             for measurement in condition.measurements:
                 if measurement.value > self.get_pollution_standard(measurement.what):
                     standard_percent = f' ({measurement.value / self.get_pollution_standard(measurement.what) * 100.:.0f}%)'
@@ -69,9 +70,10 @@ class air_condition(plugin):
     @utils.timed_lru_cache(typed=True)
     def get_city_name(self, msg, ignore_national_chars=False):
         self.update_known_stations()
+
         if ignore_national_chars:
             msg = utils.remove_national_chars(msg)
-            stations = {utils.remove_national_chars(city): city for city in self.stations_by_city.keys()}
+            stations = {utils.remove_national_chars(city): city for city in self.stations_by_city}
             result = process.extract(msg, stations.keys(), scorer=fuzz.token_sort_ratio)
             return stations[result[0][0]] if result and len(result[0]) > 1 and result[0][1] > 65 else None
         else:
@@ -82,6 +84,7 @@ class air_condition(plugin):
     def update_known_stations(self):
         response = requests.get(r'http://api.gios.gov.pl/pjp-api/rest/station/findAll', timeout=10).json()
         stations_by_city = {}
+
         for station in self.filter_stations_response(response):
             city = station['city']['name']
             if city not in stations_by_city: stations_by_city[city] = []
@@ -121,13 +124,13 @@ class air_condition(plugin):
         response = requests.get(r'http://api.gios.gov.pl/pjp-api/rest/station/sensors/%s' % station_id, timeout=10).json()
         return [sensor['id'] for sensor in response]
 
-    def colorize(self, str, index_level):
-        if index_level < 0: return str
-        if index_level == 0: return color.green(str)
-        if index_level == 1: return color.light_green(str)
-        if index_level == 2: return color.yellow(str)
-        if index_level == 3: return color.orange(str)
-        if index_level >= 4: return color.light_red(str)
+    def colorize(self, _str, index_level):
+        if index_level < 0: return _str
+        if index_level == 0: return color.green(_str)
+        if index_level == 1: return color.light_green(_str)
+        if index_level == 2: return color.yellow(_str)
+        if index_level == 3: return color.orange(_str)
+        if index_level >= 4: return color.light_red(_str)
 
     def get_pollution_standard(self, what):
         what = what.casefold().upper().replace('.', '').replace(' ', '')

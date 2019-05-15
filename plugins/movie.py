@@ -59,8 +59,8 @@ class movie(plugin):
         self.bot.say(f'{self.build_prefix(response)} {self.imdb_url % response["imdbID"]}{rating}')
 
     @utils.timed_lru_cache(expiration=timedelta(hours=1), typed=True)
-    def get_movie_info(self, movie):
-        ask = urllib.parse.quote(movie)
+    def get_movie_info(self, _movie):
+        ask = urllib.parse.quote(_movie)
         response = requests.get(self.omdbapi_url % (ask, self.config['omdb_api_key'])).json()
         if response['Response'] == 'True' and self.api_response_contains(response, 'Title'): return response
         else:

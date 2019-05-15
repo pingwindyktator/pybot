@@ -14,9 +14,6 @@ from plugin import *
 
 
 class builtins(plugin):
-    def __init__(self, bot):
-        super().__init__(bot)
-
     @command
     @doc("""help <entry>: get doc msg for <entry> command / plugin
             get general help""")
@@ -55,10 +52,10 @@ class builtins(plugin):
             self.bot.say(f'no help for {entry}')
 
     def help_for_plugin(self, entry):
-        plugin = self.bot.get_plugin(entry)
+        plugin_instance = self.bot.get_plugin(entry)
 
-        if hasattr(plugin, '__doc_string'):
-            for reply in getattr(plugin, "__doc_string").split('\n'):
+        if hasattr(plugin_instance, '__doc_string'):
+            for reply in getattr(plugin_instance, "__doc_string").split('\n'):
                 self.bot.say(color.orange(f'[{entry}] ') + reply.strip())
         else:
             self.bot.say(color.orange(f'[{entry}] ') + f'available commands: {", ".join(self.bot.get_plugin_commands(entry))}')
@@ -115,9 +112,9 @@ class builtins(plugin):
         level = utils.logging_level_str_to_int[level_name]
         try:
             if handler_name == 'stdout':
-                next((x for x in root_logger.handlers if type(x) is logging.StreamHandler)).setLevel(level)
+                next((x for x in root_logger.handlers if isinstance(x, logging.StreamHandler))).setLevel(level)
             elif handler_name == 'file':
-                next((x for x in root_logger.handlers if type(x) is logging.FileHandler)).setLevel(level)
+                next((x for x in root_logger.handlers if isinstance(x, logging.FileHandler))).setLevel(level)
             else:
                 self.bot.say(f'unknown handler: {handler_name}, supported handlers: stdout, file')
                 return
@@ -414,7 +411,7 @@ class builtins(plugin):
         if not os.path.isfile(filename):
             raise RuntimeError(f'{filename}: no such file')
 
-        for i in range(0, 3):
+        for _ in range(0, 3):
             try:
                 return self.upload_file_impl(filename)
             except Exception as e:
@@ -457,7 +454,7 @@ class builtins(plugin):
         self.bot.say(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + utils.get_str_utc_offset())
 
     @command
-    @doc("fix your previous command")
+    @doc('fix your previous command')
     def fix(self, **kwargs):
         """
         just a placeholder for fix functionality. Its implementation has to be placed in pybot.on_pubmsg

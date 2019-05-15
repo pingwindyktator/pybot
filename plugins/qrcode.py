@@ -5,9 +5,6 @@ from plugin import *
 
 
 class qrcode(plugin):
-    def __init__(self, bot):
-        super().__init__(bot)
-
     @command
     @doc('qrcode <text>: get qrcode of <text>')
     def qrcode(self, sender_nick, msg, **kwargs):

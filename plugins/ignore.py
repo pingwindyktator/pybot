@@ -145,7 +145,7 @@ class ignore(plugin):
     def ignored_users(self, sender_nick, **kwargs):
         ignored = self.bot.get_ignored_users()
 
-        if len(ignored) == 0:
+        if not ignored:
             self.bot.say('no ignored users')
         else:
             self.bot.say(f'ignored users: {", ".join(ignored)}')

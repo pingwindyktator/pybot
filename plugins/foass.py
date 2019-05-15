@@ -32,7 +32,7 @@ class foass(plugin):
 
         for response in endpoints:
             args = re.findall(r':[^/]+', response)
-            if any((arg[1:] not in self.supported_args.keys() for arg in args)):
+            if any((arg[1:] not in self.supported_args for arg in args)):
                 _endpoints.remove(response)
 
             elif not all((f':{arg}' in args for arg in self.must_have_args)):
@@ -41,7 +41,7 @@ class foass(plugin):
         endpoints = _endpoints
 
         for i in range(0, len(endpoints)):
-            for arg in self.supported_args.keys():
+            for arg in self.supported_args:
                 endpoints[i] = endpoints[i].replace(f':{arg}', '{%s}' % arg)
 
         return endpoints

@@ -26,7 +26,7 @@ class book(plugin):
         xml_root = self.get_api_response(ask)
 
         result = xml_root.find('search').find('results')
-        if len(result) == 0:
+        if not result:
             self.bot.say_err(msg)
             return
 
@@ -39,9 +39,9 @@ class book(plugin):
         author = result.find('author')
         author = self.get_text_or_none(author.find('name'))
         title = self.get_text_or_none(result.find('title'))
-        id = self.get_text_or_none(result.find('id'))
+        _id = self.get_text_or_none(result.find('id'))
 
-        if not title or not id:
+        if not title or not _id:
             self.bot.say_err()
             return
 
@@ -51,7 +51,7 @@ class book(plugin):
         prefix += ']'
         prefix = color.orange(prefix)
 
-        response = r'https://www.goodreads.com/book/show/%s' % id
+        response = r'https://www.goodreads.com/book/show/%s' % _id
         if rating:
             response += f' ({rating}/5'
             if rating_count: response += f' out of {rating_count} voters'

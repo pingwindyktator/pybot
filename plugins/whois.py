@@ -5,9 +5,6 @@ from plugin import *
 
 
 class whois(plugin):
-    def __init__(self, bot):
-        super().__init__(bot)
-
     @command
     @doc('get whois info')
     def whois(self, sender_nick, msg, **kwargs):

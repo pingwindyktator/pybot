@@ -32,19 +32,19 @@ class crypto(plugin):
             self.get_crypto_currency_id.clear_cache()
 
     class watch_desc:
-        def __init__(self, timer_object, timedelta):
+        def __init__(self, timer_object, _timedelta):
             self.timer_object = timer_object
-            self.timedelta = timedelta
+            self.timedelta = _timedelta
 
     class currency_id:
-        def __init__(self, id, name, symbol):
-            self.id = id
+        def __init__(self, _id, name, symbol):
+            self.id = _id
             self.name = name
             self.symbol = symbol
 
     class currency_info:
-        def __init__(self, id, raw_result):
-            self.id = id
+        def __init__(self, _id, raw_result):
+            self.id = _id
             self.price_usd = float(raw_result['price_usd']) if raw_result['price_usd'] else None
             self.price_btc = float(raw_result['price_btc']) if raw_result['price_btc'] else None
             self.hour_change = float(raw_result['percent_change_1h']) if raw_result['percent_change_1h'] else None

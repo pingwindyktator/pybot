@@ -5,9 +5,6 @@ from plugin import *
 
 
 class niedziela(plugin):
-    def __init__(self, bot):
-        super().__init__(bot)
-
     @utils.timed_lru_cache(expiration=timedelta(minutes=10))
     def get_result(self):
         result = requests.get(

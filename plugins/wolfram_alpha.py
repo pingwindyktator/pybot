@@ -62,8 +62,8 @@ class crypto_wa_warner:
             return False
 
     class currency_id:
-        def __init__(self, id, name, symbol):
-            self.id = id
+        def __init__(self, _id, name, symbol):
+            self.id = _id
             self.name = name
             self.symbol = symbol
 
@@ -99,6 +99,7 @@ class wolfram_alpha(plugin):
         if not msg: return
         self.logger.info(f'{sender_nick} asked wolfram alpha "{msg}"')
         if self.config['warn_crypto_asks']: self.crypto_warner.handle_msg(msg)
+
         ask = urllib.parse.quote(msg)
         self.manage_api_response(self.get_api_response(ask))
 
@@ -106,6 +107,7 @@ class wolfram_alpha(plugin):
     def get_api_response(self, ask):
         raw_response = requests.get(self.full_req % (ask, self.config['api_key'])).content.decode()
         xml_root = xml.etree.ElementTree.fromstring(raw_response)
+
         if xml_root.attrib['error'] == 'true' or xml_root.attrib['success'] == 'false':
             self.get_api_response.do_not_cache()
 

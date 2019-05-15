@@ -37,7 +37,7 @@ class too_many_msgs:
         now = datetime.now()
         if sender_nick not in self.msg_infos:
             self.msg_infos[sender_nick] = msg_info(now, 1)
-            return
+            return False
 
         mi = self.msg_infos[sender_nick]
 
@@ -78,12 +78,12 @@ class too_long_msgs:
         return 'too many long msgs'
 
     def check(self, sender_nick, msg):
-        if len(msg) < 300: return
+        if len(msg) < 300: return False
 
         now = datetime.now()
         if sender_nick not in self.msg_infos:
             self.msg_infos[sender_nick] = msg_info(now, 1)
-            return
+            return False
 
         mi = self.msg_infos[sender_nick]
 
@@ -116,7 +116,7 @@ class same_msg_too_many_times:
         now = datetime.now()
         if sender_nick not in self.same_msg_infos:
             self.same_msg_infos[sender_nick] = self.same_msg_info(sender_nick, 1, now, msg)
-            return
+            return False
 
         smi = self.same_msg_infos[sender_nick]
 
