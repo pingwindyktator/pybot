@@ -104,8 +104,8 @@ class timed_lru_cache:
 
                         return func_result
 
-                    except Exception:
-                        self.logger.warning(f'exception caught calling: {call_repr}, no result cached')
+                    except Exception as e:
+                        self.logger.warning(f'exception caught calling: {call_repr}, no result cached: {type(e).__name__}: {e}')
                         raise
                 else:
                     self.logger.debug(f'returned cached result: {call_repr} -> {self.cache[call_args][0]}')
