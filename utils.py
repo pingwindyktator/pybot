@@ -12,7 +12,7 @@ import git
 from ruamel import yaml
 from threading import Timer, RLock
 from datetime import datetime, timedelta
-from functools import total_ordering, update_wrapper
+from functools import total_ordering, update_wrapper, wraps
 
 logging_level_str_to_int = {
     'disabled': sys.maxsize,
@@ -158,6 +158,34 @@ class repeated_timer(Timer):
             self.finished.wait(self.interval)
 
         self.finished.set()
+
+
+def repeat_until(no_exception=True, return_value_is=lambda x: True, limit=3):
+    def repeat_until_decorator(function):
+        @wraps(function)
+        def repeat_until_decorator_impl(*args, **kwargs):
+            current = 0
+            exception = None
+            result = None
+
+            while current < limit:
+                current += 1
+                try:
+                    result = function(*args, **kwargs)
+                    exception = None
+                    if not return_value_is(result): continue
+                    else: break
+                except Exception as e:
+                    result = None
+                    exception = e
+                    if not no_exception: break
+
+            if exception: raise exception
+            if not return_value_is(result): raise RuntimeError('return value does not met given conditions')
+            else: return result
+
+        return repeat_until_decorator_impl
+    return repeat_until_decorator
 
 
 @total_ordering

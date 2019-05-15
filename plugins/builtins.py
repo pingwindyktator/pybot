@@ -399,6 +399,7 @@ class builtins(plugin):
         self.bot.say('config entry applied, restarting...', force=True)
         self.restart_impl(sender_nick)
 
+    @utils.repeat_until(no_exception=True)
     def upload_file_impl(self, filename):
         with open(filename) as file:
             response = requests.post(r'http://file.io/?expires=1w', files={r'file': file}).json()
@@ -411,17 +412,16 @@ class builtins(plugin):
         if not os.path.isfile(filename):
             raise RuntimeError(f'{filename}: no such file')
 
-        for _ in range(0, 3):
-            try:
-                return self.upload_file_impl(filename)
-            except Exception as e:
-                self.logger.debug(f'unable to upload {filename}: {type(e).__name__}: {e}, retrying...')
+        try:
+            return self.upload_file_impl(filename)
+        except Exception as e:
+            self.logger.debug(f'unable to upload {filename}: {type(e).__name__}: {e}, retrying with last 1000 lines...')
 
-        with open('.upload_file', 'w') as outfile:
-            with open(filename) as infile:
-                outfile.writelines(infile.readlines()[-1000:])
+            with open('.upload_file', 'w') as outfile:
+                with open(filename) as infile:
+                    outfile.writelines(infile.readlines()[-1000:])
 
-        return self.upload_file_impl('.upload_file')
+            return self.upload_file_impl('.upload_file')
 
     @command(admin=True)
     @doc('uploads error logs to file.io')

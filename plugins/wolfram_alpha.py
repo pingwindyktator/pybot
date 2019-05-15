@@ -104,6 +104,7 @@ class wolfram_alpha(plugin):
         self.manage_api_response(self.get_api_response(ask))
 
     @utils.timed_lru_cache(expiration=timedelta(hours=1), typed=True)
+    @utils.repeat_until(no_exception=False, return_value_is=lambda x: x.attrib['success'] == 'true')
     def get_api_response(self, ask):
         raw_response = requests.get(self.full_req % (ask, self.config['api_key'])).content.decode()
         xml_root = xml.etree.ElementTree.fromstring(raw_response)
