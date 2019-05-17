@@ -8,6 +8,7 @@ max_autorejoin_attempts: 5
 superop: ''
 file_logging_level: info
 stdout_logging_level: info
+filter_stdout_non_pybot_debug_logs: true
 # enabled_plugins: []
 disabled_plugins: [worldcup2018, niedziela]
 command_prefix: '.'

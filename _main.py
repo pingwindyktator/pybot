@@ -20,14 +20,13 @@ def configure_logger(config):
     file_handler.setFormatter(log_formatter)
     level = utils.logging_level_str_to_int[config['file_logging_level']]
     file_handler.setLevel(level)
-    file_handler.addFilter(utils.only_pybot_logs_filter())
     root_logger.addHandler(file_handler)
 
     stdout_handler = logging.StreamHandler(sys.stdout)
     stdout_handler.setFormatter(log_formatter)
     level = utils.logging_level_str_to_int[config['stdout_logging_level']]
     stdout_handler.setLevel(level)
-    stdout_handler.addFilter(utils.only_pybot_logs_filter())
+    if config['filter_stdout_non_pybot_debug_logs']: stdout_handler.addFilter(utils.only_pybot_logs_filter())
     root_logger.addHandler(stdout_handler)
 
 
