@@ -105,7 +105,7 @@ class timed_lru_cache:
                         return func_result
 
                     except Exception as e:
-                        self.logger.warning(f'exception caught calling: {call_repr}, no result cached: {type(e).__name__}: {e}')
+                        self.logger.info(f'exception caught calling: {call_repr}, no result cached: {type(e).__name__}: {e}')
                         raise
                 else:
                     self.logger.debug(f'returned cached result: {call_repr} -> {self.cache[call_args][0]}')
@@ -180,7 +180,9 @@ def repeat_until(no_exception=True, return_value_is=lambda x: True, limit=3):
                 except Exception as e:
                     result = None
                     exception = e
-                    if not no_exception: break
+                    if not no_exception:
+                        logger.info(f'exception caught calling: {func.__qualname__}: {type(e).__name__}: {e}')
+                        break
 
             if exception: raise exception
             if not return_value_is(result): raise RuntimeError('return value does not met given conditions')
