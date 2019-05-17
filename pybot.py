@@ -335,8 +335,14 @@ class pybot(irc.bot.SingleServerIRCBot):
 
     def _load_plugins(self):
         self._logger.debug('loading plugins...')
+        all_plugins = [x.__name__ for x in plugin.plugin.__subclasses__()]
         disabled_plugins = self.config['disabled_plugins'] if 'disabled_plugins' in self.config else []
-        enabled_plugins = self.config['enabled_plugins'] if 'enabled_plugins' in self.config else [x.__name__ for x in plugin.plugin.__subclasses__()]
+        enabled_plugins = self.config['enabled_plugins'] if 'enabled_plugins' in self.config else all_plugins
+
+        for plugin_name in disabled_plugins + enabled_plugins:
+            if plugin_name not in all_plugins:
+                self._logger.warning(f'Invalid config file: cannot find {plugin_name} plugin')
+                sys.exit(11)
 
         for plugin_class in plugin.plugin.__subclasses__():
             if plugin_class.__name__ in disabled_plugins or plugin_class.__name__ not in enabled_plugins:
