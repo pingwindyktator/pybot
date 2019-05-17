@@ -58,8 +58,9 @@ class foass(plugin):
         return response
 
     @command
-    @doc('respond <nickname>: respond to <nickname>')
-    def respond(self, sender_nick, args, **kwargs):
+    @command_alias('fuckoff')
+    @doc('fuck_off <nickname>: respond to <nickname> in a pretty surly way')
+    def fuck_off(self, sender_nick, args, **kwargs):
         if not args: return
         nickname = irc_nickname(args[0])
         self.logger.info(f'{sender_nick} responds {nickname}')
