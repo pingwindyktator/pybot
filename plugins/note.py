@@ -67,11 +67,13 @@ class note(plugin):
         self.bot.say_ok()
 
     def get_notes_for_user(self, nickname, remove=False, exact=False):
+        nickname = irc_nickname(nickname)
+
         with self.db_mutex:
             if not exact:
                 self.db_cursor.execute(f"SELECT nickname, notes FROM '{self.db_name}' WHERE nickname LIKE ? COLLATE NOCASE", (f'%{nickname}%',))
                 result = self.db_cursor.fetchall()
-                result = [x for x in result if self.is_same_nickname(nickname, x[0])]
+                result = [x for x in result if nickname.probably_the_same(x[0])]
             else:
                 self.db_cursor.execute(f"SELECT nickname, notes FROM '{self.db_name}' WHERE nickname = ? COLLATE NOCASE", (nickname,))
                 result = self.db_cursor.fetchone()
@@ -94,12 +96,6 @@ class note(plugin):
 
         if nickname: return f'{time}  <{nickname}> {msg}'
         return f'{time}  {msg}'
-
-    def is_same_nickname(self, a, b):
-        strip_str = ' _' + string.digits
-        a = a.casefold().strip(strip_str)
-        b = b.casefold().strip(strip_str)
-        return a == b and a
 
     def save_note(self, target, new_note):
         saved_notes = self.get_notes_for_user(target, exact=True, remove=False)
