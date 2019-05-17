@@ -165,20 +165,20 @@ class plugin:
 
 
 def command_alias(*args):
-    def command_alias_decorator(function):
+    def command_alias_decorator(func):
         if any(len(arg.split()) > 1 for arg in args):
-            print(f'invalid aliases for {function.__qualname__}')
+            print(f'invalid aliases for {func.__qualname__}')
             sys.exit(9)
 
-        function.__aliases = [*args]
-        return function
+        func.__aliases = [*args]
+        return func
 
     return command_alias_decorator
 
 
 def command(_cls=None, admin=False, superadmin=False, channel_op=False):
-    def command_impl(function):
-        @wraps(function)
+    def command_impl(func):
+        @wraps(func)
         def command_impl_impl(self, sender_nick, **kwargs):
             sender_nick = irc_nickname(sender_nick)
 
@@ -198,15 +198,15 @@ def command(_cls=None, admin=False, superadmin=False, channel_op=False):
                 return
 
             try:
-                function(self, sender_nick=sender_nick, **kwargs)
+                func(self, sender_nick=sender_nick, **kwargs)
             except Exception as e:
-                self.logger.error(f'exception caught calling {function.__qualname__}: {type(e).__name__}: {e}')
+                self.logger.error(f'exception caught calling {func.__qualname__}: {type(e).__name__}: {e}')
                 self.bot.say('internal error, sorry :(')
                 if self.bot.is_debug_mode_enabled(): raise
                 else: utils.report_error()
 
         if hasattr(command_impl_impl, '__regex'):
-            print(f'function {function.__qualname__} already registered as regex handler')
+            print(f'function {func.__qualname__} already registered as regex handler')
             sys.exit(8)
 
         command_impl_impl.__command = True
@@ -222,24 +222,24 @@ def command(_cls=None, admin=False, superadmin=False, channel_op=False):
 
 
 def on_message(regex_str):
-    def on_message_impl(function):
-        @wraps(function)
+    def on_message_impl(func):
+        @wraps(func)
         def on_message_impl_impl(self, **kwargs):
             try:
-                function(self, **kwargs)
+                func(self, **kwargs)
             except Exception as e:
-                self.logger.error(f'exception caught calling {function.__qualname__}: {type(e).__name__}: {e}')
+                self.logger.error(f'exception caught calling {func.__qualname__}: {type(e).__name__}: {e}')
                 if self.bot.is_debug_mode_enabled(): raise
                 else: utils.report_error()
 
         if hasattr(on_message_impl_impl, '__command'):
-            print(f'function {function.__qualname__} already registered as command')
+            print(f'function {func.__qualname__} already registered as command')
             sys.exit(7)
         try:
             on_message_impl_impl.__regex = re.compile(regex_str)
             return on_message_impl_impl
         except Exception as e:
-            print(f'invalid regex for regex handler {function.__qualname__}: {type(e).__name__}: {e}')
+            print(f'invalid regex for regex handler {func.__qualname__}: {type(e).__name__}: {e}')
             sys.exit(5)
 
     return on_message_impl

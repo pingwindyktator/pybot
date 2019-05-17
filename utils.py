@@ -72,10 +72,10 @@ class timed_lru_cache:
         self.cache = {}
         self.cache_lock = RLock()
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.function = None
+        self.func = None
         self.do_not_cache = False
 
-    def __call__(self, function):
+    def __call__(self, func):
         def timed_lru_cache_impl(*args, **kwargs):
             call_args = self._concat_args(*args, **kwargs)
             call_repr = self._get_call_repr(*args, **kwargs)
@@ -85,7 +85,7 @@ class timed_lru_cache:
                 hash(call_args)
             except TypeError:
                 self.logger.warning(f'not hashable: {call_repr}')
-                return function(*args, **kwargs)
+                return func(*args, **kwargs)
 
             with self.cache_lock:
                 if call_args in self.cache and (now - self.cache[call_args][1] > self.expiration):
@@ -94,7 +94,7 @@ class timed_lru_cache:
 
                 if call_args not in self.cache:
                     try:
-                        func_result = function(*args, **kwargs)
+                        func_result = func(*args, **kwargs)
                         if self.do_not_cache:
                             self.do_not_cache = False
                             self.logger.debug(f'not cached on demand: {call_repr}')
@@ -111,10 +111,10 @@ class timed_lru_cache:
                     self.logger.debug(f'returned cached result: {call_repr} -> {self.cache[call_args][0]}')
                     return self.cache[call_args][0]
 
-        self.function = function
-        function.clear_cache = self._clear_cache
-        function.do_not_cache = self._do_not_cache
-        return update_wrapper(timed_lru_cache_impl, function)
+        self.func = func
+        func.clear_cache = self._clear_cache
+        func.do_not_cache = self._do_not_cache
+        return update_wrapper(timed_lru_cache_impl, func)
 
     def _concat_args(self, *args, **kwargs):
         if self.typed:
@@ -125,7 +125,7 @@ class timed_lru_cache:
         return None
 
     def _get_call_repr(self, *args, **kwargs):
-        return f'{self.function.__qualname__}({", ".join([repr(x) for x in args] + [str(k) + "=" + repr(v) for k, v in kwargs.items()])})'
+        return f'{self.func.__qualname__}({", ".join([repr(x) for x in args] + [str(k) + "=" + repr(v) for k, v in kwargs.items()])})'
 
     class __magic_separator: pass
 
@@ -133,7 +133,7 @@ class timed_lru_cache:
         with self.cache_lock:
             self.cache = {}
 
-        self.logger.debug(f'cache cleared: {self.function.__qualname__}')
+        self.logger.debug(f'cache cleared: {self.func.__qualname__}')
 
     def _do_not_cache(self):
         with self.cache_lock:
@@ -161,8 +161,10 @@ class repeated_timer(Timer):
 
 
 def repeat_until(no_exception=True, return_value_is=lambda x: True, limit=3):
-    def repeat_until_decorator(function):
-        @wraps(function)
+    logger = logging.getLogger(__name__)
+
+    def repeat_until_decorator(func):
+        @wraps(func)
         def repeat_until_decorator_impl(*args, **kwargs):
             current = 0
             exception = None
@@ -171,7 +173,7 @@ def repeat_until(no_exception=True, return_value_is=lambda x: True, limit=3):
             while current < limit:
                 current += 1
                 try:
-                    result = function(*args, **kwargs)
+                    result = func(*args, **kwargs)
                     exception = None
                     if not return_value_is(result): continue
                     else: break
