@@ -33,7 +33,7 @@ class air_condition(plugin):
 
     @command
     @command_alias('pollution')
-    @doc('air <city>: get air conditions in <city> from gios.gov.pl')
+    @doc('get air conditions in <city> from gios.gov.pl', doc_args='city')
     def air(self, sender_nick, msg, **kwargs):
         if not msg: return
 

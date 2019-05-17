@@ -3,6 +3,7 @@ import re
 import sys
 # noinspection PyUnresolvedReferences
 import utils
+import inspect
 
 from utils import irc_nickname
 from pybot import pybot
@@ -245,9 +246,29 @@ def on_message(regex_str):
     return on_message_impl
 
 
-def doc(doc_string):
+def doc(doc_str, doc_args=None):
+    class pybot_doc:
+        def __init__(self, doc_args, doc_str):
+            self.doc_args = [x.strip() for x in doc_args]  # ['arg1', 'arg2']
+            self.doc_str = doc_str.strip()
+
     def doc_impl(obj):
-        obj.__doc_string = doc_string.strip()
+        if not hasattr(obj, '__pybot_docs'):
+            obj.__pybot_docs = []
+
+        if inspect.isclass(obj) and issubclass(obj, plugin):
+            # noinspection PyUnresolvedReferences
+            if obj.__pybot_docs:
+                print(f'plugin {obj.__name__} should not have more than one docs')
+                sys.exit(12)
+
+            if doc_args:
+                print(f'plugin {obj.__name__} should not have doc arguments')
+                sys.exit(13)
+
+        obj.__pybot_docs.append(pybot_doc(doc_args, doc_str))
         return obj
 
+    doc_args = doc_args if doc_args else []
+    doc_args = [doc_args] if not isinstance(doc_args, list) else doc_args
     return doc_impl

@@ -58,6 +58,9 @@ class example_plugin(plugin):
 
     @command
     @doc("this is what you will see as command's help")
+    @doc('you can add multiple docs if needed')
+    @doc('this is how command arguments are described in @doc', doc_args='arg')
+    @doc('and multiple arguments', doc_args=['arg1', 'arg2'])
     def example_command_with_doc(self, sender_nick, **kwargs):
         # try '.help example_command_with_doc' to see "this is what you will see as command's help"
         pass

@@ -15,8 +15,8 @@ from plugin import *
 
 class builtins(plugin):
     @command
-    @doc("""help <entry>: get doc msg for <entry> command / plugin
-            get general help""")
+    @doc('get doc msg for <entry> command / plugin', doc_args='entry')
+    @doc('get general help')
     def help(self, sender_nick, args, **kwargs):
         if args and args[0]:
             entry = args[0].strip()
@@ -26,6 +26,7 @@ class builtins(plugin):
                 self.help_for_plugin(entry)
             else:
                 self.bot.say(f'no such command: {entry}')
+
             self.logger.info(f'help of {args[0]} given for {sender_nick}')
         else:
             self.help_general(sender_nick)
@@ -33,7 +34,7 @@ class builtins(plugin):
 
     def help_general(self, sender_nick):
         if 'help' in self.config and self.config['help']:
-            self.bot.say(f'Here you go: {self.config["help"]}')
+            self.bot.say(f'here you go: {self.config["help"]}')
         else:
             commands = self.bot.get_commands_by_plugin()
             commands = collections.OrderedDict(sorted(commands.items()))
@@ -42,26 +43,32 @@ class builtins(plugin):
             for reply in [cmd for cmd in commands if commands[cmd]]:
                 self.bot.say(f'available commands for {color.blue(reply)}: {", ".join(sorted(commands[reply]))}', sender_nick)
 
-    def help_for_command(self, entry):
-        obj = self.bot.get_commands()[entry]
+    def help_for_command(self, command_name):
+        command = self.bot.get_commands()[command_name]
+        command_helps = getattr(command, '__pybot_docs', [])
+        if not command_helps:
+            self.bot.say(f'no help for {command_name}')
 
-        if hasattr(obj, '__doc_string'):
-            for reply in getattr(obj, "__doc_string").split('\n'):
-                self.bot.say(color.orange(f'[{entry}] ') + reply.strip())
+        for command_help in command_helps:
+            command_doc_args = command_help.doc_args
+            command_doc_args = ' '.join([f'<{x}>' for x in command_doc_args])
+            command_doc_args = f' {command_doc_args}' if command_doc_args else ''
+            command_doc_string = command_help.doc_str
+            self.bot.say(color.orange(f'{command_name}') + f'{command_doc_args}: {command_doc_string}')
+
+    def help_for_plugin(self, plugin_name):
+        plugin_instance = self.bot.get_plugin(plugin_name)
+        plugin_helps = getattr(plugin_instance, '__pybot_docs', [])
+        plugin_help = plugin_helps[0].doc_str if plugin_helps else ''
+
+        if plugin_help:
+            self.bot.say(color.orange(f'{plugin_name}') + f': {plugin_help}')
         else:
-            self.bot.say(f'no help for {entry}')
+            self.bot.say(color.orange(f'[{plugin_name}] ') + f'available commands: {", ".join(self.bot.get_plugin_commands(plugin_name))}')
 
-    def help_for_plugin(self, entry):
-        plugin_instance = self.bot.get_plugin(entry)
-
-        if hasattr(plugin_instance, '__doc_string'):
-            for reply in getattr(plugin_instance, "__doc_string").split('\n'):
-                self.bot.say(color.orange(f'[{entry}] ') + reply.strip())
-        else:
-            self.bot.say(color.orange(f'[{entry}] ') + f'available commands: {", ".join(self.bot.get_plugin_commands(entry))}')
 
     @command
-    @doc('give pybot source code URL')
+    @doc('get pybot source code URL')
     def source(self, sender_nick, **kwargs):
         self.logger.info(f'source given to {sender_nick}')
         if 'source' in self.config and self.config['source']:
@@ -98,7 +105,7 @@ class builtins(plugin):
         self.bot.say_ok()
 
     @command(admin=True)
-    @doc('change_log_level <file|stdout> <level>: change logging level')
+    @doc('change logging level', doc_args=['file|stdout', 'level'])
     def change_log_level(self, sender_nick, args, **kwargs):
         if len(args) < 2: return
         handler_name = args[0].casefold()
@@ -144,7 +151,7 @@ class builtins(plugin):
         return None
 
     @command(admin=True)
-    @doc('restart [<force>]: restart pybot app, use force to disable consistency checks')
+    @doc('restart pybot app, use force to disable consistency checks', doc_args='[force]')
     def restart(self, sender_nick, args, **kwargs):
         reason = self.is_restart_unsafe()
         if reason and not (args and args[0].strip().casefold() == 'force'):
@@ -295,7 +302,7 @@ class builtins(plugin):
         return f'{str(commit)[:6]}: {commit_msg}'
 
     @command(superadmin=True)
-    @doc('self_update [<force>]: pull changes from git remote ref and update config file, use [<force>] to discard local changes')
+    @doc('pull changes from git remote ref and update config file, use [<force>] to discard local changes', doc_args='[force]')
     def self_update(self, sender_nick, args, **kwargs):
         self.logger.info(f'{sender_nick} asked for self-update')
 
@@ -351,7 +358,7 @@ class builtins(plugin):
         self.bot.say(f'updated, now at "{self.prepare_commit_msg(repo.head.commit)}"{config_updated_str}{force_str}{diff_str}')
 
     @command(superadmin=True)
-    @doc('change_config <entry> <value>: change, save, apply bot config file and ** restart **. use ":" to separate config nesting (eg. "a:b:c" means config["a"]["b"]["c"])')
+    @doc('change, save, apply bot config file and ** restart **. use ":" to separate config nesting (eg. "a:b:c" means config["a"]["b"]["c"])', doc_args=['entry', 'value'])
     def change_config(self, msg, sender_nick, **kwargs):
         if not msg: return
         keys = msg.split()[0].split(':')

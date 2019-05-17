@@ -51,7 +51,7 @@ class ignore(plugin):
 
     @command(admin=True)
     @command_alias('ignore_user')
-    @doc("ignore <nickname>: ignore user's messages")
+    @doc("ignore <nickname>'s messages", doc_args='nickname')
     def ignore(self, sender_nick, args, **kwargs):
         if not args: return
         nickname = irc_nickname(args[0])
@@ -67,8 +67,8 @@ class ignore(plugin):
 
     @command(admin=True)
     @command_alias('ignore_user_for')
-    @doc("""ignore_for <nickname> <time>: ignore user's messages for <time> time. <time> should be %H %M  (eg.  1h 42m)
-            ignore_for <time> <nickname>: ignore user's messages for <time> time. <time> should be %H %M  (eg.  1h 42m)""")
+    @doc("ignore <nickname>'s messages for <time> time. <time> should be %H %M  (eg.  1h 42m)", doc_args=['nickname', 'time'])
+    @doc("ignore <nickname>'s messages for <time> time. <time> should be %H %M  (eg.  1h 42m)", doc_args=['time', 'nickname'])
     def ignore_for(self, sender_nick, msg, **kwargs):
         if not msg: return
         return self.ignore_for_impl(sender_nick, msg)
@@ -127,7 +127,7 @@ class ignore(plugin):
 
     @command(admin=True)
     @command_alias('unignore_user')
-    @doc("unignore <nickname>: unignore user's messages")
+    @doc("unignore <nickname>'s messages", doc_args='nickname')
     def unignore(self, sender_nick, args, **kwargs):
         if not args: return
         nickname = irc_nickname(args[0])
