@@ -207,7 +207,7 @@ class irc_nickname(str):
         value = cls.strip_regex.sub('', value)
 
         if not cls.validate_regex.findall(value):
-            raise RuntimeError('nickname not valid')
+            raise RuntimeError(f'nickname not valid: {value}')
 
         return super().__new__(cls, value)
 
