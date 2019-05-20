@@ -205,16 +205,12 @@ class irc_nickname(str):
     def __new__(cls, value):
         value = str(value).strip()
         value = cls.strip_regex.sub('', value)
-
-        if not cls.validate_regex.findall(value):
-            raise RuntimeError(f'nickname not valid: {value}')
-
         return super().__new__(cls, value)
 
     def probably_the_same(self, other):
         strip_str = ' _' + string.digits
         a = self.casefold().strip(strip_str)
-        b = irc_nickname(other).casefold().strip(strip_str)
+        b = irc_nickname(other).strip(strip_str)
         return a == b and a
 
     def __eq__(self, other):

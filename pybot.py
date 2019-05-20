@@ -2,7 +2,6 @@ import inspect
 import logging
 import sqlite3
 import ssl
-import string
 import time
 import textwrap
 import sys
@@ -271,7 +270,7 @@ class pybot(irc.bot.SingleServerIRCBot):
 
     def on_whoisuser(self, _, raw_msg):
         """ called by super() when WHOIS response arrives """
-        self._call_plugins_methods('whoisuser', raw_msg=raw_msg, nick=irc_nickname(raw_msg.arguments[0]), user=irc_nickname(raw_msg.arguments[1]), host=irc_nickname(raw_msg.arguments[2]))
+        self._call_plugins_methods('whoisuser', raw_msg=raw_msg, nick=irc_nickname(raw_msg.arguments[0]), user=irc_nickname(raw_msg.arguments[1]), host=raw_msg.arguments[2])
 
     def on_nick(self, _, raw_msg):
         """ called by super() when somebody changes nickname """
