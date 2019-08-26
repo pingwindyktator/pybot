@@ -80,8 +80,10 @@ class beer(plugin):
         reasons = self.get_reasons_str(who, to_whom)
         reasons2 = self.get_reasons_str(to_whom, who)
         if not reasons and not self.get_reasons_str(to_whom, who): return self.get_beers_simple(who, to_whom)
-        return f'{who} owes {to_whom} {self.get_beers(who, to_whom)} beers {reasons}' + '\n' + \
-               f'{to_whom} owes {who} {self.get_beers(to_whom, who)} beers {reasons2}'
+        beers_a = self.get_beers(who, to_whom)
+        beers_b = self.get_beers(to_whom, who)
+        return f'{who} owes {to_whom} {beers_a} {"beer" if beers_a == 1 else "beers"} {reasons}' + '\n' + \
+               f'{to_whom} owes {who} {beers_b} {"beer" if beers_b == 1 else "beers"} {reasons2}'
 
     def get_beers_simple(self, who, to_whom):
         return f'{who} {self.get_beers(to_whom, who)}:{self.get_beers(who, to_whom)} {to_whom}'
@@ -91,7 +93,7 @@ class beer(plugin):
             try:
                 self.db_cursor.execute(f"SELECT beers FROM '{who.casefold()}' WHERE nickname = ?", (to_whom.casefold(),))
                 result = self.db_cursor.fetchone()
-            except sqlite3.OperationalError as e:
+            except sqlite3.OperationalError:
                 return 0
 
             return result[0] if result else 0
