@@ -82,7 +82,7 @@ class air_condition(plugin):
 
     @utils.timed_lru_cache(expiration=timedelta(hours=12))
     def update_known_stations(self):
-        response = requests.get(r'http://api.gios.gov.pl/pjp-api/rest/station/findAll', timeout=10).json()
+        response = requests.get(r'http://api.gios.gov.pl/pjp-api/rest/station/findAll', timeout=15).json()
         stations_by_city = {}
 
         for station in self.filter_stations_response(response):
@@ -98,10 +98,10 @@ class air_condition(plugin):
 
     def get_measurements(self, station_id):
         result = []
-        index_response = requests.get(r'http://api.gios.gov.pl/pjp-api/rest/aqindex/getIndex/%s' % station_id, timeout=10).json()
+        index_response = requests.get(r'http://api.gios.gov.pl/pjp-api/rest/aqindex/getIndex/%s' % station_id, timeout=15).json()
 
         for sensor_id in self.get_station_sensors(station_id):
-            data_response = requests.get(r'http://api.gios.gov.pl/pjp-api/rest/data/getData/%s' % sensor_id, timeout=10).json()
+            data_response = requests.get(r'http://api.gios.gov.pl/pjp-api/rest/data/getData/%s' % sensor_id, timeout=15).json()
             index_level = self.get_index_level(index_response, data_response['key'])
             value = self.get_newest_measurment_value(data_response)
             if value is not None: result.append(self.measurement(data_response['key'], index_level, value))
@@ -121,7 +121,7 @@ class air_condition(plugin):
         return sorted(values, key=lambda x: x['date'], reverse=True)[0]['value']
 
     def get_station_sensors(self, station_id):
-        response = requests.get(r'http://api.gios.gov.pl/pjp-api/rest/station/sensors/%s' % station_id, timeout=10).json()
+        response = requests.get(r'http://api.gios.gov.pl/pjp-api/rest/station/sensors/%s' % station_id, timeout=15).json()
         return [sensor['id'] for sensor in response]
 
     def colorize(self, _str, index_level):
