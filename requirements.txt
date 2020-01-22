@@ -1,3 +1,4 @@
+bcrypt==3.1.7
 tzlocal==1.5.1
 unidecode==0.4.21
 ruamel.yaml==0.15.34
@@ -12,3 +13,4 @@ pythonwhois==2.4.3
 wikipedia==1.4.0
 sentry-sdk==0.5.4
 python-Levenshtein==0.12.0
+block-io==1.1.10

@@ -100,3 +100,8 @@ worldcup2018:
 
 beer:
   db_location: db/beer.db
+
+dogetip:
+  db_location: db/dogetip.db
+  block_io_api_key: ''
+  block_io_api_pin: ''

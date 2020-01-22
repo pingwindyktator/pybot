@@ -154,7 +154,7 @@ class antispam(plugin):
             self.bot.kick(sender_nick, 'stop it!')
             self.logger.warning(f'{sender_nick} kicked: {reason}')
         else:
-            self.bot.say(f'{sender_nick}, stop spamming!')
+            self.bot.say(f'{sender_nick}: stop spamming!')
             self.logger.warning(f"{sender_nick} is possibly spamer ({reason}), but I've no operator privileges to kick him :(")
 
     def get_kick_reason(self, sender_nick, msg):
