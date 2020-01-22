@@ -83,6 +83,7 @@ Then follow those tips:
 - All your `on_*` funcs will be called even when sender is ignored - you should handle this by yourself
 - You should keep bot's local time equal to channel users' local time. Currently it's not possible to handle multiple timezones. Bot will interpret all times as its local ones
 - Every `.py` file in `plugins/` is treated like a pybot plugin
+- Add `debug: true` value to plugin's config to enable DEBUG logging
 
 See [example_plugin.py](example_plugin.py) and [plugin.py](plugin.py) also!
 

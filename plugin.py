@@ -14,8 +14,11 @@ from functools import wraps
 class plugin:
     def __init__(self, bot: pybot):
         self.bot = bot
-        self.logger = logging.getLogger(self._get_class_name())
         self.config = self.bot.config[self._get_class_name()] if self._get_class_name() in self.bot.config else None
+        self.logger = logging.getLogger(self._get_class_name())
+        if self.logger.level > logging.DEBUG and 'debug' in self.config and self.config['debug']:
+            self.logger.setLevel(logging.DEBUG)
+
         self.assert_config()
 
     def _get_class_name(self):
