@@ -84,7 +84,7 @@ class spacex_launches(plugin):
         total_seconds = (time - now).total_seconds()
 
         if total_seconds > threading.TIMEOUT_MAX:
-            self.logger.info(f'{flight_id} flight reminder not set, timeout value is too large')
+            self.logger.debug(f'{flight_id} flight reminder not set, timeout value is too large')
         else:
             timer = Timer(total_seconds, self.remind_upcoming_launch, kwargs={'flight_id': flight_id})
             self.upcoming_launches_timers[flight_id].timers.append(timer)
