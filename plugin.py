@@ -105,7 +105,7 @@ class plugin:
         called by bot when private msg received
         :param raw_msg : raw IRC msg
         :param msg     : full message
-        :param source  : primsg source
+        :param source  : privmsg source
         """
 
     def on_whoisuser(self, raw_msg, nick, user, host, **kwargs):
