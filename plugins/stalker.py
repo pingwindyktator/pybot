@@ -86,7 +86,7 @@ class stalker(plugin):
             result = self.db_cursor.fetchall()
 
         if result:
-            result = [json.loads(x[0]) for x in result]
+            result = [json.loads(x[0]) for x in result if x[0]]
             result = [[irc_nickname(y) for y in x] for x in result]
 
         return result
