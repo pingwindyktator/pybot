@@ -160,7 +160,7 @@ class dogetip(plugin):
             self.bot.say(f'{sender_nick} just tipped {receiver} with {amount}Ð [{txid}]')
         except Exception as e:
             self.logger.warning(f'cannot send transaction from {sender_nick}: {e}')
-            self.bot.say(f'cannot send transaction: {e}')
+            self.bot.say(f'{sender_nick}: cannot send transaction: {e}')
 
     @command
     @doc('register an account to use this plugin, you will need to provide a PIN on privmsg after that')
