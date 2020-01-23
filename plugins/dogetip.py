@@ -144,7 +144,7 @@ class dogetip(plugin):
 
         address = self.get_address(sender_nick)
         qrcode = self.get_qr_code(address)
-        self.bot.say(f'{sender_nick}: registration completed, your DOGEOCIN address is {address} -> {qrcode}')
+        self.bot.say(f'{sender_nick}: registration completed, your DOGECOIN address is {address} -> {qrcode}')
 
     def tip_impl(self, sender_nick, receiver, amount):
         receiver_label = self.gen_id_for_nick(receiver)
@@ -187,7 +187,7 @@ class dogetip(plugin):
         address = self.get_address(sender_nick)
         qrcode = self.get_qr_code(address)
 
-        self.bot.say(f'{sender_nick}: your DOGEOCIN address is {address} -> {qrcode}')
+        self.bot.say(f'{sender_nick}: your DOGECOIN address is {address} -> {qrcode}')
 
     @command
     @doc('get your DOGECOIN balance')
