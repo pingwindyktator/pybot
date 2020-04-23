@@ -216,7 +216,7 @@ class pybot(irc.bot.SingleServerIRCBot):
         #   args_list == ["some", "msg"]
         #   raw_msg   == IRC Event class
 
-        if not (len(cmd) > 2 and cmd[0].isalpha() and all(c.isalnum() or c == '_' for c in cmd)):
+        if not (len(cmd) > 1 and cmd[0].isalpha() and all(c.isalnum() or c == '_' for c in cmd)):
             self._logger.info(f'invalid command by {sender_nick}: {cmd}')
             pass
 
