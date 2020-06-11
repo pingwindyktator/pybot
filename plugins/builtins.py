@@ -287,8 +287,7 @@ class builtins(plugin):
             self.logger.error(f'exception caught while updating config file: {type(e).__name__}: {e}')
             self.bot.say('cannot update config file, aborting...')
             shutil.copyfile('..pybot.yaml', 'pybot.yaml')
-            if self.bot.is_debug_mode_enabled(): raise
-            else: utils.report_error()
+            utils.report_error()
 
     def prepare_commit_msg(self, commit):
         commit_msg = commit.message.strip().replace('\n', '; ')
@@ -344,8 +343,7 @@ class builtins(plugin):
             self.logger.error(f'exception caught while updating config file: {type(e).__name__}: {e}. getting back to {repo.head.orig_head().commit}')
             self.bot.say('cannot update config file, aborting...')
             repo.head.reset(commit=repo.head.orig_head().commit, index=True, working_tree=True)
-            if self.bot.is_debug_mode_enabled(): raise
-            else: utils.report_error()
+            utils.report_error()
             return
 
         self.bot.say(f'updated, now at "{self.prepare_commit_msg(repo.head.commit)}"{config_updated_str}{force_str}{diff_str}')

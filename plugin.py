@@ -205,8 +205,7 @@ def command(_cls=None, admin=False, superadmin=False, channel_op=False):
             except Exception as e:
                 self.logger.error(f'exception caught calling {func.__qualname__}: {type(e).__name__}: {e}')
                 self.bot.say('internal error, sorry :(')
-                if self.bot.is_debug_mode_enabled(): raise
-                else: utils.report_error()
+                utils.report_error()
 
         if hasattr(command_impl_impl, '__regex'):
             print(f'function {func.__qualname__} already registered as regex handler')
@@ -232,8 +231,7 @@ def on_message(regex_str):
                 func(self, **kwargs)
             except Exception as e:
                 self.logger.error(f'exception caught calling {func.__qualname__}: {type(e).__name__}: {e}')
-                if self.bot.is_debug_mode_enabled(): raise
-                else: utils.report_error()
+                utils.report_error()
 
         if hasattr(on_message_impl_impl, '__command'):
             print(f'function {func.__qualname__} already registered as command')

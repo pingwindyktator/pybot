@@ -41,6 +41,8 @@ int_to_logging_level_str = {
     logging.NOTSET: 'all',
 }
 
+CONFIG_FILENAME = 'pybot.yaml'
+
 
 class null_object:
     def __init__(self, *args, **kwargs): pass
@@ -108,7 +110,7 @@ class timed_lru_cache:
 
                     except Exception as e:
                         self.logger.info(f'exception caught calling: {call_repr}, no result cached: {type(e).__name__}: {e}')
-                        raise
+                        raise e from None
                 else:
                     self.logger.debug(f'returned cached result: {call_repr} -> {self.cache[call_args][0]}')
                     return self.cache[call_args][0]
@@ -140,58 +142,6 @@ class timed_lru_cache:
     def _do_not_cache(self):
         with self.cache_lock:
             self.do_not_cache = True
-
-
-# noinspection PyUnresolvedReferences
-class repeated_timer(Timer):
-    """
-    exception safe, repeating timer
-    """
-
-    def run(self):
-        logger = logging.getLogger(self.__class__.__name__)
-
-        while not self.finished.is_set():
-            try:
-                self.function(*self.args, **self.kwargs)
-            except Exception as e:
-                logger.error(f'exception caught calling {self.function.__qualname__}: {type(e).__name__}: {e}, continuing...')
-
-            self.finished.wait(self.interval)
-
-        self.finished.set()
-
-
-def repeat_until(no_exception=True, return_value_is=lambda x: True, limit=3):
-    logger = logging.getLogger(__name__)
-
-    def repeat_until_decorator(func):
-        @wraps(func)
-        def repeat_until_decorator_impl(*args, **kwargs):
-            current = 0
-            exception = None
-            result = None
-
-            while current < limit:
-                current += 1
-                try:
-                    result = func(*args, **kwargs)
-                    exception = None
-                    if not return_value_is(result): continue
-                    else: break
-                except Exception as e:
-                    result = None
-                    exception = e
-                    if not no_exception:
-                        logger.info(f'exception caught calling: {func.__qualname__}: {type(e).__name__}: {e}')
-                        break
-
-            if exception: raise exception
-            if not return_value_is(result): raise RuntimeError('return value does not met given conditions')
-            else: return result
-
-        return repeat_until_decorator_impl
-    return repeat_until_decorator
 
 
 @total_ordering
@@ -226,34 +176,57 @@ class irc_nickname(str):
         return other.casefold() in self.casefold()
 
 
-class only_pybot_logs_filter(logging.Filter):
+# noinspection PyUnresolvedReferences
+class repeated_timer(Timer):
     """
-    filters non-pybot DEBUG logs
+    exception safe, repeating timer
     """
 
-    def filter(self, record):
-        return record.pathname.startswith(get_pybot_dir()) or record.levelno > logging.DEBUG
+    def run(self):
+        logger = logging.getLogger(self.__class__.__name__)
+
+        while not self.finished.is_set():
+            try:
+                self.function(*self.args, **self.kwargs)
+            except Exception as e:
+                logger.error(f'exception caught calling {self.function.__qualname__}: {type(e).__name__}: {e}')
+                report_error()
+
+            self.finished.wait(self.interval)
+
+        self.finished.set()
 
 
-class sentry_specific_filter(logging.Filter):
-    def __init__(self, name=''):
-        super().__init__(name)
-        self.to_be_filtered_out = []
-        self.analyze_config(yaml.load(open('pybot.yaml'), Loader=yaml.Loader))
+def repeat_until(no_exception=True, return_value_is=lambda x: True, limit=3):
+    logger = logging.getLogger(__name__)
 
-    def filter(self, record):
-        for f in self.to_be_filtered_out:
-            if f.casefold() in record.msg.casefold():
-                return False
+    def repeat_until_decorator(func):
+        @wraps(func)
+        def repeat_until_decorator_impl(*args, **kwargs):
+            current = 0
+            exception = None
+            result = None
 
-        return True
+            while current < limit:
+                current += 1
+                try:
+                    result = func(*args, **kwargs)
+                    exception = None
+                    if not return_value_is(result): continue
+                    else: break
+                except Exception as e:
+                    result = None
+                    exception = e
+                    if not no_exception:
+                        logger.info(f'exception caught calling: {func.__qualname__}: {type(e).__name__}: {e}')
+                        break
 
-    def analyze_config(self, config):
-        for key, value in config.items():
-            if not isinstance(value, dict):
-                if 'api_key'.casefold() in key.casefold(): self.to_be_filtered_out.append(value)
-            else:
-                self.analyze_config(value)
+            if exception: raise exception from None
+            if not return_value_is(result): raise RuntimeError('return value does not met given conditions')
+            else: return result
+
+        return repeat_until_decorator_impl
+    return repeat_until_decorator
 
 
 def remove_national_chars(s):
@@ -388,6 +361,39 @@ def set_timezone(timezone):
     time.tzset()
 
 
+class only_pybot_logs_filter(logging.Filter):
+    """
+    filters non-pybot DEBUG logs
+    """
+
+    def filter(self, record):
+        return record.pathname.startswith(get_pybot_dir()) or record.levelno > logging.DEBUG
+
+
+## -----------------------------------------------------
+
+
+class sentry_specific_filter(logging.Filter):
+    def __init__(self, name=''):
+        super().__init__(name)
+        self.to_be_filtered_out = []
+        self.analyze_config(yaml.load(open('pybot.yaml'), Loader=yaml.Loader))
+
+    def filter(self, record):
+        for f in self.to_be_filtered_out:
+            if f.casefold() in record.msg.casefold():
+                return False
+
+        return True
+
+    def analyze_config(self, config):
+        for key, value in config.items():
+            if not isinstance(value, dict):
+                if 'api_key'.casefold() in key.casefold(): self.to_be_filtered_out.append(value)
+            else:
+                self.analyze_config(value)
+
+
 # noinspection PyUnresolvedReferences
 def setup_sentry():
     import sentry_sdk.utils
@@ -444,7 +450,7 @@ def setup_sentry():
             scope.set_tag(key, value)
 
 
-def report_error():
+def report_error_sentry():
     logger = logging.getLogger(__name__)
 
     try:
@@ -452,3 +458,15 @@ def report_error():
         logger.info('exception report sent to sentry.io')
     except Exception as e:
         logger.error(f'exception caught calling sentry_sdk.capture_exception: {type(e).__name__}: {e}')
+
+
+def report_error_debug():
+    type, msg, traceback = sys.exc_info()
+    raise type(msg).with_traceback(traceback) from None
+
+
+def report_error():
+    # if bot.is_debug_mode_enabled(): report_error_debug()
+    # else: report_error_sentry()
+    # fallback:
+    report_error_debug()

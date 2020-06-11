@@ -72,6 +72,7 @@ def main(debug_mode=True):
     if not debug_mode:
         set_timezone(config)
         utils.setup_sentry()
+        utils.report_error = utils.report_error_sentry
 
     configure_logger(config)
     bot = pybot(config, debug_mode)

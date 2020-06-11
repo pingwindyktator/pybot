@@ -159,7 +159,7 @@ def configure_logger(*args, **kwargs):
     logging.basicConfig(format=logging_format, level=logging.INFO, stream=sys.stdout)
 
 
-def simulator_main():
+def sim_main():
     _main.configure_logger = configure_logger
     _main.set_timezone = lambda _: None
     color.disable_colors()
@@ -172,4 +172,4 @@ def simulator_main():
 
 
 if __name__ == "__main__":
-    simulator_main()
+    sim_main()
