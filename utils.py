@@ -281,7 +281,7 @@ def get_config_violations(config, assert_unknown_keys=False):
         'timezone': config_key_info(True, str),
         'filter_stdout_non_pybot_debug_logs': config_key_info(True, bool),
 
-        'force_debug_mode_to_be': config_key_info(False, bool),
+        'debug_mode': config_key_info(False, bool),
         'password': config_key_info(False, list),
         'disabled_plugins': config_key_info(False, list),
         'enabled_plugins': config_key_info(False, list),

@@ -66,8 +66,8 @@ def set_timezone(config):
 def main(debug_mode=True):
     config = init_config()
 
-    if 'force_debug_mode_to_be' in config:
-        debug_mode = config['force_debug_mode_to_be']
+    if 'debug_mode' in config:
+        debug_mode = config['debug_mode']
 
     if not debug_mode:
         set_timezone(config)
