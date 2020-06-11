@@ -131,7 +131,7 @@ class builtins(plugin):
         """
 
         try:
-            config = yaml.load(open('pybot.yaml'), Loader=yaml.Loader)
+            config = yaml.load(open(utils.CONFIG_FILENAME), Loader=yaml.Loader)
         except Exception as e:
             self.logger.info(f'exception: {type(e).__name__}: {e}')
             return 'cannot load config file'
@@ -248,8 +248,8 @@ class builtins(plugin):
         :return: True if config was updated, False otherwise
         """
 
-        config = yaml.load(open('pybot.yaml'), Loader=yaml.RoundTripLoader)
-        config_template = yaml.load(open('pybot.template.yaml'), Loader=yaml.Loader)
+        config = yaml.load(open(utils.CONFIG_FILENAME), Loader=yaml.RoundTripLoader)
+        config_template = yaml.load(open(utils.CONFIG_TEMPLATE_FILENAME), Loader=yaml.Loader)
         if not config: config = {}
         for key, value in config_template.items():
             self.insert_to_config(key, value, config)
@@ -264,21 +264,21 @@ class builtins(plugin):
         config = yaml.load(open('.pybot.yaml'), Loader=yaml.Loader)
         if utils.get_config_violations(config): raise RuntimeError('invalid config file')
 
-        shutil.copyfile('.pybot.yaml', 'pybot.yaml')
+        shutil.copyfile('.pybot.yaml', utils.CONFIG_FILENAME)
         self.logger.warning('config file updated')
         return True
 
     @command(superadmin=True)
     @doc('update config with config template defaults and ** restarts **, should be used with caution!')
     def update_config(self, sender_nick, **kwargs):
-        shutil.copyfile('pybot.yaml', '..pybot.yaml')
+        shutil.copyfile(utils.CONFIG_FILENAME, '..pybot.yaml')
 
         try:
             self.update_config_file()
             reason = self.is_restart_unsafe()
             if reason:
                 self.bot.say(f'restart is unsafe: {reason}, aborting process...')
-                shutil.copyfile('..pybot.yaml', 'pybot.yaml')
+                shutil.copyfile('..pybot.yaml', utils.CONFIG_FILENAME)
                 return
 
             self.bot.say('config updated, restarting...', force=True)
@@ -286,7 +286,7 @@ class builtins(plugin):
         except Exception as e:
             self.logger.error(f'exception caught while updating config file: {type(e).__name__}: {e}')
             self.bot.say('cannot update config file, aborting...')
-            shutil.copyfile('..pybot.yaml', 'pybot.yaml')
+            shutil.copyfile('..pybot.yaml', utils.CONFIG_FILENAME)
             utils.report_error()
 
     def prepare_commit_msg(self, commit):
@@ -363,7 +363,7 @@ class builtins(plugin):
             self.bot.say(f'cannot parse value: {value}')
             return
 
-        config = yaml.load(open('pybot.yaml'), Loader=yaml.RoundTripLoader)
+        config = yaml.load(open(utils.CONFIG_FILENAME), Loader=yaml.RoundTripLoader)
         config_entry = config
 
         for key_it, key in enumerate(keys):
@@ -392,7 +392,7 @@ class builtins(plugin):
             self.bot.say(f'restart is unsafe: {reason}, aborting...')
             return
 
-        shutil.copyfile('.pybot.yaml', 'pybot.yaml')
+        shutil.copyfile('.pybot.yaml', utils.CONFIG_FILENAME)
         self.logger.warning(f'{sender_nick} changed config entry {keys} = {value}')
         self.bot.say('config entry applied, restarting...', force=True)
         self.restart_impl(sender_nick)

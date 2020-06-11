@@ -42,6 +42,7 @@ int_to_logging_level_str = {
 }
 
 CONFIG_FILENAME = 'pybot.yaml'
+CONFIG_TEMPLATE_FILENAME = 'pybot.template.yaml'
 
 
 class null_object:
@@ -377,7 +378,7 @@ class sentry_specific_filter(logging.Filter):
     def __init__(self, name=''):
         super().__init__(name)
         self.to_be_filtered_out = []
-        self.analyze_config(yaml.load(open('pybot.yaml'), Loader=yaml.Loader))
+        self.analyze_config(yaml.load(open(CONFIG_FILENAME), Loader=yaml.Loader))
 
     def filter(self, record):
         for f in self.to_be_filtered_out:
