@@ -2,7 +2,7 @@ bcrypt==3.1.7
 tzlocal==1.5.1
 unidecode==0.4.21
 ruamel.yaml==0.15.34
-lxml==4.6.3
+lxml==4.6.5
 requests==2.20.0
 irc==16.1
 GitPython==3.1.12
